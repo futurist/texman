@@ -1,0 +1,10 @@
+.topButton{
+	margin-right:10px;
+}
+
+table.dataTable tr.selected{
+	background: #9A9A9A;
+}
+table.dataTable tr.selected td{
+	color: white;
+}
