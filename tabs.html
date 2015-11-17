@@ -18,9 +18,13 @@
 <script>
 var host="http://1111hui.com:88"
 
+function NewID(){
+    return (+new Date()+Math.random()).toString(36);
+}
 
 var Contact = function(data) {
     data = data || {}
+    this.key = NewID()
     this.userid = m.prop(data.userid||'')
     this.name = m.prop(data.name||'')
     this.client = m.prop(data.client||'')
@@ -32,12 +36,23 @@ Contact.prototype.toString = function() {
 
 Contact.prototype.clone = function(data) {
     return new Contact({
+        key: this.key,
         userid : this.userid(),
         name : this.name(),
         client : this.client()
     });    
 }
 
+Contact.createFromObject = function(obj) {
+    if(!obj) return new Contact();
+
+    return new Contact({
+        key: obj.uniqKey|| NewID(),
+        userid : obj.userid||'newuser',
+        name : obj.name,
+        client : obj.client
+    });
+}
 Contact.list = function(data) {
     return m.request({method: "GET", url: host+'/views/dataJSON.json', data: data, initialValue:[], type:Contact})
 }
@@ -56,12 +71,14 @@ var ContactsWidget = function(currContact) {
         this.ContactList = new ContactList( )
 
         this.save = function(contact) {
+
+            this.contacts().push(contact.clone())
+            
             Contact.save(contact).then(update.bind(this))
         }.bind(this)
     },
     this.view= function(ctrl) {
         return [
-            m.component(ctrl.ContactForm, { parent:ctrl }),
             m.component(ctrl.ContactList, { parent:ctrl })
         ]
     }
@@ -119,23 +136,21 @@ var ContactList = function defContactList ( currContact ) {
 
                     m('.row', {config:initFundation}, [
 
-                        m('ul.tabs[data-tab]', {}, [
+                        m('ul.tabs[data-tab]', {key:NewID() }, [
 
                                     self.module.data.map(function(obj,i){
                                         var active = i==0?'.active':'';
-                                        return m('li.tab-title'+active, [
+                                        return m('li.tab-title'+active, {key:obj.key }, [
 
-                                            obj.userid() ?
                                             m('a', {
                                                 href:'#panel'+i,
                                                 // href: 'javascript:;',
                                                 // onclick: function(e){ parent.currContact=obj.clone();  }
-                                            }, obj.userid()) :
-                                            m('span', '-')
+                                            }, obj.userid()||'newuser')
 
                                         ]);
 
-                                    }).concat( m('li.tab-title', [m('a.addTab',"+")]) )
+                                    }).concat( m('li.tab-title', [m('a.addTab[href="#addTab"]',"+")]) )
 
 
                         ]),
@@ -143,8 +158,8 @@ var ContactList = function defContactList ( currContact ) {
                         m('div.tabs-content', [
                             self.module.data.map(function(obj,i){
                                 var active = i==0?'active':'';
-                                return m('div.content.panel#panel'+i, {class:active, role:'tabpanel'}, 'content'+i)
-                            })
+                                return m('div.content.panel#panel'+i, {class:active, key:obj.key, role:'tabpanel'}, 'content '+obj.name()+obj.client() )
+                            }).concat( m('div.content.panel#addTab',[m.component(parent.ContactForm, {parent:parent} )]) )
                         ])
 
                     ])
