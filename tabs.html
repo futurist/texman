@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="stylesheet" href="css/normalize.css" />
+<link rel="stylesheet" href="css/foundation.css" />
+<link rel="stylesheet" href="css/mytabs.css" />
+<script src="js/vendor/modernizr.js"></script>
+<script src="js/vendor/jquery.js"></script>
+<!-- <script src="js/vendor/fastclick.js"></script> -->
+<script src="js/foundation/foundation.js"></script>
+<script src="js/foundation/foundation.tab.js"></script>
+</head>
+<body>
+
+<div id="container"></div>
+<script src="js/mithril.js"></script>
+<script>
+var host="http://1111hui.com:88"
+
+
+var Contact = function(data) {
+    data = data || {}
+    this.userid = m.prop(data.userid||'')
+    this.name = m.prop(data.name||'')
+    this.client = m.prop(data.client||'')
+}
+
+Contact.prototype.toString = function() {
+    return [].concat( this.userid(), this.name(), this.client() ).join()
+}
+
+Contact.prototype.clone = function(data) {
+    return new Contact({
+        userid : this.userid(),
+        name : this.name(),
+        client : this.client()
+    });    
+}
+
+Contact.list = function(data) {
+    return m.request({method: "GET", url: host+'/views/dataJSON.json', data: data, initialValue:[], type:Contact})
+}
+Contact.save = function(data) {
+    return m.request({method: "POST", url: '/views/dataJSON.json', data: data, initialValue:[], type:Contact})
+}
+
+
+var ContactsWidget = function(currContact) {
+
+
+    this.controller= function update() {
+        this.contacts = Contact.list()
+        this.currContact = currContact || new Contact();
+        this.ContactForm = new ContactForm( )
+        this.ContactList = new ContactList( )
+
+        this.save = function(contact) {
+            Contact.save(contact).then(update.bind(this))
+        }.bind(this)
+    },
+    this.view= function(ctrl) {
+        return [
+            m.component(ctrl.ContactForm, { parent:ctrl }),
+            m.component(ctrl.ContactList, { parent:ctrl })
+        ]
+    }
+}
+
+var ContactForm = function() {
+
+    var parent = null;
+    this.controller= function(args) {
+
+        parent = args.parent;
+
+    },
+    this.view= function(ctrl, args) {
+        var contact = parent.currContact || new Contact();
+        return m("form", [
+            m("label", "Name"),
+            m("input", {oninput: m.withAttr("value", contact.name), value: contact.name()}),
+
+            m("label", "Email"),
+            m("input", {oninput: m.withAttr("value", contact.client), value: contact.client()}),
+
+            m("button[type=button]", {onclick: parent.save.bind(this, contact)}, "Save")
+        ])
+    }
+}
+
+
+var ContactList = function defContactList ( currContact ) {
+    var self = this;
+    var parent = null;
+
+    self.module = {};
+    self.module.init = function (data, keyword) {
+        this.data = data;
+        this.rowsperpage = 10;
+        this.keyword = m.prop(keyword||'');
+    }
+
+    self.controller = function (args) {
+        parent = args.parent;
+        self.module.init( parent.contacts() );
+    };
+
+
+    self.view =  function(ctrl, args) {
+        return m('div',[
+
+                    // m('.row', [
+                    //     m('input[placeholder="Filter by Name"][type="text"]', {
+                    //         onkeyup: m.withAttr('value', self.module.keyword),
+                    //         value: self.module.keyword()
+                    //     })
+                    // ]),
+
+                    m('.row', {config:initFundation}, [
+
+                        m('ul.tabs[data-tab]', {}, [
+
+                                    self.module.data.map(function(obj,i){
+                                        var active = i==0?'.active':'';
+                                        return m('li.tab-title'+active, [
+
+                                            obj.userid() ?
+                                            m('a', {
+                                                href:'#panel'+i,
+                                                // href: 'javascript:;',
+                                                // onclick: function(e){ parent.currContact=obj.clone();  }
+                                            }, obj.userid()) :
+                                            m('span', '-')
+
+                                        ]);
+
+                                    }).concat( m('li.tab-title', [m('a.addTab',"+")]) )
+
+
+                        ]),
+
+                        m('div.tabs-content', [
+                            self.module.data.map(function(obj,i){
+                                var active = i==0?'active':'';
+                                return m('div.content.panel#panel'+i, {class:active, role:'tabpanel'}, 'content'+i)
+                            })
+                        ])
+
+                    ])
+
+
+        ])
+    }
+
+}
+
+
+m.mount(document.querySelector('#container'), new ContactsWidget)
+
+function initFundation(a,b,c){
+
+    $(document).foundation({
+    tab: {
+      callback : function (tab) {
+        console.log(tab);
+      }
+    }
+    });
+
+
+}
+
+</script>
+
+
+</body>
+</html>

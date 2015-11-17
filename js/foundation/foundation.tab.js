@@ -19,7 +19,6 @@
     init : function (scope, method, options) {
       var self = this,
           S = this.S;
-
   	  // Store the default active tabs which will be referenced when the
   	  // location hash is absent, as in the case of navigating the tabs and
   	  // returning to the first viewing via the browser Back button.
