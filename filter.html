@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8>
+<title>sdfsdf</title>
+<script type="text/javascript" src="js/mithril.js"></script>
+</head>
+<body>
+
+
+</body>
+</html>
+
+<script type="text/javascript">
+
+var data = [
+    { name: 'alice', hobby: 'programming' },
+    { name: 'bob', hobby: 'gaming' },
+    { name: 'carl', hobby: 'crafting' },
+    { name: 'dan', hobby: 'dancing' },
+    { name: 'erl', hobby: 'curling' }
+]
+
+var app={}
+
+app.controller=function  () {
+	var self=this;
+	self.query=''
+	self.filter=function(v){
+		return v.name.match(new RegExp( self.query, 'i') )
+	}
+}
+
+app.view = function  (c) {
+	return m('div', [
+
+			m('span', 'Search'),
+			m('input', {key:'filter', value:c.query, oninput:function(e){  c.query=e.target.value  } }),
+
+			m('ul', [
+				data.filter(c.filter).map(function  (v) {
+					return m('li', v.name+' '+v.hobby)
+				})
+			])
+
+		])
+}
+
+m.mount(document.body, app);
+
+</script>

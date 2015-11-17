@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8>
+<title>sdfsdf</title>
+<script type="text/javascript" src="js/mithril.js"></script>
+</head>
+<body>
+
+<script type="text/javascript">
+
+var model = {count:0}
+
+var H1 = {
+	controller:function(data){
+		console.log(data);
+		return {html:"jsdofiowefjiowe"+model.count++}
+	},
+
+	view:function  (c) {
+		return m("h1", {align:'right', style:{border:'1px solid red'}}, c.html);
+	}
+}
+
+m.render(document.body, m('h2',"oisdfjo"));
+
+
+
+//declare a component
+var MyComponent = {
+    controller: function(args, extras) {
+        console.log(args.name, extras)
+        return {greeting: "Hello"}
+    },
+    view: function(ctrl, args, extras) {
+        return m("h1", ctrl.greeting + " " + args.name + " " + extras)
+    }
+}
+
+//create a component whose controller and view functions receive some arguments
+var component = m.component(MyComponent, {name: "world"}, "this is asdfsdsdfsd test")
+
+var ctrl = new component.controller() // logs "world", "this is a test"
+console.log(component, ctrl)
+m.render(document.body, component.view(ctrl)) // render the virtual DOM tree manually
+
+//<body><h1>Hello world this is a test</h1></body>
+
+
+
+var App = {
+    view: function() {
+        return m(".app", [
+            m("h1", "My App"),
+
+            //nested component
+           MyComponent
+        ])
+    }
+}
+
+var MyComponent = {
+    controller: function(args) {
+        return {greeting: args}
+    },
+    view: function(ctrl) {
+    	console.log(ctrl)
+        return m("h2", ctrl.greeting)
+    }
+}
+
+m.mount(document.body, App)
+
+
+
+var App = {
+    controller: function() {
+        return {data: [1, 2, 3]}
+    },
+    view: function(ctrl) {
+
+        return m(".app", [
+
+            //pressing the button reverses the list
+            m("button[type=button]", {onclick: function() {ctrl.data.reverse()}}, "My App"),
+
+            ctrl.data.map(function(item) {
+                //the key ensures the components aren't recreated from scratch, if they merely exchanged places
+                return m.component(MyComponent, {message: "Hello " + item, key: item})
+            })
+        ])
+    }
+}
+
+var MyComponent = {
+    controller: function(args) {
+        return {greeting: args.message}
+    },
+    view: function(ctrl) {
+        return m("h2", ctrl.greeting)
+    }
+}
+
+m.mount(document.body, App);
+
+
+
+
+
+var MyApp = {
+    controller: function() {
+        return {
+            temp: m.prop(10) // kelvin
+        }
+    },
+    view: function(ctrl) {
+        return m("div", [
+            m("input", {oninput: m.withAttr("value", ctrl.temp), value: ctrl.temp()}), "K",
+            m("br"),
+            m.component(TemperatureConverter, {value: ctrl.temp()})
+        ]);
+    }
+};
+var TemperatureConverter = {
+    controller: function() {
+        //note how the controller does not handle the input arguments
+
+        //define some helper functions to be called from the view
+        return {
+            kelvinToCelsius: function(value) {
+                return value - 273.15
+            },
+            kelvinToFahrenheit: function(value) {
+                return ( 9 / 5 * (value - 273.15)) + 32
+            }
+        }
+    },
+    view: function(ctrl, args) {
+        return m('div', [
+            "celsius:", ctrl.kelvinToCelsius(args.value),
+            m("br"),
+            "fahrenheit:", ctrl.kelvinToFahrenheit(args.value),
+        ]);
+    }
+};
+// m.mount(document.body, MyApp);
+
+var ctrl = new TemperatureConverter.controller();
+
+var tpl = TemperatureConverter.view(ctrl, {value: 273.15})
+console.log(tpl);
+
+var MyComponent = {
+    controller: function() {
+        return {
+            onunload : function() {
+                console.log("unloading my component");
+            }
+        }
+    },
+    view: function() {
+        return m("div", "test")
+    }
+};
+
+// m.mount(document.body, MyComponent);
+
+//...
+
+var AnotherComponent = {
+    view: function() {
+        return m("div", "another")
+    }
+};
+
+// mount on the same DOM element, replacing MyComponent
+// m.mount(document.body, AnotherComponent); // logs "unloading my component"
+
+
+//standalone usage
+document.onclick = m.withAttr("title", function(value) {
+    //alerts the title of the body element when it's clicked
+    console.log(value);
+})
+
+
+
+</script>
+
+</body>
+</html>

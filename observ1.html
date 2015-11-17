@@ -1,0 +1,125 @@
+<body></body>
+<script src="http://1111hui.com/js/mithril.js"></script>
+<script>
+var host="http://1111hui.com:88"
+
+
+var Contact = function(data) {
+    data = data || {}
+    this.userid = m.prop(data.userid||'')
+    this.name = m.prop(data.name||'')
+    this.client = m.prop(data.client||'')
+    this.toString = function(){
+        console.log( this.userid(),this.name(), this.client() )
+    }
+}
+Contact.list = function(data) {
+    return m.request({method: "GET", url: host+'/views/dataJSON.json', data: data, type:Contact})
+}
+Contact.save = function(data) {
+    if(!data.name() || !data.client() ) return alert(34);
+    return m.request({method: "POST", url: '/views/dataJSON.json', data: data})
+}
+
+Contact.edit = new Contact();
+
+
+var Observable = function() {
+    var channels = {}
+    return {
+        register: function(subscriptions, controller) {
+            return function self() {
+                var ctrl = new controller
+                var reload = controller.bind(ctrl)
+                Observable.on(subscriptions, reload)
+                ctrl.onunload = function() {
+                    Observable.off(reload)
+                }
+                return ctrl
+            }
+        },
+        on: function(subscriptions, callback) {
+            subscriptions.forEach(function(subscription) {
+                if (!channels[subscription]) channels[subscription] = []
+                channels[subscription].push(callback)
+            })
+        },
+        off: function(callback) {
+            for (var channel in channels) {
+                var index = channels[channel].indexOf(callback)
+                if (index > -1) channels[channel].splice(index, 1)
+            }
+        },
+        trigger: function(channel, args) {
+            //console.log(channels, channel)
+            channels[channel].map(function(callback) {
+                callback(args)
+            })
+        }
+    }
+}.call()
+
+//model layer observer
+Observable.on(["saveContact"], function onSave(data) {
+    var xhr = Contact.save(data.contact);
+    if(xhr) xhr.then(Observable.trigger("updateContact"))
+})
+
+
+//ContactsWidget is the same as before
+var ContactsWidget = {
+    controller: Observable.register(["updateContact"], function toUpdate() {
+        this.contacts = Contact.list()
+        this.contact = Contact.edit
+    }),
+    view: function(ctrl) {
+        return [
+            m.component(ContactForm, {contact: ctrl.contact} ),
+            m.component(ContactList, {contacts: ctrl.contacts})
+        ]
+    }
+}
+
+//ContactList no longer calls `Contact.save`
+var ContactForm = {
+    controller: function(args) {
+        this.contact = m.prop( args.contact || Contact.edit)
+        this.save = function(contact) {
+            Observable.trigger("saveContact", {contact: contact})
+        }
+    },
+    view: function(ctrl, args) {
+        var contact = ctrl.contact()
+        return m("form", [
+            m("label", "Name"),
+            m("input", {oninput: m.withAttr("value", contact.name), value: contact.name()}),
+
+            m("label", "ClientName"),
+            m("input", {oninput: m.withAttr("value", contact.client), value: contact.client()}),
+
+            m("button[type=button]", {onclick: ctrl.save.bind(this, contact)}, "Save")
+        ])
+    }
+}
+
+//ContactList is the same as before
+var ContactList = {
+    view: function(ctrl, args) {
+        return m("table", [
+            args.contacts().map(function(contact) {
+
+                return m("tr", { 'data-name':contact.userid(), onclick: function(e){  Contact.edit=contact; m.redraw(true)  } }, [
+                    m("td", contact.userid()),
+                    m("td", contact.name()),
+                    m("td", contact.client())
+                ])
+            })
+        ])
+    }
+}
+
+m.mount(document.body, ContactsWidget)
+
+
+
+</script>

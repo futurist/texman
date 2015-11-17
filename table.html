@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8>
+<title>table</title>
+<script type="text/javascript" src="js/mithril.js"></script>
+</head>
+<body>
+
+<script type="text/javascript">
+var url = 'http://1111hui.com/pdf/client/views/dataJSON.json';
+
+
+var user = m.prop([]);
+function initData (v) {
+	console.log(v)
+	return v;
+}
+
+var d = m.request({url:url}).then(user).then(initData)
+
+console.log(d, user() );
+
+
+
+
+var User = function(data) {
+    this.name = m.prop(data.name);
+}
+
+User.list = function() {
+    return m.request({method: "GET", url: url, type: User });
+}
+
+var users = User.list();
+
+//standalone usage
+var greetAsync = function() {
+    var deferred = m.deferred();
+    setTimeout(function() {
+        deferred.resolve("hello");
+    }, 1000);
+    return deferred.promise;
+};
+a= greetAsync();
+console.log( a() )
+
+a.then( function(v){console.log(v); m.redraw(); } );
+
+
+//model
+var saved = false
+function save(e) {
+   if (e.keyCode == 13) {
+       //this causes a redraw, since event handlers active auto-redrawing by default
+       saved = true
+   }
+   else {
+       //we don't care about other keys, so don't redraw
+       m.redraw.strategy("none")
+   }
+}
+
+//view
+var view = function() {
+   return m("div", [
+       m("button[type=button]", {onkeypress: save}, "Save"),
+       saved ? "Saved" : ""
+   ])
+}
+
+m.mount(document.body, { view:function(){return m('h1#sdf.abc[align=center]',{ class:'oijo', align:'left', config:changeText}, 'osidjf')} });
+
+function changeText(a,b,c,d){
+console.log(a,b,c,d);	
+	//m.render(document.body, "<p>12341234</p>");
+}
+
+//m.mount(document.body, {view:view});
+
+
+</script>
+
+
+</body>
+</html>

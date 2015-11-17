@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <script type="text/javascript" src="js/mithril.js"></script>
+</head>
+<body>
+<script type="text/javascript">
+    
+function alertsRedrawCount(element, isInit, context) {
+    if (!isInit) context.count = 0
+    console.log( element, ++context.count)
+}
+var App = {
+    controller: function() {
+        return {data: [1, 2, 3]}
+    },
+    view: function(ctrl) {
+
+        return m(".app", [
+
+            //pressing the button reverses the list
+            m("button[type=button]", {onclick: function() {ctrl.data.reverse()}}, "My App"),
+
+            ctrl.data.map(function(item) {
+                //the key ensures the components aren't recreated from scratch, if they merely exchanged places
+                return m.component(MyComponent, {message: "Hello " + item, key: item})
+            })
+        ])
+    }
+}
+
+var MyComponent = {
+    controller: function(args) {
+        return {greeting: args.message}
+    },
+    view: function(ctrl) {
+        return m("h2", {config:alertsRedrawCount}, ctrl.greeting)
+    }
+}
+
+m.mount(document.body, App);
+
+
+</script>
+</body>
+</html>

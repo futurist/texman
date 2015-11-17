@@ -1,0 +1,175 @@
+<link rel="stylesheet" href="css/semantic.min.css">
+
+<body></body>
+
+<script src="js/mithril.js"></script>
+<script src="js/Pagination.js"></script>
+<script src="js/Table.js"></script>
+<script>
+var host="http://1111hui.com:88"
+
+
+var Contact = function(data) {
+    data = data || {}
+    this.userid = m.prop(data.userid||'')
+    this.name = m.prop(data.name||'')
+    this.client = m.prop(data.client||'')
+}
+Contact.edit = new Contact();
+Contact.list = function(data) {
+    return m.request({method: "GET", url: host+'/views/dataJSON.json', data: data, initialValue:[], type:Contact})
+}
+Contact.save = function(data) {
+    return m.request({method: "POST", url: '/views/dataJSON.json', data: data, initialValue:[], type:Contact})
+}
+var cloneContact = function(data) {
+    return new Contact({
+        userid : data.userid(),
+        name : data.name(),
+        client : data.client()
+    });
+}
+
+var ContactsWidget = {
+    controller: function update() {
+        this.contacts = Contact.list()
+        this.save = function(contact) {
+            Contact.save(contact).then(update.bind(this))
+        }.bind(this)
+    },
+    view: function(ctrl) {
+        return [
+            m.component(ContactForm, {onsave: ctrl.save}),
+            m.component(ContactList, {contacts: ctrl.contacts})
+        ]
+    }
+}
+
+var ContactForm = {
+    controller: function(args) {
+
+        this.contact = m.prop(args.contact || Contact.edit)
+
+    },
+    view: function(ctrl, args) {
+        var contact = Contact.edit;
+        return m("form", [
+            m("label", "Name"),
+            m("input", {oninput: m.withAttr("value", contact.name), value: contact.name()}),
+
+            m("label", "Email"),
+            m("input", {oninput: m.withAttr("value", contact.client), value: contact.client()}),
+
+            m("button[type=button]", {onclick: args.onsave.bind(this, contact)}, "Save")
+        ])
+    }
+}
+
+
+var ContactList = {}
+
+ContactList.mv = {};
+ContactList.mv.init = function (data, keyword) {
+    this.data = data;
+    this.rowsperpage = 10;
+    this.filter = m.prop(keyword||'');
+}
+
+ContactList.controller = function (data) {
+    ContactList.mv.init( data.contacts() );
+};
+
+
+ContactList.view =  function(ctrl, args) {
+        return m('div',[
+        m('.row.two.column', [
+                m('.column', {
+                    style: 'margin-top:7px;'
+                }, [
+                    m('.header.input', 'Search Results')
+                ]),
+                m('.column.right.aligned', [
+                    m('.ui.mini.input', [
+                        m('input[placeholder="Filter by Name"][type="text"]', {
+                            onkeyup: m.withAttr('value', ContactList.mv.filter),
+                            value: ContactList.mv.filter()
+                        })
+                    ])
+                ])
+        ]),
+        m('.row.rs-nopaddingtop', [
+                m('.ui.column.col-sm-11', [
+                    m.component(Table, {
+                        columns: [
+                            {
+                                field: 'name',
+                                label: 'Name',
+                                format: function (val, obj, celAttr, rowAttr, idx, getter) {
+                                    return obj.userid() ?
+                                        m('a', {
+                                            href: 'javascript:;',
+                                            onclick: function(e){ Contact.edit=cloneContact(obj);  }
+                                        }, obj.userid()) :
+                                        m('span', '-');
+                                },
+                                sort: function (key, ascending, getter) {
+                                    return function (a, b) {
+                                        var x = getter(a),
+                                            y = getter(b);
+                                        x = ('' + x);
+                                        y = ('' + y);
+                                        return ((x < y) ? -1 : ((x > y) ? 1 : 0)) * (!ascending ? -1 : 1);
+                                    };
+                                },
+                                classes: 'col-sm-5'
+                            },
+                            {
+                                field: 'location',
+                                label: 'Location',
+                                get: function (obj) {
+                                    return (obj.client() ? obj.client() + ', ' : '') + (obj.client() ? obj.client() + ' ' : '');
+                                }
+                            },
+                            {
+                                field: 'status',
+                                label: 'Action',
+                                sortable: false,
+                                format: function (val, obj) {
+                                    return !obj.client() ? m('a[href="#"]', 'Activate') : m('a[href="#"]', 'Deactivate');
+                                }
+                            }
+                        ],
+                        data: ContactList.mv.data,
+                        pagination: {
+                            rowsperpage: 10/*,
+                            classes: {
+                                leftIconClass: 'glyphicon glyphicon-arrow-left',
+                                rightIconClass: 'glyphicon glyphicon-arrow-right'
+                            }*/
+                        },
+                        filter: function (item) {
+                            return item.userid().indexOf(ContactList.mv.filter()) > -1;
+                        },
+                        onclick: function (e, table, tableEl) {
+                            console.log(e, table, this, tableEl);
+                            console.log(table.getCell(e));
+                            console.log(table.getRow(e));
+                            console.log(table.getData(e).name());
+                        }/*,
+                        classes: {
+                            table: 'table table-striped table-bordered',
+                            sortingAscending: 'glyphicon glyphicon-chevron-up',
+                            sortedDescending: 'glyphicon glyphicon-chevron-down'
+                        }*/
+                    })
+                ])
+            ])
+        ])
+    }
+
+
+m.mount(document.body, ContactsWidget)
+
+
+
+</script>
