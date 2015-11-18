@@ -22,6 +22,35 @@ function NewID(){
     return (+new Date()+Math.random()).toString(36);
 }
 
+// Production steps of ECMA-262, Edition 5, 15.4.4.17
+// Reference: http://es5.github.io/#x15.4.4.17
+if (!Array.prototype.some) {
+  Array.prototype.some = function(fun/*, thisArg*/) {
+    'use strict';
+
+    if (this == null) {
+      throw new TypeError('Array.prototype.some called on null or undefined');
+    }
+
+    if (typeof fun !== 'function') {
+      throw new TypeError();
+    }
+
+    var t = Object(this);
+    var len = t.length >>> 0;
+
+    var thisArg = arguments.length >= 2 ? arguments[1] : void 0;
+    for (var i = 0; i < len; i++) {
+      if (i in t && fun.call(thisArg, t[i], i, t)) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+}
+
+
 var mBindOnce = (function() {
     var cache = {}
     return function(view) {
@@ -37,6 +66,18 @@ function skipReDraw(){
 	m.redraw.strategy("none");
 }
 
+function persistent(el, isInit, context) {
+    context.retain = true;
+
+    context.onunload = function() {
+        //clearTimeout(context.timer);
+        console.log("unloaded the div");
+    }
+
+    if (!isInit) {
+        //only runs once, even if you move back and forth between `/` and `/contact`
+    }
+}
 
 var Record = function(data) {
     data = data || {}
@@ -56,7 +97,7 @@ Record.prototype.clone = function(data) {
         userid : this.userid(),
         name : this.name(),
         client : this.client()
-    });    
+    });
 }
 
 Record.createFromObject = function(obj) {
@@ -69,6 +110,16 @@ Record.createFromObject = function(obj) {
         client : obj.client
     });
 }
+
+Record.prototype.copyFromRecord = function(obj, preserveKey) {
+	obj = obj || {}
+	if(!preserveKey) this.key = NewID()
+	this.userid(obj.userid()||'')
+	this.name(obj.name()||'')
+	this.client(obj.client()||'')
+}
+
+
 Record.getRecordList = function(data) {
     return m.request({method: "GET", url: host+'/views/dataJSON.json', data: data, initialValue:[], type:Record}).then(function(data){
     	return data;
@@ -84,12 +135,18 @@ Record.saveRecord = function(data) {
 var RecordListWidget = function() {
 
 	var self=this;
-    this.controller= function update() {
+	this.curTabID = 0;
+    this.updateList= function update() {
+    	self.RecordList.module.init( self.recordList() );
+    }
+
+    this.controller= function () {
         self.recordList = Record.getRecordList()
+        self.RecordList = new RecordList( self );
     },
     this.view= function(ctrl) {
         return [
-        	new RecordList( self )
+        	self.RecordList
         ]
     }
 }
@@ -100,17 +157,28 @@ var RecordForm = function( parent, curRecord ) {
     var record = curRecord&&curRecord.clone() || new Record();
     self.save = function() {
 
-    	console.log(curRecord.toString(), record.toString())
-        parent.recordList().push(record.clone() )
+    	console.log(curRecord&&curRecord.toString(), record.toString())
+    	if(!curRecord)
+        	parent.recordList().push(record )
+        else{
+        	//parent.recordList()[0].client('oisdjfo');
+        	parent.recordList().some(function(v,i){
+        		if(  v.key==curRecord.key ){
+        			parent.curTabID = i;
+        			v.copyFromRecord(record);
+        			return true;
+        		}
+        	})
+        }
         //Record.saveRecord(record).then(update.bind(this))
     }
 
     this.controller= function(args) {
-    	console.log(234)
+    	console.log('New Form render')
     },
     this.view= function(ctrl, args) {
-        console.log( record.toString(), record.client() )
-        return m("form", [
+        //console.log( record.toString(), record.client() )
+        return m("form", {config:persistent}, [
             m("label", "Name"),
             m("input", {oninput: function(){ skipReDraw(); record.name(this.value);  }, value: record.name()}),
 
@@ -129,7 +197,6 @@ var RecordList = function defRecordList ( parent ) {
     self.module = {};
     self.module.init = function (data, keyword) {
         this.data = data;
-        this.current = 0;
         this.rowsperpage = 10;
         this.keyword = m.prop(keyword||'');
     }
@@ -137,58 +204,59 @@ var RecordList = function defRecordList ( parent ) {
     self.controller = function (args) {
 
         self.module.init( parent.recordList() );
-
+        console.log('RecordList controller');
     };
 
 
     self.view =  function(ctrl, args) {
-
+    	//console.log('RecordList view', self.module.data);
         return m('div',[
 
-                    // m('.row', [
-                    //     m('input[placeholder="Filter by Name"][type="text"]', {
-                    //         onkeyup: m.withAttr('value', self.module.keyword),
-                    //         value: self.module.keyword()
-                    //     })
-                    // ]),
+            // m('.row', [
+            //     m('input[placeholder="Filter by Name"][type="text"]', {
+            //         onkeyup: m.withAttr('value', self.module.keyword),
+            //         value: self.module.keyword()
+            //     })
+            // ]),
 
-                    m('.row', {config:initFundation}, [
+            m('.row', {config:initFundation}, [
 
-                        m('ul.tabs[data-tab]', [
+                m('ul.tabs[data-tab]', [
 
-                                    self.module.data.map(function(obj,i){
-                                        var active = i==self.module.current?'.active':'';
-                                        return m('li.tab-title'+active, {key:obj.key }, [
-                                            m('a', {
-                                                href:'#panel'+i,
-                                            }, obj.userid()||'newuser')
-
-                                        ]);
-
-                                    }).concat( m('li.tab-title', [m('a.addTab[href="#addTab"]',"+")]) )
-
-
-                        ]),
-
-                        m('div.tabs-content', [
                             self.module.data.map(function(obj,i){
-                                var active = i==self.module.current?'active':'';
-                                return m('div.content.panel#panel'+i, 
-                                	{class:active, key:obj.key, role:'tabpanel'}, 
-                                	[m('a', { onclick: function(e){ 
-	                                		skipReDraw();
-	                                		var form = new RecordForm(parent, obj);
-	                                		setTimeout(function  () {
-		                                		m.render($('#panel'+i)[0], form.view() )  
-	                                		},30);
-                                		} },
-                                		'content '+obj.name()+obj.client()+obj.key )]
-                                )
-                            }).concat( m('div.content.panel#addTab', new RecordForm(parent) ) )
+                                var active = i==parent.curTabID?'.active':'';
+                                return m('li.tab-title'+active, {key:obj.key }, [
+                                    m('a', {
+                                        href:'#panel'+i,
+                                    }, obj.userid()||'newuser')
 
-                        ])
+                                ]);
 
-                    ])
+                            }).concat( m('li.tab-title', [m('a.addTab[href="#addTab"]',"+")]) )
+
+
+                ]),
+
+                m('div.tabs-content', [
+                    self.module.data.map(function(obj,i){
+                        var active = i==parent.curTabID?'active':'';
+                        //console.log( 'iter', obj.toString() )
+                        return m('div.content.panel#panel'+i,
+                        	{class:active, key:obj.key, role:'tabpanel'},
+                        	[m('a', { onclick: function(e){
+                            		skipReDraw();
+                            		var form = new RecordForm(parent, obj);
+                            		setTimeout(function  () {
+                                		m.render($('#panel'+i)[0], form.view() )
+                            		},30);
+                        		} },
+                        		'content '+obj.name()+obj.client()+obj.key )]
+                        )
+                    }).concat( m('div.content.panel#addTab', new RecordForm(parent) ) )
+
+                ])
+
+            ])
 
 
         ])
