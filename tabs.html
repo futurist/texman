@@ -22,7 +22,23 @@ function NewID(){
     return (+new Date()+Math.random()).toString(36);
 }
 
-var Contact = function(data) {
+var mBindOnce = (function() {
+    var cache = {}
+    return function(view) {
+        if (!cache[view.toString()]) {
+            cache[view.toString()] = true
+            return view()
+        }
+        else return {subtree: "retain"}
+    }
+}())
+
+function skipReDraw(){
+	m.redraw.strategy("none");
+}
+
+
+var Record = function(data) {
     data = data || {}
     this.key = NewID()
     this.userid = m.prop(data.userid||'')
@@ -30,101 +46,103 @@ var Contact = function(data) {
     this.client = m.prop(data.client||'')
 }
 
-Contact.prototype.toString = function() {
+Record.prototype.toString = function() {
     return [].concat( this.userid(), this.name(), this.client() ).join()
 }
 
-Contact.prototype.clone = function(data) {
-    return new Contact({
-        key: this.key,
+Record.prototype.clone = function(data) {
+    return new Record({
+        key: NewID(),
         userid : this.userid(),
         name : this.name(),
         client : this.client()
     });    
 }
 
-Contact.createFromObject = function(obj) {
-    if(!obj) return new Contact();
+Record.createFromObject = function(obj) {
+    if(!obj) return new Record();
 
-    return new Contact({
+    return new Record({
         key: obj.uniqKey|| NewID(),
         userid : obj.userid||'newuser',
         name : obj.name,
         client : obj.client
     });
 }
-Contact.list = function(data) {
-    return m.request({method: "GET", url: host+'/views/dataJSON.json', data: data, initialValue:[], type:Contact})
+Record.getRecordList = function(data) {
+    return m.request({method: "GET", url: host+'/views/dataJSON.json', data: data, initialValue:[], type:Record}).then(function(data){
+    	return data;
+    })
 }
-Contact.save = function(data) {
-    return m.request({method: "POST", url: '/views/dataJSON.json', data: data, initialValue:[], type:Contact})
+Record.saveRecord = function(data) {
+    return m.request({method: "POST", url: '/views/dataJSON.json', data: data, initialValue:[], type:Record}).then(function(data){
+    	console.log(data)
+    })
 }
 
 
-var ContactsWidget = function(currContact) {
+var RecordListWidget = function() {
 
-
+	var self=this;
     this.controller= function update() {
-        this.contacts = Contact.list()
-        this.currContact = currContact || new Contact();
-        this.ContactForm = new ContactForm( )
-        this.ContactList = new ContactList( )
-
-        this.save = function(contact) {
-
-            this.contacts().push(contact.clone())
-            
-            Contact.save(contact).then(update.bind(this))
-        }.bind(this)
+        self.recordList = Record.getRecordList()
     },
     this.view= function(ctrl) {
         return [
-            m.component(ctrl.ContactList, { parent:ctrl })
+        	new RecordList( self )
         ]
     }
 }
 
-var ContactForm = function() {
+var RecordForm = function( parent, curRecord ) {
 
-    var parent = null;
+	var self = this;
+    var record = curRecord&&curRecord.clone() || new Record();
+    self.save = function() {
+
+    	console.log(curRecord.toString(), record.toString())
+        parent.recordList().push(record.clone() )
+        //Record.saveRecord(record).then(update.bind(this))
+    }
+
     this.controller= function(args) {
-
-        parent = args.parent;
-
+    	console.log(234)
     },
     this.view= function(ctrl, args) {
-        var contact = parent.currContact || new Contact();
+        console.log( record.toString(), record.client() )
         return m("form", [
             m("label", "Name"),
-            m("input", {oninput: m.withAttr("value", contact.name), value: contact.name()}),
+            m("input", {oninput: function(){ skipReDraw(); record.name(this.value);  }, value: record.name()}),
 
             m("label", "Email"),
-            m("input", {oninput: m.withAttr("value", contact.client), value: contact.client()}),
+            m("input", {oninput: function(){ skipReDraw(); record.client(this.value);  }, value: record.client()}),
 
-            m("button[type=button]", {onclick: parent.save.bind(this, contact)}, "Save")
+            m("button[type=button]", {onclick: self.save }, "Save")
         ])
     }
 }
 
 
-var ContactList = function defContactList ( currContact ) {
+var RecordList = function defRecordList ( parent ) {
     var self = this;
-    var parent = null;
 
     self.module = {};
     self.module.init = function (data, keyword) {
         this.data = data;
+        this.current = 0;
         this.rowsperpage = 10;
         this.keyword = m.prop(keyword||'');
     }
 
     self.controller = function (args) {
-        parent = args.parent;
-        self.module.init( parent.contacts() );
+
+        self.module.init( parent.recordList() );
+
     };
 
 
     self.view =  function(ctrl, args) {
+
         return m('div',[
 
                     // m('.row', [
@@ -136,16 +154,13 @@ var ContactList = function defContactList ( currContact ) {
 
                     m('.row', {config:initFundation}, [
 
-                        m('ul.tabs[data-tab]', {key:NewID() }, [
+                        m('ul.tabs[data-tab]', [
 
                                     self.module.data.map(function(obj,i){
-                                        var active = i==0?'.active':'';
+                                        var active = i==self.module.current?'.active':'';
                                         return m('li.tab-title'+active, {key:obj.key }, [
-
                                             m('a', {
                                                 href:'#panel'+i,
-                                                // href: 'javascript:;',
-                                                // onclick: function(e){ parent.currContact=obj.clone();  }
                                             }, obj.userid()||'newuser')
 
                                         ]);
@@ -157,9 +172,20 @@ var ContactList = function defContactList ( currContact ) {
 
                         m('div.tabs-content', [
                             self.module.data.map(function(obj,i){
-                                var active = i==0?'active':'';
-                                return m('div.content.panel#panel'+i, {class:active, key:obj.key, role:'tabpanel'}, 'content '+obj.name()+obj.client() )
-                            }).concat( m('div.content.panel#addTab',[m.component(parent.ContactForm, {parent:parent} )]) )
+                                var active = i==self.module.current?'active':'';
+                                return m('div.content.panel#panel'+i, 
+                                	{class:active, key:obj.key, role:'tabpanel'}, 
+                                	[m('a', { onclick: function(e){ 
+	                                		skipReDraw();
+	                                		var form = new RecordForm(parent, obj);
+	                                		setTimeout(function  () {
+		                                		m.render($('#panel'+i)[0], form.view() )  
+	                                		},30);
+                                		} },
+                                		'content '+obj.name()+obj.client()+obj.key )]
+                                )
+                            }).concat( m('div.content.panel#addTab', new RecordForm(parent) ) )
+
                         ])
 
                     ])
@@ -170,15 +196,21 @@ var ContactList = function defContactList ( currContact ) {
 
 }
 
-
-m.mount(document.querySelector('#container'), new ContactsWidget)
+var RecordList1 = new RecordListWidget;
+m.mount(document.querySelector('#container'), RecordList1)
 
 function initFundation(a,b,c){
+
+
 
     $(document).foundation({
     tab: {
       callback : function (tab) {
-        console.log(tab);
+      	if( $(tab.context).hasClass('addTab')  ){
+      		//m.mount( $('#addTab')[0], new RecordForm() );
+      	} else {
+
+      	}
       }
     }
     });
