@@ -19,7 +19,8 @@
 var host="http://1111hui.com:88"
 
 function NewID(){
-    return (+new Date()+Math.random()).toString(36);
+    return +new Date() + "_" + (Math.round(Math.random() * 1e6)).toString(36)
+    //return (+new Date()+Math.random()).toString(36);
 }
 
 // Production steps of ECMA-262, Edition 5, 15.4.4.17
@@ -78,6 +79,37 @@ function persistent(el, isInit, context) {
         //only runs once, even if you move back and forth between `/` and `/contact`
     }
 }
+
+var DATATYPE={
+    STRING:0,
+    INT: 1
+}
+
+var obj = {
+        'userid':0,
+        'name':0,
+        'client':1        
+    }
+
+
+
+var datafield = function(obj){
+
+    this.val=function(key){
+        if(arguments.length>1) obj[key]=arguments[1]
+        return obj[key];
+    }
+    this.keys=function(){
+        var i,k=[];
+        if(typeof obj=='object') 
+            for(i in obj){
+                k.push(i);
+            }
+        return k;
+    }
+    this.obj = obj;
+}
+
 
 var Record = function(data) {
     data = data || {}
