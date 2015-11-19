@@ -54,6 +54,9 @@ if (!Array.prototype.some) {
   };
 }
 
+Array.prototype.lastEl = function(fun/*, thisArg*/) {
+    return this.length? this[this.length-1] : null;
+}
 
 var mBindOnce = (function() {
     var cache = {}
@@ -75,7 +78,6 @@ function persistent(el, isInit, context) {
 
     context.onunload = function() {
         //clearTimeout(context.timer);
-        console.log("unloaded the Form");
     }
 
     if (!isInit) {
@@ -126,18 +128,18 @@ var RecordTypes = {
             mainKey:'userid',
             desc: 'computer list of company',
         },
-        field: {
+        template: {
             '_type': 'Computer',
-            'userid':0,
+            'userid':'',
             'ip':0,
-            'client':1,
+            'client':'oiawjefo',
         }
     }
 }
 
 var Record = function(data) {
     data = data || {}
-    this._fields = Object.keys(RecordTypes[data._type].field);
+    this._fields = Object.keys(RecordTypes[data._type].template);
     this._key = NewID()
     this._fields.forEach( function(v){
         this[v] = m.prop(data[v]||'')
@@ -216,25 +218,33 @@ var RecordListWidget = function() {
  * @param {curRecord} Object||String, if String then will find in RecordTypes for record template
  */
 var RecordForm = function( parent, curRecord ) {
+    if(!curRecord) return;
 
-	var self = this;
-    console.log(curRecord, type.call(curRecord))
+    var self = this;
 
-    var isNew = type.call(curRecord)==STRING;
+    var _recordType = RecordTypes[ curRecord._type() ]
 
-    var record = !isNew&& curRecord&&curRecord.clone() || isNew && new Record( RecordTypes[curRecord].field );
+    var isNew = curRecord[ _recordType.meta.mainKey ]() === '';
+
+    // console.log(curRecord, curRecord._type(), curRecord[ _recordType.meta.mainKey ](), isNew )
+    var record = !isNew&& curRecord.clone() || curRecord;
+
     self.cancel = function() {
-
+        console.log(isNew, curRecord)
+        //return curRecord._key = NewID();
         // using below trick to change generateID to trigger redraw
-    	return parent.generateID = NewID();
+    	//return parent.generateID = NewID();
     }
 
     self.save = function() {
 
-    	console.log(curRecord&&curRecord.toString(), record.toString())
-    	if(isNew)
-        	parent.recordList().push(record )
-        else{
+    	// console.log(curRecord&&curRecord.toString(), record.toString())
+    	if(isNew){
+            isNew = false;
+            record.userid(+new Date());
+        	parent.recordList().push( record )
+            parent.curTabID = parent.recordList().length-1;
+        } else {
         	parent.recordList().some(function(v,i){
         		if(  v._key==curRecord._key ){
         			parent.curTabID = i;
@@ -250,12 +260,12 @@ var RecordForm = function( parent, curRecord ) {
     	//console.log('New Form render');
     	return {
             onunload : function() {
-                console.log("unloading my component");
+                console.log("unloading RecordForm component");
             }
     	}
     },
     this.view= function(ctrl, args) {
-        // console.log( record, record.toString() )
+        console.log( record, record.toString() )
         return m("form", {config:persistent}, [
             m("label", "Name"),
             m("input", {oninput: function(){ skipReDraw(); record.ip(this.value);  }, value: record.ip()}),
@@ -288,6 +298,7 @@ var RecordList = function defRecordList ( parent ) {
 
 
     self.view =  function(ctrl, args) {
+        var newRec= new Record(RecordTypes['Computer'].template); 
     	// console.log('RecordList view', self.module.data);
         return m('div', { }, [
 
@@ -312,7 +323,7 @@ var RecordList = function defRecordList ( parent ) {
 
                                 ]);
 
-                            }).concat( m('li.tab-title', [m('a.addTab[href="#addTab"]',"+")]) )
+                            }).concat( m('li.tab-title', {className:''}, [m('a.addTab[href="#addTab"]', "+")] ) )
 
 
                 ]),
@@ -331,7 +342,9 @@ var RecordList = function defRecordList ( parent ) {
                         		} },
                         		'content '+obj.toString() +obj._key )]
                         )
-                    }).concat( m('div.content.panel#addTab', new RecordForm(parent, 'Computer') ) )
+                    }).concat( function() {
+                        return m('div.content.panel#addTab', {className:''}, new RecordForm(parent, newRec ) )
+                    }() )
 
                 ])
 
@@ -346,9 +359,9 @@ var RecordList = function defRecordList ( parent ) {
 var RecordList1 = new RecordListWidget;
 m.mount(document.querySelector('#container'), RecordList1)
 
-function initFundation(a,b,c){
+function initFundation(a,b,c, d){
 
-
+    console.log(a,b,c, d)
     $(document).foundation({
     tab: {
       callback : function (tab) {
@@ -356,7 +369,14 @@ function initFundation(a,b,c){
       	var curTabID = $(tab).data('tabid');
       	if(curTabID) RecordList1.curTabID = curTabID;
 
-      	if( $(tab.context).hasClass('addTab')  ){
+
+      	if( $(tab).find('.addTab')  ){
+            /**
+             * below code to make addNew tab deselect by add a 'active' class to V-DOM when switched to
+             */
+            var newUL = d.children[0].children.lastEl();
+            var newDIV = d.children[1].children.lastEl();
+            newUL.attrs.className=newDIV.attrs.className='active';
 
       	} else {
 
