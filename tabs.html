@@ -18,6 +18,9 @@
 <script>
 var host="http://1111hui.com:88"
 
+var OBJECT = "[object Object]", ARRAY = "[object Array]", STRING = "[object String]", FUNCTION = "function";
+var type = {}.toString;
+
 function NewID(){
     return +new Date() + "_" + (Math.round(Math.random() * 1e6)).toString(36)
     //return (+new Date()+Math.random()).toString(36);
@@ -80,80 +83,104 @@ function persistent(el, isInit, context) {
     }
 }
 
-var DATATYPE={
-    STRING:0,
-    INT: 1
-}
 
-var obj = {
-        'userid':0,
-        'name':0,
-        'client':1        
-    }
+/**
+- Search for obj = [ {tag:1, attrs:{x:10}, children:[{tag:1, attrs:{z:20}, children:[...] } ]  } ]
+- Usage: findKeyVal(obj, 'z', 20 )
+- Return val: finded obj or null
+**/
+function findKeyVal(data, key, val) { 
+    var findingObj=null;
 
-
-
-var datafield = function(obj){
-
-    this.val=function(key){
-        if(arguments.length>1) obj[key]=arguments[1]
-        return obj[key];
-    }
-    this.keys=function(){
-        var i,k=[];
-        if(typeof obj=='object') 
-            for(i in obj){
-                k.push(i);
+    function _find(data, key, val){
+        if(typeof data!='object') return;
+        if(findingObj) return true;
+        if( data.some && data.length ) return data.some(function(v){
+            return _find(v, key, val)
+        })
+        for(var i in data.attrs){ 
+            if(i==key && val==data.attrs[i]){
+                return findingObj=data;
             }
-        return k;
+        }
+
+        if(data.children&&data.children.length){
+            for(i=0; i<data.children.length; i++){
+                if( _find(data.children[i], key, val) ) return true;
+            }
+        }
     }
-    this.obj = obj;
+    _find.apply(this, arguments);
+
+    return findingObj;
 }
 
+/**
+ * [RecordTypes Dictionary]
+ * @type _type is additional field key that using in RecordForm Component
+ */
+var RecordTypes = {
+    'Computer': {
+        meta:{
+            title: 'Computer List',
+            mainKey:'userid',
+            desc: 'computer list of company',
+        },
+        field: {
+            '_type': 'Computer',
+            'userid':0,
+            'ip':0,
+            'client':1,
+        }
+    }
+}
 
 var Record = function(data) {
     data = data || {}
-    this.key = NewID()
-    this.userid = m.prop(data.userid||'')
-    this.name = m.prop(data.name||'')
-    this.client = m.prop(data.client||'')
+    this._fields = Object.keys(RecordTypes[data._type].field);
+    this._key = NewID()
+    this._fields.forEach( function(v){
+        this[v] = m.prop(data[v]||'')
+    }.bind(this) )
 }
 
 Record.prototype.toString = function() {
-    return [].concat( this.userid(), this.name(), this.client() ).join()
+    return [].concat( this._fields.map(function(v){ return this[v]() }.bind(this)) ).toString()
 }
 
 Record.prototype.clone = function(data) {
-    return new Record({
-        key: NewID(),
-        userid : this.userid(),
-        name : this.name(),
-        client : this.client()
-    });
-}
+    var obj = { }
 
-Record.createFromObject = function(obj) {
-    if(!obj) return new Record();
+    this._fields.forEach( function(v){
+        obj[v] = this[v]()
+    }.bind(this) )
 
-    return new Record({
-        key: obj.uniqKey|| NewID(),
-        userid : obj.userid||'newuser',
-        name : obj.name,
-        client : obj.client
-    });
+    obj._key = NewID()
+
+    return new Record(obj);
 }
 
 Record.prototype.copyFromRecord = function(obj, preserveKey) {
 	obj = obj || {}
-	if(!preserveKey) this.key = NewID()
-	this.userid(obj.userid()||'')
-	this.name(obj.name()||'')
-	this.client(obj.client()||'')
+
+    this._fields.forEach( function(v){
+        this[v]( obj[v]()||'' )
+    }.bind(this) )
+
+    if(!preserveKey) this._key = NewID()
 }
 
 
 Record.getRecordList = function(data) {
-    return m.request({method: "GET", url: host+'/views/dataJSON.json', data: data, initialValue:[], type:Record}).then(function(data){
+    return m.request({
+        method: "GET", url: host+'/views/dataJSON.json', data: data, initialValue:[], type:Record, 
+        unwrapSuccess: function(data) {
+            return data.map(function(v){ v._type='Computer'; return v; });
+        },
+        unwrapError: function(response) {
+            return response.error;
+        }
+    }).then(function(data){
     	return data;
     })
 }
@@ -184,40 +211,32 @@ var RecordListWidget = function() {
     }
 }
 
+/**
+ * @param {parent} parent component
+ * @param {curRecord} Object||String, if String then will find in RecordTypes for record template
+ */
 var RecordForm = function( parent, curRecord ) {
 
 	var self = this;
-    var record = curRecord&&curRecord.clone() || new Record();
+    console.log(curRecord, type.call(curRecord))
+
+    var isNew = type.call(curRecord)==STRING;
+
+    var record = !isNew&& curRecord&&curRecord.clone() || isNew && new Record( RecordTypes[curRecord].field );
     self.cancel = function() {
 
-
+        // using below trick to change generateID to trigger redraw
     	return parent.generateID = NewID();
-
-    	return m.redraw();
-
-		if(!curRecord)
-	    	parent.recordList().push(record )
-	    else{
-	    	//parent.recordList()[0].client('oisdjfo');
-	    	parent.recordList().some(function(v,i){
-	    		if(  v.key==curRecord.key ){
-	    			parent.curTabID = i;
-	    			v.copyFromRecord(record);
-	    			return true;
-	    		}
-	    	})
-	    }
     }
 
     self.save = function() {
 
     	console.log(curRecord&&curRecord.toString(), record.toString())
-    	if(!curRecord)
+    	if(isNew)
         	parent.recordList().push(record )
         else{
-        	//parent.recordList()[0].client('oisdjfo');
         	parent.recordList().some(function(v,i){
-        		if(  v.key==curRecord.key ){
+        		if(  v._key==curRecord._key ){
         			parent.curTabID = i;
         			v.copyFromRecord(record);
         			return true;
@@ -236,10 +255,10 @@ var RecordForm = function( parent, curRecord ) {
     	}
     },
     this.view= function(ctrl, args) {
-        //console.log( record.toString(), record.client() )
+        // console.log( record, record.toString() )
         return m("form", {config:persistent}, [
             m("label", "Name"),
-            m("input", {oninput: function(){ skipReDraw(); record.name(this.value);  }, value: record.name()}),
+            m("input", {oninput: function(){ skipReDraw(); record.ip(this.value);  }, value: record.ip()}),
 
             m("label", "Email"),
             m("input", {oninput: function(){ skipReDraw(); record.client(this.value);  }, value: record.client()}),
@@ -285,10 +304,11 @@ var RecordList = function defRecordList ( parent ) {
 
                             self.module.data.map(function(obj,i){
                                 var active = i==parent.curTabID?'.active':'';
-                                return m('li.tab-title'+active, { 'data-tabid':i, key:obj.key }, [
+                                // console.log( 'iter', obj._fields, obj )
+                                return m('li.tab-title'+active, { 'data-tabid':i, key:obj._key }, [
                                     m('a', {
                                         href:'#panel'+i,
-                                    }, obj.userid()||'newuser')
+                                    }, obj[ RecordTypes[obj._type()].meta.mainKey ]() ||'newuser')
 
                                 ]);
 
@@ -300,9 +320,8 @@ var RecordList = function defRecordList ( parent ) {
                 m('div.tabs-content', [
                     self.module.data.map(function(obj,i){
                         var active = i==parent.curTabID?'active':'';
-                        //console.log( 'iter', obj.toString() )
                         return m('div.content.panel#panel'+i,
-                        	{class:active, key:obj.key, role:'tabpanel'},
+                        	{class:active, key:obj._key, role:'tabpanel'},
                         	[m('a', { onclick: function(e){
                             		skipReDraw();
                             		var form = new RecordForm(parent, obj);
@@ -310,9 +329,9 @@ var RecordList = function defRecordList ( parent ) {
                                 		m.render($('#panel'+i)[0], form.view() )
                             		},30);
                         		} },
-                        		'content '+obj.name()+obj.client()+obj.key )]
+                        		'content '+obj.toString() +obj._key )]
                         )
-                    }).concat( m('div.content.panel#addTab', new RecordForm(parent) ) )
+                    }).concat( m('div.content.panel#addTab', new RecordForm(parent, 'Computer') ) )
 
                 ])
 
