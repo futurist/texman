@@ -21,6 +21,19 @@ var host="http://1111hui.com:88"
 var OBJECT = "[object Object]", ARRAY = "[object Array]", STRING = "[object String]", FUNCTION = "function";
 var type = {}.toString;
 
+function extend(obj) {
+	if(arguments.length<2) return obj;
+	for(var i=1; i<arguments.length; i++){
+		var props = arguments[i];
+		for(var prop in props) {
+		    if(props.hasOwnProperty(prop)) {
+		        obj[prop] = props[prop];
+		    }
+		}
+	}
+    return obj;
+}
+
 function NewID(){
     return +new Date() + "_" + (Math.round(Math.random() * 1e6)).toString(36)
     //return (+new Date()+Math.random()).toString(36);
@@ -58,6 +71,9 @@ Array.prototype.lastEl = function(fun/*, thisArg*/) {
     return this.length? this[this.length-1] : null;
 }
 
+
+
+
 var mBindOnce = (function() {
     var cache = {}
     return function(view) {
@@ -91,7 +107,7 @@ function persistent(el, isInit, context) {
 - Usage: findKeyVal(obj, 'z', 20 )
 - Return val: finded obj or null
 **/
-function findKeyVal(data, key, val) { 
+function findKeyVal(data, key, val) {
     var findingObj=null;
 
     function _find(data, key, val){
@@ -100,7 +116,7 @@ function findKeyVal(data, key, val) {
         if( data.some && data.length ) return data.some(function(v){
             return _find(v, key, val)
         })
-        for(var i in data.attrs){ 
+        for(var i in data.attrs){
             if(i==key && val==data.attrs[i]){
                 return findingObj=data;
             }
@@ -121,25 +137,62 @@ function findKeyVal(data, key, val) {
  * [RecordTypes Dictionary]
  * @type _type is additional field key that using in RecordForm Component
  */
-var RecordTypes = {
+
+var DBDB =
+{
     'Computer': {
         meta:{
             title: 'Computer List',
             mainKey:'userid',
             desc: 'computer list of company',
         },
-        template: {
-            '_type': 'Computer',
-            'userid':'',
-            'ip':0,
-            'client':'oiawjefo',
+        template:{
+        	'userid':{ initValue:'', displayName:'UserID', readonly:true },
+        	'ip':{ initValue:'111.11.12.34', displayName:'IP', placeholder:'this is ip', max:10, min:1, validation:function(val){ return true } },
+        	'client':{ initValue:'awefawef', displayName:'Client', placeholder:'this is client', max:10, min:1, validation:function(val){ return true } },
         }
     }
 }
 
+
+var RecordTypes = (function(obj) {
+
+	var self = {};
+
+	self.dataModule = {};
+
+	self.addModule = function( newObj ) {
+		for(var i in newObj){
+			newObj[i].template._type = i;
+			self.dataModule[i] = newObj[i];
+		}
+	}
+
+	self.getModule = function( type ){
+		return self.dataModule[type];
+	}
+
+	self.getTemplate = function( type ){
+		var newObj={}
+		var template = self.dataModule[type].template;
+		for(var i in template){
+			newObj[i] = i=='_type'? template[i] : template[i].initValue
+		}
+		return newObj;
+	}
+
+	self.addModule(obj);
+
+	return self;
+
+})(DBDB)
+
+
+
+
 var Record = function(data) {
     data = data || {}
-    this._fields = Object.keys(RecordTypes[data._type].template);
+    this._fields = Object.keys( RecordTypes.getTemplate(data._type) );
     this._key = NewID()
     this._fields.forEach( function(v){
         this[v] = m.prop(data[v]||'')
@@ -175,7 +228,7 @@ Record.prototype.copyFromRecord = function(obj, preserveKey) {
 
 Record.getRecordList = function(data) {
     return m.request({
-        method: "GET", url: host+'/views/dataJSON.json', data: data, initialValue:[], type:Record, 
+        method: "GET", url: host+'/views/dataJSON.json', data: data, initialValue:[], type:Record,
         unwrapSuccess: function(data) {
             return data.map(function(v){ v._type='Computer'; return v; });
         },
@@ -222,7 +275,7 @@ var RecordForm = function( parent, curRecord ) {
 
     var self = this;
 
-    var _recordType = RecordTypes[ curRecord._type() ]
+    var _recordType = RecordTypes.getModule( curRecord._type() );
 
     var isNew = curRecord[ _recordType.meta.mainKey ]() === '';
 
@@ -231,7 +284,7 @@ var RecordForm = function( parent, curRecord ) {
 
     self.cancel = function() {
         console.log(isNew, curRecord)
-        //return curRecord._key = NewID();
+        return curRecord._key = NewID();
         // using below trick to change generateID to trigger redraw
     	//return parent.generateID = NewID();
     }
@@ -265,17 +318,24 @@ var RecordForm = function( parent, curRecord ) {
     	}
     },
     this.view= function(ctrl, args) {
-        console.log( record, record.toString() )
+        // console.log( record, record.toString() )
+        var template = _recordType.template;
         return m("form", {config:persistent}, [
-            m("label", "Name"),
-            m("input", {oninput: function(){ skipReDraw(); record.ip(this.value);  }, value: record.ip()}),
 
-            m("label", "Email"),
-            m("input", {oninput: function(){ skipReDraw(); record.client(this.value);  }, value: record.client()}),
+        	Object.keys(template).map(function  (v) {
+        		if(v=='_type') return [];
+        		var t = template[v];
+        		return m('div', [
+        			m("label", t.displayName),
+        			m("input", extend( t, {oninput: function(){ skipReDraw(); record[v](this.value);  }, value: record[v]() } )  )
+        		])
+        	}),
 
             m("button[type=button]", {onclick: self.cancel }, "Cancel"),
             m("button[type=button]", {onclick: self.save }, "Save")
-        ])
+        ]
+
+        )
     }
 }
 
@@ -298,7 +358,7 @@ var RecordList = function defRecordList ( parent ) {
 
 
     self.view =  function(ctrl, args) {
-        var newRec= new Record(RecordTypes['Computer'].template); 
+        var newRec= new Record(RecordTypes.getTemplate('Computer'));
     	// console.log('RecordList view', self.module.data);
         return m('div', { }, [
 
@@ -319,7 +379,7 @@ var RecordList = function defRecordList ( parent ) {
                                 return m('li.tab-title'+active, { 'data-tabid':i, key:obj._key }, [
                                     m('a', {
                                         href:'#panel'+i,
-                                    }, obj[ RecordTypes[obj._type()].meta.mainKey ]() ||'newuser')
+                                    }, obj[ RecordTypes.getModule(obj._type()).meta.mainKey ]() ||'newuser')
 
                                 ]);
 
@@ -334,9 +394,9 @@ var RecordList = function defRecordList ( parent ) {
                         return m('div.content.panel#panel'+i,
                         	{class:active, key:obj._key, role:'tabpanel'},
                         	[m('a', { onclick: function(e){
-                            		skipReDraw();
                             		var form = new RecordForm(parent, obj);
                             		setTimeout(function  () {
+                            			skipReDraw();
                                 		m.render($('#panel'+i)[0], form.view() )
                             		},30);
                         		} },
@@ -361,7 +421,7 @@ m.mount(document.querySelector('#container'), RecordList1)
 
 function initFundation(a,b,c, d){
 
-    console.log(a,b,c, d)
+    // console.log(a,b,c, d)
     $(document).foundation({
     tab: {
       callback : function (tab) {
@@ -369,16 +429,19 @@ function initFundation(a,b,c, d){
       	var curTabID = $(tab).data('tabid');
       	if(curTabID) RecordList1.curTabID = curTabID;
 
+      	var newUL = d.children[0].children.lastEl();
+      	var newDIV = d.children[1].children.lastEl();
+
 
       	if( $(tab).find('.addTab')  ){
             /**
              * below code to make addNew tab deselect by add a 'active' class to V-DOM when switched to
              */
-            var newUL = d.children[0].children.lastEl();
-            var newDIV = d.children[1].children.lastEl();
             newUL.attrs.className=newDIV.attrs.className='active';
 
       	} else {
+
+      		newUL.attrs.className=newDIV.attrs.className='';
 
       	}
       }
