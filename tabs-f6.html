@@ -4,13 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <link rel="stylesheet" href="css/normalize.css" />
-<link rel="stylesheet" href="css/foundation.css" />
+<link rel="stylesheet" href="css/foundation6.css" />
 <link rel="stylesheet" href="css/mytabs.css" />
 <script src="js/vendor/modernizr.js"></script>
 <script src="js/vendor/jquery.js"></script>
 <!-- <script src="js/vendor/fastclick.js"></script> -->
-<script src="js/foundation.js"></script>
-
+<script src="js/foundation6.js"></script>
 </head>
 <body>
 
@@ -406,6 +405,8 @@ var RecordDisplay = function( parent, curRecord ) {
 var RecordList = function defRecordList ( parent ) {
     var self = this;
 
+    self.UUID = NewID();
+    
     self.module = {};
     self.module.init = function (data, keyword) {
         this.data = data;
@@ -422,8 +423,8 @@ var RecordList = function defRecordList ( parent ) {
 
     self.view =  function(ctrl, args) {
         var newRec= new Record(RecordTypes.getTemplate('Computer'));
-    	console.log('RecordList view', self.module.data.length, parent.curTabID, parent.generateID);
-    	var active = self.module.data.length==parent.curTabID?'.active':'';
+    	console.log('RecordList view',self.UUID, self.module.data.length, parent.curTabID, parent.generateID);
+    	var active = self.module.data.length==parent.curTabID?'is-active':'';
 
         return m('div', { }, [
 
@@ -434,35 +435,35 @@ var RecordList = function defRecordList ( parent ) {
             //     })
             // ]),
 
-            m('.row', {key: parent.generateID, config:initFundation}, [
+            m('.row', { key: parent.generateID, config:initFundation }, [
 
-                m('ul.tabs[data-tab]', [
+                m('ul.tabs[data-tabs]', {key: self.UUID, id: self.UUID }, [
 
                             self.module.data.map(function(obj,i){
-                                var active = i==parent.curTabID?'.active':'';
+                                var active = i==parent.curTabID?'is-active':'';
                                 // console.log( 'iter', obj._fields, obj )
-                                return m('li.tab-title'+active, { 'data-tabid':i, key:obj._key }, [
+                                return m('li.tabs-title', { className:active, 'data-tabid':i, key:obj._key }, [
                                     m('a', {
                                         href:'#panel'+obj._key,
                                     }, obj[ RecordTypes.getModule(obj._type()).meta.mainKey ]() ||'newuser')
 
                                 ]);
 
-                            }).concat( m('li.tab-title'+active, { key:newRec._key, 'data-tabid': self.module.data.length , className:''}, [m('a.addTab[href="#addTab"]', "+")] ) )
+                            }).concat( m('li.tabs-title', { className:active, key:newRec._key, 'data-tabid': self.module.data.length , className:''}, [m('a.addTab[href="#addTab"]', "+")] ) )
 
 
                 ]),
 
-                m('div.tabs-content', [
+                m('div.tabs-content', {key: self.UUID, 'data-tabs-content': self.UUID}, [
                     self.module.data.map(function(obj,i){
-                        var active = i==parent.curTabID?'active':'';
-                        return m('div.content.panel#panel'+obj._key,
-                        	{class:active, key:obj._key, role:'tabpanel'},
+                        var active = i==parent.curTabID?'is-active':'';
+                        return m('div.tabs-panel#panel'+obj._key,
+                        	{className:active, key:obj._key, role:'tabpanel'},
                     		[m('div.showForm.display', {className:''}, new RecordDisplay(parent, obj ) )]
                         )
                     }).concat( function() {
                     	console.log(1234, active, newRec._key)
-                        return m('div.content.panel#addTab'+active, { key:newRec._key, className:''}, new RecordForm(parent, newRec ) )
+                        return m('div.tabs-panel#addTab', { className:active, key:newRec._key, className:''}, new RecordForm(parent, newRec ) )
                     }() )
 
                 ])
@@ -481,22 +482,21 @@ m.mount(document.querySelector('#container'), RecordList1)
 function initFundation(a,b,c, d){
 
     // console.log(a,b,c, d)
-    $(document).foundation({
-    tab: {
-      callback : function (tab) {
+    
+function tabCallback (tab) {
 
       	var curTabID = parseInt($(tab).data('tabid'))||0;
-      	console.log(curTabID)
+      	console.log(tab, $(tab).data('tabid'), curTabID)
       	var newUL = d.children[0].children[curTabID];
       	var newDIV = d.children[1].children[curTabID];
         
         /**
          * below code to make addNew tab deselect by add a 'active' class to V-DOM when switched to
          */
-        d.children[0].children.forEach(function(v){ if(v&&v.attrs.className) v.attrs.className=v.attrs.className.replace(/\b\s+active\b/g, '') });
-        d.children[1].children.forEach(function(v){ if(v&&v.attrs.className) v.attrs.className=v.attrs.className.replace(/\b\s+active\b/g, '') });
-      	newUL.attrs.className+=' active';
-      	newDIV.attrs.className+=' active';
+        d.children[0].children.forEach(function(v){ if(v&&v.attrs.className) v.attrs.className=v.attrs.className.replace(/\b\s+is-active\b/g, '') });
+        d.children[1].children.forEach(function(v){ if(v&&v.attrs.className) v.attrs.className=v.attrs.className.replace(/\b\s+is-active\b/g, '') });
+      	newUL.attrs.className+=' is-active';
+      	newDIV.attrs.className+=' is-active';
       	// console.log(newUL.attrs.className, curTabID)
       	RecordList1.curTabID = curTabID;
 
@@ -507,9 +507,26 @@ function initFundation(a,b,c, d){
 
 
       	}
-      }
-    }
-    });
+}
+
+	var tabEl = $(a).find('.tabs[data-tabs]');
+
+	var elem = new Foundation.Tabs( tabEl , {
+		
+	} );
+
+	
+	tabEl.find('.tabs-title').on('click.zf.tabs',  function(e){ 
+		tabCallback(this);
+	})
+
+
+
+    // $(document).foundation({
+    // tab: {
+    //   callback : null
+    // }
+    // });
 
 
 }
