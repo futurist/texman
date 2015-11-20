@@ -77,7 +77,6 @@
         clearTimeout(self.timer);
         self.timer = setTimeout(function () {
           self.validate([originalSelf], e);
-          console.log(e)
         }.bind(originalSelf), settings.timeout);
       }
 
@@ -227,7 +226,7 @@
       while (i--) {
         var el = el_patterns[i][0],
             required = el_patterns[i][2],
-            value = el.value.trim(),
+            value = (el.value||'').trim(),
             direct_parent = this.S(el).parent(),
             validator = el.getAttribute(this.add_namespace('data-abide-validator')),
             is_radio = el.type === 'radio',

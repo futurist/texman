@@ -45,6 +45,12 @@ function NewID(){
     //return (+new Date()+Math.random()).toString(36);
 }
 
+var _delay = function(func, wait) {
+    var args = [].slice.call(arguments, 2);
+    return setTimeout(function(){
+      return func.apply(null, args);
+    }, wait);
+}
 
 var Observable = function() {
     var channels = {}
@@ -129,6 +135,9 @@ var mBindOnce = (function() {
 
 function skipReDraw(){
 	m.redraw.strategy("none");
+}
+function beginReDraw(){
+	m.redraw.strategy("diff");
 }
 
 function persistent(el, isInit, context) {
@@ -302,7 +311,7 @@ var RecordForm = function( parent, curRecord ) {
     var template = _recordType.template;
     var _mainKey = _recordType.meta.mainKey;
     var isNew = curRecord[ _mainKey ]() === '';
-    
+
     var record = !isNew&& curRecord.clone() || curRecord;
 
     self.reset = function(e) {
@@ -337,12 +346,12 @@ var RecordForm = function( parent, curRecord ) {
         		}
         	})
         }
-        m.redraw();
+
+        _delay(m.redraw, 100);
 
         //Record.saveRecord(record).then(update.bind(this))
     }
 
-	Observable.on(["saveContact"], function(data) { self.save(); });
 
     this.controller= function(args) {
     	console.log('New RecordForm render',record._key);
@@ -356,7 +365,7 @@ var RecordForm = function( parent, curRecord ) {
     this.view= function(ctrl, args) {
         // console.log( record, record.toString() )
 
-        return m("form[data-abide]", { config:initFundationForm }, [
+        return m("form[data-abide]", { onsubmit:function(){ skipReDraw(); return false;},  config: function(a,b,c,d){ initFundationForm(a,b,c,d,self) } }, [
 
         	Object.keys(template).map(function  (v) {
         		if(v=='_type') return [];
@@ -371,7 +380,7 @@ var RecordForm = function( parent, curRecord ) {
         	[
         	isNew ?m("button.secondary.button[type=button]", {onclick: self.reset }, "Reset")
 	              :m("button.secondary.button[type=button]", {onclick: self.cancel }, "Cancel"),
-	            m("button[type=button]", {onclick: function(e){ skipReDraw(); $(e.target).closest('form').submit() } }, "Save")
+	            m("button[type=button]", {onclick: function(e){ $(e.target).closest('form').submit(); skipReDraw();  } }, "Save")
             ]
         ]
 
@@ -380,11 +389,8 @@ var RecordForm = function( parent, curRecord ) {
 }
 
 
-function initFundationForm(el, exists, context, vdom ){
+function initFundationForm(el, exists, context, vdom, self ){
 	// context.retain = true;
-	console.log(context, vdom)
-
-	
 
     $(document).foundation({
 
@@ -393,11 +399,12 @@ function initFundationForm(el, exists, context, vdom ){
 		    validate_on_blur : true, // validate whenever you focus/blur on an input field
 		    focus_on_invalid : true, // automatically bring the focus to an invalid input field
 		    error_labels: true, // labels with a for="inputId" will recieve an `error` class
+		    validate_on: 'manual'
 		  }
 
     });
 
-	$(el).on('valid.fndtn.abide', function(e){ Observable.trigger("saveContact"); })
+	$(el).on('valid.fndtn.abide', function(e){ console.log(e, 'valid form'); beginReDraw(); self.save(); })
 
 }
 
@@ -534,7 +541,7 @@ function initFundationTab(el, exists, context, vdom){
       	// console.log(curTabID)
       	var newUL = vdom.children[0].children[curTabID];
       	var newDIV = vdom.children[1].children[curTabID];
-        
+
         /**
          * below code to make addNew tab deselect by add a 'active' class to V-DOM when switched to
          */
