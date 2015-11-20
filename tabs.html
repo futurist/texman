@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <link rel="stylesheet" href="css/normalize.css" />
 <link rel="stylesheet" href="css/foundation.css" />
@@ -286,11 +287,10 @@ var RecordForm = function( parent, curRecord ) {
     
     var record = !isNew&& curRecord.clone() || curRecord;
 
-    self.reset = function() {
-    	skipReDraw();
-    	//window.alert(1234);
-    	m.redraw();
-    	//record._key = NewID();
+    self.reset = function(e) {
+    	if(!window.confirm('已填的内容会丢失,确定重置?')){
+    		skipReDraw();
+    	}
     	console.log('reset', record._key)
     	return;
 
@@ -374,7 +374,9 @@ var RecordDisplay = function( parent, curRecord ) {
 		var form = new RecordForm(parent, record);
 		setTimeout(function  () {
 			//skipReDraw();
-    		m.render($('#panel'+record._key)[0], form.view() )
+			var $dom = $('#panel'+record._key+' .showForm');
+    		m.render($dom[0], form.view() )
+    		$dom.removeClass('display');
 		},30);
 	}
 
@@ -420,7 +422,7 @@ var RecordList = function defRecordList ( parent ) {
 
     self.view =  function(ctrl, args) {
         var newRec= new Record(RecordTypes.getTemplate('Computer'));
-    	console.log('RecordList view', parent.curTabID);
+    	console.log('RecordList view', parent.curTabID, parent.generateID);
     	var active = self.module.data.length==parent.curTabID?'.active':'';
 
         return m('div', { }, [
@@ -456,11 +458,11 @@ var RecordList = function defRecordList ( parent ) {
                         var active = i==parent.curTabID?'active':'';
                         return m('div.content.panel#panel'+obj._key,
                         	{class:active, key:obj._key, role:'tabpanel'},
-                    		[m('div.showForm', {className:''}, new RecordDisplay(parent, obj ) )]
+                    		[m('div.showForm.display', {className:''}, new RecordDisplay(parent, obj ) )]
                         )
                     }).concat( function() {
                     	console.log(1234, active, newRec._key)
-                        return m('div.content.panel#addTab'+active, {key:newRec._key, className:''}, new RecordForm(parent, newRec ) )
+                        return m('div.content.panel#addTab'+active, { className:''}, new RecordForm(parent, newRec ) )
                     }() )
 
                 ])
@@ -484,7 +486,7 @@ function initFundation(a,b,c, d){
       callback : function (tab) {
 
       	var curTabID = parseInt($(tab).data('tabid'))||0;
-
+      	console.log(curTabID)
       	var newUL = d.children[0].children[curTabID];
       	var newDIV = d.children[1].children[curTabID];
         
@@ -495,7 +497,7 @@ function initFundation(a,b,c, d){
         d.children[1].children.forEach(function(v){ if(v&&v.attrs.className) v.attrs.className=v.attrs.className.replace(/\b\s+active\b/g, '') });
       	newUL.attrs.className+=' active';
       	newDIV.attrs.className+=' active';
-      	console.log(newUL.attrs.className, curTabID)
+      	// console.log(newUL.attrs.className, curTabID)
       	RecordList1.curTabID = curTabID;
 
       	if( $(tab).find('.addTab')  ){
