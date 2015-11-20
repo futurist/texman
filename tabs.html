@@ -9,13 +9,17 @@
 <script src="js/vendor/modernizr.js"></script>
 <script src="js/vendor/jquery.js"></script>
 <!-- <script src="js/vendor/fastclick.js"></script> -->
-<script src="js/foundation.js"></script>
+
+<script src="js/foundation/foundation.js"></script>
+<script src="js/foundation/foundation.tab.js"></script>
+<script src="js/foundation/foundation.abide.js"></script>
 
 </head>
 <body>
 
 <div id="container"></div>
 <script src="js/mithril.js"></script>
+<script src="dbdb.js"></script>
 <script>
 var host="http://1111hui.com:88"
 
@@ -40,6 +44,42 @@ function NewID(){
     return +new Date() + "_" + (Math.round(Math.random() * 1e6)).toString(36)
     //return (+new Date()+Math.random()).toString(36);
 }
+
+
+var Observable = function() {
+    var channels = {}
+    return {
+        register: function(subscriptions, controller) {
+            return function self() {
+                var ctrl = new controller
+                var reload = controller.bind(ctrl)
+                Observable.on(subscriptions, reload)
+                ctrl.onunload = function() {
+                    Observable.off(reload)
+                }
+                return ctrl
+            }
+        },
+        on: function(subscriptions, callback) {
+            subscriptions.forEach(function(subscription) {
+                if (!channels[subscription]) channels[subscription] = []
+                channels[subscription].push(callback)
+            })
+        },
+        off: function(callback) {
+            for (var channel in channels) {
+                var index = channels[channel].indexOf(callback)
+                if (index > -1) channels[channel].splice(index, 1)
+            }
+        },
+        trigger: function(channel, args) {
+            console.log(channel)
+            channels[channel].map(function(callback) {
+                callback(args)
+            })
+        }
+    }
+}.call()
 
 // Production steps of ECMA-262, Edition 5, 15.4.4.17
 // Reference: http://es5.github.io/#x15.4.4.17
@@ -133,225 +173,6 @@ function findKeyVal(data, key, val) {
     _find.apply(this, arguments);
 
     return findingObj;
-}
-
-/**
- * [RecordTypes Dictionary]
- * @type _type is additional field key that using in RecordForm Component
- */
-
-var DBDB =
-{
-    'Computer11': {
-        meta:{
-            title: 'Computer List',
-            mainKey:'userid',
-            desc: 'computer list of company',
-        },
-        template:{
-        	'userid':{ tag:'input', attrs:{title:'UserID', readOnly:true} },
-        	'ip':{ tag:'input',
-        			attrs:{ value:'111.11.12.34', title:'IP', type:'text', required:true, pattern:"number", placeholder:'this is ip' } },
-        	'client':{ tag:'input', attrs:{value:'awefawef', title:'Client', placeholder:'this is client'} },
-        }
-    },
-
-    'Computer':{
-
-    	meta:{
-            title: 'Computer List',
-            mainKey:'ih7hcc94_yj5rk9',
-            desc: 'computer list of company',
-        },
-
-    	template:{
-  "ih7hcc94_yj5rk9": {
-    "tag": "input",
-    "attrs": {
-      "style": "text-align: left; width: 150px;",
-      "title": "文本框",
-      "value": "",
-      "name": "leipiNewField",
-      "orgheight": "",
-      "orgwidth": "150",
-      "orgalign": "left",
-      "orgfontsize": "",
-      "orghide": "0",
-      "leipiplugins": "text",
-      "orgtype": "text"
-    },
-    "children": []
-  },
-  "ih7hcc94_wng66r": {
-    "tag": "select",
-    "attrs": {
-      "name": "leipiNewField",
-      "title": "下拉菜单",
-      "leipiplugins": "select",
-      "size": "1",
-      "orgwidth": "150",
-      "style": "width: 150px;"
-    },
-    "children": [
-      {
-        "tag": "option",
-        "attrs": {
-          "value": "下拉"
-        },
-        "children": [
-          "下拉"
-        ]
-      },
-      {
-        "tag": "option",
-        "attrs": {
-          "value": "菜单"
-        },
-        "children": [
-          "菜单"
-        ]
-      }
-    ]
-  },
-  "ih7hcc94_j62yb9": {
-    "tag": "span",
-    "attrs": {
-      "leipiplugins": "radios",
-      "title": "单选",
-      "name": "leipiNewField"
-    },
-    "children": [
-      {
-        "tag": "input",
-        "attrs": {
-          "value": "单选1",
-          "type": "radio",
-          "checked": "checked"
-        },
-        "children": []
-      },
-      "单选1 ",
-      {
-        "tag": "input",
-        "attrs": {
-          "value": "单选2",
-          "type": "radio"
-        },
-        "children": []
-      },
-      "单选2 "
-    ]
-  },
-  "ih7hcc94_sor": {
-    "tag": "span",
-    "attrs": {
-      "leipiplugins": "checkboxs",
-      "title": "复选"
-    },
-    "children": [
-      {
-        "tag": "input",
-        "attrs": {
-          "name": "leipiNewField",
-          "value": "复选1",
-          "type": "checkbox",
-          "checked": "checked"
-        },
-        "children": []
-      },
-      "复选1 ",
-      {
-        "tag": "input",
-        "attrs": {
-          "name": "leipiNewField",
-          "value": "复选2",
-          "type": "checkbox",
-          "checked": "checked"
-        },
-        "children": []
-      },
-      "复选2 ",
-      {
-        "tag": "input",
-        "attrs": {
-          "name": "leipiNewField",
-          "value": "复选3",
-          "type": "checkbox"
-        },
-        "children": []
-      },
-      "复选3 "
-    ]
-  },
-  "ih7hcc94_5h4cxr": {
-    "tag": "input",
-    "attrs": {
-      "name": "leipiNewField",
-      "type": "text",
-      "value": "{macros}",
-      "title": "宏控件",
-      "leipiplugins": "macros",
-      "orgtype": "sys_date_cn",
-      "orghide": "0",
-      "orgfontsize": "12",
-      "orgwidth": "150",
-      "style": "font-size: 12px; width: 150px;"
-    },
-    "children": []
-  },
-  "ih7hcc94_qzolxr": {
-    "tag": "input",
-    "attrs": {
-      "name": "leipiNewField",
-      "leipiplugins": "listctrl",
-      "type": "text",
-      "value": "{列表控件}",
-      "readonly": "readonly",
-      "title": "采购商品列表",
-      "orgtitle": "商品名称`数量`单价`小计`描述`",
-      "orgcoltype": "text`int`int`int`text`",
-      "orgunit": "```元``",
-      "orgsum": "0`0`0`1`0`",
-      "orgcolvalue": "`````",
-      "orgwidth": "100%",
-      "style": "width: 100%;"
-    },
-    "children": []
-  },
-  "ih7hcc94_8nnrk9": {
-    "tag": "textarea",
-    "attrs": {
-      "title": "多行文本",
-      "name": "leipiNewField",
-      "leipiplugins": "textarea",
-      "value": "",
-      "orgrich": "0",
-      "orgfontsize": "12",
-      "orgwidth": "600",
-      "orgheight": "80",
-      "style": "font-size:12px;width:600px;height:80px;"
-    },
-    "children": []
-  },
-  "ih7hcc94_7i7ldi": {
-    "tag": "img",
-    "attrs": {
-      "name": "leipiNewField",
-      "title": "进度条",
-      "leipiplugins": "progressbar",
-      "orgvalue": "20",
-      "orgsigntype": "progress-info",
-      "src": "js/ueditor/formdesign/images/progressbar.gif"
-    },
-    "children": []
-  }
-}
-
-
-
-
-    }
-
 }
 
 
@@ -516,12 +337,17 @@ var RecordForm = function( parent, curRecord ) {
         		}
         	})
         }
+        m.redraw();
+
         //Record.saveRecord(record).then(update.bind(this))
     }
+
+	Observable.on(["saveContact"], function(data) { self.save(); });
 
     this.controller= function(args) {
     	console.log('New RecordForm render',record._key);
     	return {
+    		save: self.save,
             onunload : function() {
                 console.log("unloading RecordForm component",record._key);
             }
@@ -530,21 +356,22 @@ var RecordForm = function( parent, curRecord ) {
     this.view= function(ctrl, args) {
         // console.log( record, record.toString() )
 
-        return m("form", {config:null}, [
+        return m("form[data-abide]", { config:initFundationForm }, [
 
         	Object.keys(template).map(function  (v) {
         		if(v=='_type') return [];
         		var t = template[v];
         		return m('div', [
         			m("label", t.attrs.title),
-        			m("input", extend({}, t.attrs, {oninput: function(){ skipReDraw(); record[v](this.value);  }, value: record[v]() } )  )
+        			m(t.tag, extend({}, t.attrs, {oninput: function(){ skipReDraw(); record[v](this.value);  }, value: record[v]() } ), t.children  ),
+        			m('small.error', "必填")
         		])
         	}),
 
         	[
         	isNew ?m("button.secondary.button[type=button]", {onclick: self.reset }, "Reset")
 	              :m("button.secondary.button[type=button]", {onclick: self.cancel }, "Cancel"),
-	            m("button[type=button]", {onclick: self.save }, "Save")
+	            m("button[type=button]", {onclick: function(e){ skipReDraw(); $(e.target).closest('form').submit() } }, "Save")
             ]
         ]
 
@@ -552,6 +379,27 @@ var RecordForm = function( parent, curRecord ) {
     }
 }
 
+
+function initFundationForm(el, exists, context, vdom ){
+	// context.retain = true;
+	console.log(context, vdom)
+
+	
+
+    $(document).foundation({
+
+		abide : {
+		    live_validate : true, // validate the form as you go
+		    validate_on_blur : true, // validate whenever you focus/blur on an input field
+		    focus_on_invalid : true, // automatically bring the focus to an invalid input field
+		    error_labels: true, // labels with a for="inputId" will recieve an `error` class
+		  }
+
+    });
+
+	$(el).on('valid.fndtn.abide', function(e){ Observable.trigger("saveContact"); })
+
+}
 
 var RecordDisplay = function( parent, curRecord ) {
     if(!curRecord) return;
@@ -631,7 +479,7 @@ var RecordList = function defRecordList ( parent ) {
             //     })
             // ]),
 
-            m('.row', {key: parent.generateID, config:initFundation}, [
+            m('.row', {key: parent.generateID, config:initFundationTab}, [
 
                 m('ul.tabs[data-tab]', [
 
@@ -675,7 +523,7 @@ var RecordList = function defRecordList ( parent ) {
 var RecordList1 = new RecordListWidget;
 m.mount(document.querySelector('#container'), RecordList1)
 
-function initFundation(a,b,c, d){
+function initFundationTab(el, exists, context, vdom){
 
     // console.log(a,b,c, d)
     $(document).foundation({
@@ -684,14 +532,14 @@ function initFundation(a,b,c, d){
 
       	var curTabID = parseInt($(tab).data('tabid'))||0;
       	// console.log(curTabID)
-      	var newUL = d.children[0].children[curTabID];
-      	var newDIV = d.children[1].children[curTabID];
+      	var newUL = vdom.children[0].children[curTabID];
+      	var newDIV = vdom.children[1].children[curTabID];
         
         /**
          * below code to make addNew tab deselect by add a 'active' class to V-DOM when switched to
          */
-        d.children[0].children.forEach(function(v){ if(v&&v.attrs.className) v.attrs.className=v.attrs.className.replace(/\b\s+active\b/g, '') });
-        d.children[1].children.forEach(function(v){ if(v&&v.attrs.className) v.attrs.className=v.attrs.className.replace(/\b\s+active\b/g, '') });
+        vdom.children[0].children.forEach(function(v){ if(v&&v.attrs.className) v.attrs.className=v.attrs.className.replace(/\b\s+active\b/g, '') });
+        vdom.children[1].children.forEach(function(v){ if(v&&v.attrs.className) v.attrs.className=v.attrs.className.replace(/\b\s+active\b/g, '') });
       	newUL.attrs.className+=' active';
       	newDIV.attrs.className+=' active';
       	// console.log(newUL.attrs.className, curTabID)
@@ -705,7 +553,9 @@ function initFundation(a,b,c, d){
 
       	}
       }
-    }
+    },
+
+
     });
 
 

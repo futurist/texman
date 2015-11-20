@@ -77,6 +77,7 @@
         clearTimeout(self.timer);
         self.timer = setTimeout(function () {
           self.validate([originalSelf], e);
+          console.log(e)
         }.bind(originalSelf), settings.timeout);
       }
 
@@ -416,6 +417,7 @@
     },
 
     reflow : function(scope, options) {
+      console.log(scope)
       var self = this,
           form = self.S('[' + this.attr_name() + ']').attr('novalidate', 'novalidate');
           self.S(form).each(function (idx, el) {
