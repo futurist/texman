@@ -22,6 +22,7 @@ var OBJECT = "[object Object]", ARRAY = "[object Array]", STRING = "[object Stri
 var type = {}.toString;
 
 function extend(obj) {
+	obj = obj || {};
 	if(arguments.length<2) return obj;
 	for(var i=1; i<arguments.length; i++){
 		var props = arguments[i];
@@ -147,9 +148,10 @@ var DBDB =
             desc: 'computer list of company',
         },
         template:{
-        	'userid':{ initValue:'', displayName:'UserID', readonly:true },
-        	'ip':{ initValue:'111.11.12.34', displayName:'IP', placeholder:'this is ip', max:10, min:1, validation:function(val){ return true } },
-        	'client':{ initValue:'awefawef', displayName:'Client', placeholder:'this is client', max:10, min:1, validation:function(val){ return true } },
+        	'userid':{ tag:'input', attrs:{title:'UserID', readOnly:true} },
+        	'ip':{ tag:'input',
+        			attrs:{ value:'111.11.12.34', title:'IP', type:'text', required:true, pattern:"number", placeholder:'this is ip' } },
+        	'client':{ tag:'input', attrs:{value:'awefawef', title:'Client', placeholder:'this is client'} },
         }
     }
 }
@@ -176,7 +178,7 @@ var RecordTypes = (function(obj) {
 		var newObj={}
 		var template = self.dataModule[type].template;
 		for(var i in template){
-			newObj[i] = i=='_type'? template[i] : template[i].initValue
+			newObj[i] = i=='_type'? template[i] : template[i].attrs.value
 		}
 		return newObj;
 	}
@@ -275,16 +277,27 @@ var RecordForm = function( parent, curRecord ) {
 
     var self = this;
 
+    // console.log(curRecord, curRecord._type(), curRecord[ _recordType.meta.mainKey ](), isNew )
+
     var _recordType = RecordTypes.getModule( curRecord._type() );
+    var template = _recordType.template;
 
     var isNew = curRecord[ _recordType.meta.mainKey ]() === '';
-
-    // console.log(curRecord, curRecord._type(), curRecord[ _recordType.meta.mainKey ](), isNew )
+    
     var record = !isNew&& curRecord.clone() || curRecord;
 
+    self.reset = function() {
+    	skipReDraw();
+    	//window.alert(1234);
+    	m.redraw();
+    	//record._key = NewID();
+    	console.log('reset', record._key)
+    	return;
+
+    }
     self.cancel = function() {
-        console.log(isNew, curRecord)
-        return curRecord._key = NewID();
+        curRecord._key = NewID();
+        return;
         // using below trick to change generateID to trigger redraw
     	//return parent.generateID = NewID();
     }
@@ -310,29 +323,77 @@ var RecordForm = function( parent, curRecord ) {
     }
 
     this.controller= function(args) {
-    	//console.log('New Form render');
+    	console.log('New RecordForm render',record._key);
     	return {
             onunload : function() {
-                console.log("unloading RecordForm component");
+                console.log("unloading RecordForm component",record._key);
             }
     	}
     },
     this.view= function(ctrl, args) {
         // console.log( record, record.toString() )
-        var template = _recordType.template;
-        return m("form", {config:persistent}, [
+
+        return m("form", {config:null}, [
 
         	Object.keys(template).map(function  (v) {
         		if(v=='_type') return [];
         		var t = template[v];
         		return m('div', [
-        			m("label", t.displayName),
-        			m("input", extend( t, {oninput: function(){ skipReDraw(); record[v](this.value);  }, value: record[v]() } )  )
+        			m("label", t.attrs.title),
+        			m("input", extend({}, t.attrs, {oninput: function(){ skipReDraw(); record[v](this.value);  }, value: record[v]() } )  )
         		])
         	}),
 
-            m("button[type=button]", {onclick: self.cancel }, "Cancel"),
-            m("button[type=button]", {onclick: self.save }, "Save")
+        	[
+        	isNew ?m("button.secondary.button[type=button]", {onclick: self.reset }, "Reset")
+	              :m("button.secondary.button[type=button]", {onclick: self.cancel }, "Cancel"),
+	            m("button[type=button]", {onclick: self.save }, "Save")
+            ]
+        ]
+
+        )
+    }
+}
+
+
+var RecordDisplay = function( parent, curRecord ) {
+    if(!curRecord) return;
+
+    var self = this;
+
+    var record = curRecord;
+
+    var _recordType = RecordTypes.getModule( record._type() );
+    var template = _recordType.template;
+
+    self.remove = function() {
+        console.log('remove', curRecord)
+    }
+
+    self.edit = function(e){
+		var form = new RecordForm(parent, record);
+		setTimeout(function  () {
+			//skipReDraw();
+    		m.render($('#panel'+record._key)[0], form.view() )
+		},30);
+	}
+
+    this.view= function(ctrl, args) {
+        // console.log( record, record.toString() )
+        return m("div", {config:null}, [
+
+        	Object.keys(template).map(function  (v) {
+        		if(v=='_type') return [];
+        		var t = template[v];
+        		return m('div', [
+        			m("label", t.attrs.title),
+        			m("input", extend( {}, t.attrs, {disabled:true,readOnly:true}, { value: record[v]() } )  )
+        		])
+        	}),
+
+            m("button.alert.button[type=button]", {onclick: self.remove }, "Delete"),
+            m("button.success.button[type=button]", {onclick: self.edit }, "Edit"),
+
         ]
 
         )
@@ -359,7 +420,9 @@ var RecordList = function defRecordList ( parent ) {
 
     self.view =  function(ctrl, args) {
         var newRec= new Record(RecordTypes.getTemplate('Computer'));
-    	// console.log('RecordList view', self.module.data);
+    	console.log('RecordList view', parent.curTabID);
+    	var active = self.module.data.length==parent.curTabID?'.active':'';
+
         return m('div', { }, [
 
             // m('.row', [
@@ -378,12 +441,12 @@ var RecordList = function defRecordList ( parent ) {
                                 // console.log( 'iter', obj._fields, obj )
                                 return m('li.tab-title'+active, { 'data-tabid':i, key:obj._key }, [
                                     m('a', {
-                                        href:'#panel'+i,
+                                        href:'#panel'+obj._key,
                                     }, obj[ RecordTypes.getModule(obj._type()).meta.mainKey ]() ||'newuser')
 
                                 ]);
 
-                            }).concat( m('li.tab-title', {className:''}, [m('a.addTab[href="#addTab"]', "+")] ) )
+                            }).concat( m('li.tab-title'+active, {'data-tabid': self.module.data.length , className:''}, [m('a.addTab[href="#addTab"]', "+")] ) )
 
 
                 ]),
@@ -391,19 +454,13 @@ var RecordList = function defRecordList ( parent ) {
                 m('div.tabs-content', [
                     self.module.data.map(function(obj,i){
                         var active = i==parent.curTabID?'active':'';
-                        return m('div.content.panel#panel'+i,
+                        return m('div.content.panel#panel'+obj._key,
                         	{class:active, key:obj._key, role:'tabpanel'},
-                        	[m('a', { onclick: function(e){
-                            		var form = new RecordForm(parent, obj);
-                            		setTimeout(function  () {
-                            			skipReDraw();
-                                		m.render($('#panel'+i)[0], form.view() )
-                            		},30);
-                        		} },
-                        		'content '+obj.toString() +obj._key )]
+                    		[m('div.showForm', {className:''}, new RecordDisplay(parent, obj ) )]
                         )
                     }).concat( function() {
-                        return m('div.content.panel#addTab', {className:''}, new RecordForm(parent, newRec ) )
+                    	console.log(1234, active, newRec._key)
+                        return m('div.content.panel#addTab'+active, {key:newRec._key, className:''}, new RecordForm(parent, newRec ) )
                     }() )
 
                 ])
@@ -426,22 +483,26 @@ function initFundation(a,b,c, d){
     tab: {
       callback : function (tab) {
 
-      	var curTabID = $(tab).data('tabid');
-      	if(curTabID) RecordList1.curTabID = curTabID;
+      	var curTabID = parseInt($(tab).data('tabid'))||0;
 
-      	var newUL = d.children[0].children.lastEl();
-      	var newDIV = d.children[1].children.lastEl();
-
+      	var newUL = d.children[0].children[curTabID];
+      	var newDIV = d.children[1].children[curTabID];
+        
+        /**
+         * below code to make addNew tab deselect by add a 'active' class to V-DOM when switched to
+         */
+        d.children[0].children.forEach(function(v){ if(v&&v.attrs.className) v.attrs.className=v.attrs.className.replace(/\b\s+active\b/g, '') });
+        d.children[1].children.forEach(function(v){ if(v&&v.attrs.className) v.attrs.className=v.attrs.className.replace(/\b\s+active\b/g, '') });
+      	newUL.attrs.className+=' active';
+      	newDIV.attrs.className+=' active';
+      	console.log(newUL.attrs.className, curTabID)
+      	RecordList1.curTabID = curTabID;
 
       	if( $(tab).find('.addTab')  ){
-            /**
-             * below code to make addNew tab deselect by add a 'active' class to V-DOM when switched to
-             */
-            newUL.attrs.className=newDIV.attrs.className='active';
+
 
       	} else {
 
-      		newUL.attrs.className=newDIV.attrs.className='';
 
       	}
       }
