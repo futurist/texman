@@ -370,7 +370,7 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
 
     }
     self.cancel = function() {
-
+    	if(!window.confirm('内容将会还原，确定继续？') ) return;
 		var form = new RecordDisplay(parent, curRecord, mountCallBack);
 		parent.module.displayContainers[curRecord._key] = form;
 		function mountCallBack () {
@@ -430,7 +430,7 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
         // console.log( record, record.toString() )
         // function(a,b,c,d){ initFundationForm(a,b,c,d,self) }
         var errors = checkErrors(record);
-        return m("form.mValidator[novalidate]", {key:record._key, config: null  }, [
+        return m("form.mValidator[novalidate]", {key:record._key, config: function(){  }  }, [
 
         	_recordType.fields.map(function  (v) {
         		if(v=='_type') return [];
@@ -455,7 +455,10 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
 	              :m("button.secondary.button[type=button]", {onclick: self.cancel }, "Cancel"),
 	            m("button[type=button]", {onclick: function(e){ 
 	            	if(!errors){ self.save() }
-	            	else{ alert('请确保表单没有错误')}  
+	            	else{
+	            		self.focusDiv = [].concat.apply([], _recordType.fields);
+	            		alert('请确保表单没有错误')
+	            	}
 	            } }, "Save")
             ]
         ]
