@@ -19,6 +19,7 @@
 
 <div id="container"></div>
 <script src="js/mithril.js"></script>
+<script src="mValidator.js"></script>
 <script src="dbdb.js"></script>
 <script>
 var host="http://1111hui.com:88"
@@ -120,8 +121,6 @@ Array.prototype.lastEl = function(fun/*, thisArg*/) {
 }
 
 
-
-
 var mBindOnce = (function() {
     var cache = {}
     return function(view) {
@@ -184,7 +183,11 @@ function findKeyVal(data, key, val) {
     return findingObj;
 }
 
-
+/**
+ * [description]
+ * @param  {Object} obj) {	var        self [description]
+ * @return {[type]}      [description]
+ */
 var RecordTypes = (function(obj) {
 
 	var self = {};
@@ -220,24 +223,30 @@ var RecordTypes = (function(obj) {
 
 
 
-
+/**
+ * [Record description]
+ * @param {[type]} data [description]
+ */
 var Record = function(data) {
     data = data || {}
-    this._fields = RecordTypes.getModule(data._type).fields;
     this._key = NewID()
-    this._fields.forEach( function(v){
+    this.getFields(data._type).forEach( function(v){
         this[v] = m.prop(data[v]||'')
     }.bind(this) )
 }
 
+Record.prototype.getFields = function(type) {
+	return RecordTypes.getModule(type||this._type()).fields||[];
+}
+
 Record.prototype.toString = function() {
-    return [].concat( this._fields.map(function(v){ return this[v]() }.bind(this)) ).toString()
+    return [].concat( this.getFields().map(function(v){ return this[v]() }.bind(this)) ).toString()
 }
 
 Record.prototype.clone = function(data) {
     var obj = { }
 
-    this._fields.forEach( function(v){
+    this.getFields().forEach( function(v){
         obj[v] = this[v]()
     }.bind(this) )
 
@@ -249,7 +258,7 @@ Record.prototype.clone = function(data) {
 Record.prototype.copyFromRecord = function(obj, preserveKey) {
 	obj = obj || {}
 
-    this._fields.forEach( function(v){
+    this.getFields().forEach( function(v){
         this[v]( obj[v]()||'' )
     }.bind(this) )
 
@@ -276,7 +285,9 @@ Record.saveRecord = function(data) {
     })
 }
 
-
+/**
+ * [RecordListWidget description]
+ */
 var RecordListWidget = function() {
 
 	var self=this;
@@ -313,6 +324,7 @@ var RecordListWidget = function() {
     }
 }
 
+
 /**
  * @param {parent} parent component
  * @param {curRecord} Object||String, if String then will find in RecordTypes for record template
@@ -330,6 +342,14 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
     var isNew = curRecord[ _mainKey ]() === '';
 
     var record = !isNew&& curRecord.clone() || curRecord;
+
+	var validator = mValidator(function(record, template, patterns, errors){
+	    record.getFields().forEach(function  (v) {
+	    	if( !patterns[ template[v].pattern ].test(record[v]()) ) {
+	    		errors.add(v, template[v].errorMsg ); 
+	    	}
+	    })
+	});
 
     self.reset = function(e) {
     	if(!window.confirm('已填的内容会丢失,确定重置?')){
