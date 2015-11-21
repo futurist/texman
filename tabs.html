@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <link rel="stylesheet" href="css/normalize.css" />
 <link rel="stylesheet" href="css/foundation.css" />
+<link rel="stylesheet" href="css/font-awesome.min.css" />
 <link rel="stylesheet" href="css/mytabs.css" />
+
 <script src="js/vendor/modernizr.js"></script>
 <script src="js/vendor/jquery.js"></script>
 <!-- <script src="js/vendor/fastclick.js"></script> -->
@@ -428,16 +430,17 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
 
     this.view= function(ctrl, args) {
         // console.log( record, record.toString() )
-        // function(a,b,c,d){ initFundationForm(a,b,c,d,self) }
+        // to call from controller see github issue
         var errors = checkErrors(record);
-        return m("form.mValidator[novalidate]", {key:record._key, config: function(){  }  }, [
+        return m("form.mValidator[novalidate]", {key:record._key, config: null  }, [
 
         	_recordType.fields.map(function  (v) {
         		if(v=='_type') return [];
         		var t = template[v];
+        		var isError = (self.focusDiv.indexOf(v)>-1)&&errors&&errors[v];
         		// console.log('view: ', record._key, self.focusDiv(), v)
-        		return m('div', {key:recordKeys[v], className: (self.focusDiv.indexOf(v)>-1)&&errors&&errors[v] ?'error':''  }, [
-        			m("label", t.attrs.title),
+        		return m('div', {key:recordKeys[v], className:  isError?'valid-error':''  }, [
+        			m("label", [ m('span[data-tooltip]', {className: isError?'has-tip':'labelTitle', title:'oisdjfoj'}, t.attrs.title)] ),  //, m('small.error', "必填")
         			m(t.tag, extend({}, t.attrs,
         				{
         				 	onfocus:function(){ 
@@ -446,10 +449,11 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
         				 	oninput: function(){  record[v](this.value); },
         					value: record[v]()
         				} ), t.children  ),
-        			m('small.error', "必填")
+        			
         		])
         	}),
 
+        	m('div.buttons',{},
         	[
         	isNew ?m("button.secondary.button[type=button]", {onclick: self.reset }, "Reset")
 	              :m("button.secondary.button[type=button]", {onclick: self.cancel }, "Cancel"),
@@ -460,7 +464,7 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
 	            		alert('请确保表单没有错误')
 	            	}
 	            } }, "Save")
-            ]
+            ])
         ]
 
         )
@@ -554,7 +558,7 @@ var RecordList = function defRecordList ( parent ) {
             //     })
             // ]),
 
-            m('.row', {key: parent.generateID, config:initFundationTab}, [
+            m('.row', {key: parent.generateID, config:initFundation}, [
 
                 m('ul.tabs[data-tab]', {key: parent.generateID}, [
 
@@ -599,7 +603,7 @@ var RecordList = function defRecordList ( parent ) {
 var RecordList1 = new RecordListWidget;
 m.mount(document.querySelector('#container'), RecordList1)
 
-function initFundationTab(el, exists, context, vdom){
+function initFundation(el, exists, context, vdom){
 
     // console.log(a,b,c, d)
     $(document).foundation({

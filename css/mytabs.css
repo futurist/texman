@@ -13,3 +13,14 @@
 .mValidator small.error{
 	display: none;
 }
+
+.labelTitle{
+	border-bottom: 1px none white;
+}
+.valid-error span.has-tip{
+	color:#E43636;
+}
+.valid-error span.has-tip:after{
+	font:16px FontAwesome;
+	content: " \f071";
+}
