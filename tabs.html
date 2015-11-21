@@ -386,6 +386,7 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
     	if(!window.confirm('已填的内容会丢失,确定重置?')){
     		return
     	}
+    	self.focusDiv = [];
 	    record = curRecord = new Record(RecordTypes.getTemplate( record._type() ));
         // record._key = NewID();
     	console.log('reset', record._key)
@@ -461,25 +462,36 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
         		var t = template[v];
         		var isRequired = t.attrs&&t.attrs.required?'[required]':'';
         		var isError = (self.focusDiv.indexOf(v)>-1)&&errors&&errors[v];
-        		// console.log( isError, self.delaySet(isError) )
         		// console.log('view: ', record._key, self.focusDiv(), v)
         		return m('div.inputWrap'+isRequired, {key:recordKeys[v], className:  isError?'valid-error':''  }, [
         			m("label", [ m('span[data-tooltip]', {className: isError?'has-tip':'labelTitle' , title:'oisdjfoj'}, t.attrs.title)] ),  //, m('small.error', "必填")
         			m(t.tag, extend({}, t.attrs,
         				{
-        					config: function(el){ 
-        						var val=[].concat.call([], $(el).data('selected') );
-        						val.forEach(function(v){
-        							$(el).find('[value="'+v+'"]').prop('selected', 'selected');
-        						})
+        					config: function(el){
+        						if(t.tag=='select'){
+        							var val=[].concat.call([], el.value );
+        							val.forEach(function(v){
+        								$(el).find('[value="'+v+'"]').prop('selected', 'selected');
+        							})
+        						}
         					},
-        				 	onfocus:function(){ 
-        				 		self.focusDiv.push(v); 
+        				 	onfocus:function(){
+        				 		self.focusDiv.push(v);
         				 	},
         				 	oninput: function(){  record[v](this.value); },
         					value: record[v]()
-        				} ), t.children  ),
-        			
+        				} ),
+
+        				(function(){
+        					if(t.tag=='select'){
+        						if( record[v]()&& t.children.indexOf( record[v]() ) == -1 ) t.children.unshift(record[v]());
+        						return t.children.map(function(v){ return m('option', v) });
+        					}
+        					return [];
+        				})()
+
+        			),
+
         		])
         	}),
 
@@ -487,7 +499,7 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
         	[
         	isNew ?m("button.secondary.button[type=button]", {onclick: self.reset }, "Reset")
 	              :m("button.secondary.button[type=button]", {onclick: self.cancel }, "Cancel"),
-	            m("button[type=button]", {onclick: function(e){ 
+	            m("button[type=button]", {onclick: function(e){
 	            	if(!errors){ self.save() }
 	            	else{
 	            		self.focusDiv = [].concat.apply([], _recordType.fields);

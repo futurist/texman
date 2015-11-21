@@ -17,50 +17,10 @@ var DBDB =
         	'ip':{ tag:'input',
         			attrs:{ value:'111.11.12.34', title:'IP', type:'text', required:true, pattern:"number", placeholder:'this is ip' } },
           // 'client1':{ tag:'input', attrs:{value:'awefawef', title:'Client', pattern:'domain', placeholder:'this is client'} },
-        	'client':{ tag:'select', attrs:{title:'Client', name:'Client', multiple:false, 'data-selected':'["pc332","pc331"]' }, 
+        	'client2':{ tag:'select', attrs:{title:'Client', name:'Client', multiple:false, value:"下拉3" }, children:['下拉','下拉2','下拉3'] },
 
-              children:
-              [
-                {
-                  "tag": "option",
-                  "attrs": {
-                    "value": "pc33"
-                  },
-                  "children": [
-                    "下拉"
-                  ]
-                },
-                {
-                  "tag": "option",
-                  "attrs": {
-                    selected: true,
-                    "value": "pc331"
-                  },
-                  "children": [
-                    "下拉2"
-                  ]
-                },
-                {
-                  "tag": "option",
-                  "attrs": {
-                    "value": "pc332"
-                  },
-                  "children": [
-                    "下拉3"
-                  ]
-                },
-                {
-                  "tag": "option",
-                  "attrs": {
-                    "value": "菜单"
-                  },
-                  "children": [
-                    "菜单234"
-                  ]
-                }
-              ]
+          'client':{ tag:'select', attrs:{title:'Client', name:'Client', multiple:false, value:"下拉3" }, children:['下拉','下拉2','下拉3'] }
 
-          },
         }
     },
 
