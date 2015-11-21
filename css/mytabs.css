@@ -14,6 +14,13 @@
 	display: none;
 }
 
+.inputWrap .labelTitle:before{
+	content: "\00a0";
+	padding-right: 4px;
+}
+.inputWrap[required] .labelTitle:before{
+	content: "*";
+}
 .labelTitle{
 	border-bottom: 1px none white;
 }

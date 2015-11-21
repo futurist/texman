@@ -48,12 +48,33 @@ function NewID(){
     //return (+new Date()+Math.random()).toString(36);
 }
 
-var _delay = function(func, wait) {
+/**
+ * Underscore method list
+ * @param  {[type]} func [description]
+ * @param  {[type]} wait [description]
+ * @return {[type]}      [description]
+ */
+_delay = function(func, wait) {
     var args = [].slice.call(arguments, 2);
     return setTimeout(function(){
       return func.apply(null, args);
     }, wait);
 }
+_debounce = function(func, wait, immediate) {
+  var timeout, result;
+  return function() {
+    var context = this, args = arguments;
+    var later = function() {
+      timeout = null;
+      if (!immediate) result = func.apply(context, args);
+    };
+    var callNow = immediate && !timeout;
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+    if (callNow) result = func.apply(context, args);
+    return result;
+  };
+};
 
 var Observable = function() {
     var channels = {}
@@ -415,6 +436,7 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
         //Record.saveRecord(record).then(update.bind(this))
     }
 
+    self.delaySet = _debounce( function(isError){ return isError?'has-tip':'labelTitle' }, 1000 );
 
     this.controller= function(args) {
     	console.log('New RecordForm render', isNew, record._key, curRecord._key);
@@ -437,12 +459,20 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
         	_recordType.fields.map(function  (v) {
         		if(v=='_type') return [];
         		var t = template[v];
+        		var isRequired = t.attrs&&t.attrs.required?'[required]':'';
         		var isError = (self.focusDiv.indexOf(v)>-1)&&errors&&errors[v];
+        		// console.log( isError, self.delaySet(isError) )
         		// console.log('view: ', record._key, self.focusDiv(), v)
-        		return m('div', {key:recordKeys[v], className:  isError?'valid-error':''  }, [
-        			m("label", [ m('span[data-tooltip]', {className: isError?'has-tip':'labelTitle', title:'oisdjfoj'}, t.attrs.title)] ),  //, m('small.error', "必填")
+        		return m('div.inputWrap'+isRequired, {key:recordKeys[v], className:  isError?'valid-error':''  }, [
+        			m("label", [ m('span[data-tooltip]', {className: isError?'has-tip':'labelTitle' , title:'oisdjfoj'}, t.attrs.title)] ),  //, m('small.error', "必填")
         			m(t.tag, extend({}, t.attrs,
         				{
+        					config: function(el){ 
+        						var val=[].concat.call([], $(el).data('selected') );
+        						val.forEach(function(v){
+        							$(el).find('[value="'+v+'"]').prop('selected', 'selected');
+        						})
+        					},
         				 	onfocus:function(){ 
         				 		self.focusDiv.push(v); 
         				 	},
