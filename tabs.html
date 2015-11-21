@@ -12,7 +12,7 @@
 
 <script src="js/foundation/foundation.js"></script>
 <script src="js/foundation/foundation.tab.js"></script>
-<script src="js/foundation/foundation.abide.js"></script>
+<script src="js/foundation/foundation.tooltip.js"></script>
 
 </head>
 <body>
@@ -342,14 +342,22 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
     var isNew = curRecord[ _mainKey ]() === '';
 
     var record = !isNew&& curRecord.clone() || curRecord;
+    var recordKeys = {}
+    record.getFields().forEach(function  (v) {
+    	recordKeys[v] = NewID();
+    })
 
-	var validator = mValidator(function(record, template, patterns, errors){
+	var checkErrors = mValidator(function(record, patterns, errors){
+		var template = RecordTypes.getModule( record._type() ).template;
 	    record.getFields().forEach(function  (v) {
-	    	if( !patterns[ template[v].pattern ].test(record[v]()) ) {
-	    		errors.add(v, template[v].errorMsg ); 
+	    	var pattern = template[v] &&  template[v].attrs && template[v].attrs.pattern;
+	    	if( pattern && !patterns[ pattern ].test(record[v]()) ) {
+	    		errors.add(v, template[v].errorMsg );
 	    	}
 	    })
-	});
+	})
+
+    self.focusDiv = [];
 
     self.reset = function(e) {
     	if(!window.confirm('已填的内容会丢失,确定重置?')){
@@ -373,7 +381,6 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
     }
 
     self.save = function() {
-
     	// console.log(curRecord&&curRecord.toString(), record.toString())
     	if(isNew){
             isNew = false;
@@ -393,6 +400,7 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
 					function mountCallBack () {
 						var $dom = $('#panel'+v._key+' .showForm');
 			    		$dom.addClass('display');
+			    		m.redraw();
 					};
 
         			return true;
@@ -400,7 +408,7 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
         	})
         }
 
-        _delay(m.redraw, 100);
+        // _delay(m.redraw, 100);
 
         //Record.saveRecord(record).then(update.bind(this))
     }
@@ -420,15 +428,24 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
 
     this.view= function(ctrl, args) {
         // console.log( record, record.toString() )
-
-        return m("form[data-abide]", {key:record._key, onsubmit:function(){ skipReDraw(); return false;},  config: function(a,b,c,d){ initFundationForm(a,b,c,d,self) } }, [
+        // function(a,b,c,d){ initFundationForm(a,b,c,d,self) }
+        var errors = checkErrors(record);
+        return m("form.mValidator[novalidate]", {key:record._key, config: null  }, [
 
         	_recordType.fields.map(function  (v) {
         		if(v=='_type') return [];
         		var t = template[v];
-        		return m('div', {key:record._key}, [
+        		// console.log('view: ', record._key, self.focusDiv(), v)
+        		return m('div', {key:recordKeys[v], className: (self.focusDiv.indexOf(v)>-1)&&errors&&errors[v] ?'error':''  }, [
         			m("label", t.attrs.title),
-        			m(t.tag, extend({}, t.attrs, {key:record._key, oninput: function(){  record[v](this.value);  }, value: record[v]() } ), t.children  ),
+        			m(t.tag, extend({}, t.attrs,
+        				{
+        				 	onfocus:function(){ 
+        				 		self.focusDiv.push(v); 
+        				 	},
+        				 	oninput: function(){  record[v](this.value); },
+        					value: record[v]()
+        				} ), t.children  ),
         			m('small.error', "必填")
         		])
         	}),
@@ -436,7 +453,10 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
         	[
         	isNew ?m("button.secondary.button[type=button]", {onclick: self.reset }, "Reset")
 	              :m("button.secondary.button[type=button]", {onclick: self.cancel }, "Cancel"),
-	            m("button[type=button]", {onclick: function(e){ self.save()  } }, "Save")
+	            m("button[type=button]", {onclick: function(e){ 
+	            	if(!errors){ self.save() }
+	            	else{ alert('请确保表单没有错误')}  
+	            } }, "Save")
             ]
         ]
 
@@ -444,25 +464,6 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
     }
 }
 
-
-function initFundationForm(el, exists, context, vdom, self ){
-	// context.retain = true;
-
-    $(document).foundation({
-
-		abide : {
-		    live_validate : true, // validate the form as you go
-		    validate_on_blur : true, // validate whenever you focus/blur on an input field
-		    focus_on_invalid : true, // automatically bring the focus to an invalid input field
-		    error_labels: true, // labels with a for="inputId" will recieve an `error` class
-		    validate_on: 'manual'
-		  }
-
-    });
-
-	$(el).on('valid.fndtn.abide', function(e){ console.log(e, 'valid form'); beginReDraw(); self.save(); })
-
-}
 
 var RecordDisplay = function( parent, curRecord, mountCallBack) {
     if(!curRecord) return;
@@ -491,9 +492,10 @@ var RecordDisplay = function( parent, curRecord, mountCallBack) {
 	}
 
 	this.controller = function() {
-		console.log('new RecordDisplay', typeof(mountCallBack))
+		// console.log('new RecordDisplay', record._key, typeof(mountCallBack))
 		this.onunload = function(e){
-			console.log('unload RecordDisplay', e)
+			// e.preventDefault();
+			console.log('unload RecordDisplay', record._key)
 		}
 		self.ctrl = this;
 
@@ -577,7 +579,7 @@ var RecordList = function defRecordList ( parent ) {
                     		[m('div.showForm.display', {className:''}, parent.module.displayContainers[obj._key]  )]
                         )
                     }).concat( function() {
-                    	console.log(1234, active, newRec._key)
+                    	// console.log(1234, active, newRec._key)
                         return m('div.content.panel#addTab'+active, { key:newRec._key, className:''}, [m('div.addForm', {key: newRec._key, className:''}, parent.module.newForm )] )
                     }() )
 

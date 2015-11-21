@@ -6,3 +6,10 @@
 	border: none;
 	background: none;
 }
+
+.mValidator .error small.error{
+	display: block;
+}
+.mValidator small.error{
+	display: none;
+}
