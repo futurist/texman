@@ -291,9 +291,9 @@ var RecordListWidget = function() {
         this.keyword = m.prop(keyword||'');
 	    this.newRec= new Record(RecordTypes.getTemplate('Computer'));
 	    this.newForm = new RecordForm(self, this.newRec );
-	    this.displayForms = {}
+	    this.displayContainers = {}
 	    data.forEach(function(v){
-	    	 this.displayForms[v._key] = new RecordDisplay( self, v )
+	    	 this.displayContainers[v._key] = new RecordDisplay( self, v )
 	    }.bind(this))
     }
 
@@ -342,8 +342,14 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
 
     }
     self.cancel = function() {
-        curRecord._key = NewID();
-        return;
+
+		var form = new RecordDisplay(parent, curRecord, mountCallBack);
+		parent.module.displayContainers[curRecord._key] = form;
+		function mountCallBack () {
+			var $dom = $('#panel'+curRecord._key+' .showForm');
+			$dom.addClass('display');
+		};
+
     }
 
     self.save = function() {
@@ -363,11 +369,9 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
         			v.copyFromRecord(record, true);
 
         			var form = new RecordDisplay(parent, v, mountCallBack);
-					parent.module.displayForms[v._key] = form;
+					parent.module.displayContainers[v._key] = form;
 					function mountCallBack () {
 						var $dom = $('#panel'+v._key+' .showForm');
-						// console.log('some', v,i,form)
-			    		m.render($dom[0], form.view( form.ctrl ) )
 			    		$dom.addClass('display');
 					};
 
@@ -384,13 +388,14 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
 
     this.controller= function(args) {
     	console.log('New RecordForm render', isNew, record._key, curRecord._key);
-    	return {
-            onunload : function() {
-                console.log("unloading RecordForm component",record._key);
-            }
-    	}
+
+        this.onunload = function() {
+            console.log("unloading RecordForm component",record._key);
+        }
+
     	self.ctrl = this;
     	if(typeof mountCallBack==FUNCTION) mountCallBack(self);
+
     },
 
     this.view= function(ctrl, args) {
@@ -454,14 +459,15 @@ var RecordDisplay = function( parent, curRecord, mountCallBack) {
     }
 
     self.edit = function(e){
-		var form = new RecordForm(parent, record);
-		function callback () {
+
+		var form = new RecordForm(parent, record, mountCallBack);
+		parent.module.displayContainers[record._key] = form;
+		function mountCallBack () {
 			console.log('new edit form', record._key)
 			var $dom = $('#panel'+record._key+' .showForm');
-    		m.render($dom[0], form.view(form.controller()) )
     		$dom.removeClass('display');
 		};
-		callback();
+
 	}
 
 	this.controller = function() {
@@ -548,7 +554,7 @@ var RecordList = function defRecordList ( parent ) {
                         // console.log( 'iter',  obj.toString() )
                         return m('div.content.panel#panel'+obj._key,
                         	{className:active, key:obj._key, role:'tabpanel'},
-                    		[m('div.showForm.display', {className:''}, parent.module.displayForms[obj._key]  )]
+                    		[m('div.showForm.display', {className:''}, parent.module.displayContainers[obj._key]  )]
                         )
                     }).concat( function() {
                     	console.log(1234, active, newRec._key)
