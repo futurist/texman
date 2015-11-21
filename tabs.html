@@ -194,6 +194,7 @@ var RecordTypes = (function(obj) {
 	self.addModule = function( newObj ) {
 		for(var i in newObj){
 			newObj[i].template._type = i;
+			newObj[i].fields = Object.keys(newObj[i].template);
 			self.dataModule[i] = newObj[i];
 		}
 	}
@@ -222,7 +223,7 @@ var RecordTypes = (function(obj) {
 
 var Record = function(data) {
     data = data || {}
-    this._fields = Object.keys( RecordTypes.getTemplate(data._type) );
+    this._fields = RecordTypes.getModule(data._type).fields;
     this._key = NewID()
     this._fields.forEach( function(v){
         this[v] = m.prop(data[v]||'')
@@ -279,17 +280,33 @@ Record.saveRecord = function(data) {
 var RecordListWidget = function() {
 
 	var self=this;
-	this.curTabID = 0;
-	this.generateID = NewID();
-    this.updateList= function update() {
-    	self.RecordList.module.init( self.recordList() );
+
+	self.curTabID = 0;
+	self.generateID = NewID();
+
+    self.module = {};
+    self.module.init = function (data, keyword) {
+        this.data = data;
+        this.rowsperpage = 10;
+        this.keyword = m.prop(keyword||'');
+	    this.newRec= new Record(RecordTypes.getTemplate('Computer'));
+	    this.newForm = new RecordForm(self, this.newRec );
+	    this.displayForms = {}
+	    data.forEach(function(v){
+	    	 this.displayForms[v._key] = new RecordDisplay( self, v )
+	    }.bind(this))
     }
 
-    this.controller= function () {
+    self.updateList= function update() {
+    	self.module.init( self.recordList() );
+    }
+
+    self.controller= function () {
+    	console.log( 'init RecordListWidget controller' )
         self.recordList = Record.getRecordList()
         self.RecordList = new RecordList( self );
     },
-    this.view= function(ctrl) {
+    self.view= function(ctrl) {
         return [
         	self.RecordList
         ]
@@ -300,7 +317,7 @@ var RecordListWidget = function() {
  * @param {parent} parent component
  * @param {curRecord} Object||String, if String then will find in RecordTypes for record template
  */
-var RecordForm = function( parent, curRecord ) {
+var RecordForm = function( parent, curRecord, mountCallBack ) {
     if(!curRecord) return;
 
     var self = this;
@@ -316,8 +333,10 @@ var RecordForm = function( parent, curRecord ) {
 
     self.reset = function(e) {
     	if(!window.confirm('已填的内容会丢失,确定重置?')){
-    		skipReDraw();
+    		return
     	}
+	    record = curRecord = new Record(RecordTypes.getTemplate( record._type() ));
+        // record._key = NewID();
     	console.log('reset', record._key)
     	return;
 
@@ -334,14 +353,24 @@ var RecordForm = function( parent, curRecord ) {
             isNew = false;
             record[_mainKey](+new Date());
         	parent.recordList().push( record )
-        	// parent.updateList();
+        	parent.updateList();
             parent.curTabID = parent.recordList().length-1;
 
         } else {
         	parent.recordList().some(function(v,i){
         		if(  v._key==curRecord._key ) {
         			parent.curTabID = i;
-        			v.copyFromRecord(record);
+        			v.copyFromRecord(record, true);
+
+        			var form = new RecordDisplay(parent, v, mountCallBack);
+					parent.module.displayForms[v._key] = form;
+					function mountCallBack () {
+						var $dom = $('#panel'+v._key+' .showForm');
+						// console.log('some', v,i,form)
+			    		m.render($dom[0], form.view( form.ctrl ) )
+			    		$dom.addClass('display');
+					};
+
         			return true;
         		}
         	})
@@ -354,25 +383,27 @@ var RecordForm = function( parent, curRecord ) {
 
 
     this.controller= function(args) {
-    	console.log('New RecordForm render',record._key);
+    	console.log('New RecordForm render', isNew, record._key, curRecord._key);
     	return {
-    		save: self.save,
             onunload : function() {
                 console.log("unloading RecordForm component",record._key);
             }
     	}
+    	self.ctrl = this;
+    	if(typeof mountCallBack==FUNCTION) mountCallBack(self);
     },
+
     this.view= function(ctrl, args) {
         // console.log( record, record.toString() )
 
-        return m("form[data-abide]", { onsubmit:function(){ skipReDraw(); return false;},  config: function(a,b,c,d){ initFundationForm(a,b,c,d,self) } }, [
+        return m("form[data-abide]", {key:record._key, onsubmit:function(){ skipReDraw(); return false;},  config: function(a,b,c,d){ initFundationForm(a,b,c,d,self) } }, [
 
-        	Object.keys(template).map(function  (v) {
+        	_recordType.fields.map(function  (v) {
         		if(v=='_type') return [];
         		var t = template[v];
-        		return m('div', [
+        		return m('div', {key:record._key}, [
         			m("label", t.attrs.title),
-        			m(t.tag, extend({}, t.attrs, {oninput: function(){ skipReDraw(); record[v](this.value);  }, value: record[v]() } ), t.children  ),
+        			m(t.tag, extend({}, t.attrs, {key:record._key, oninput: function(){  record[v](this.value);  }, value: record[v]() } ), t.children  ),
         			m('small.error', "必填")
         		])
         	}),
@@ -380,7 +411,7 @@ var RecordForm = function( parent, curRecord ) {
         	[
         	isNew ?m("button.secondary.button[type=button]", {onclick: self.reset }, "Reset")
 	              :m("button.secondary.button[type=button]", {onclick: self.cancel }, "Cancel"),
-	            m("button[type=button]", {onclick: function(e){ $(e.target).closest('form').submit(); skipReDraw();  } }, "Save")
+	            m("button[type=button]", {onclick: function(e){ self.save()  } }, "Save")
             ]
         ]
 
@@ -408,7 +439,7 @@ function initFundationForm(el, exists, context, vdom, self ){
 
 }
 
-var RecordDisplay = function( parent, curRecord ) {
+var RecordDisplay = function( parent, curRecord, mountCallBack) {
     if(!curRecord) return;
 
     var self = this;
@@ -424,19 +455,30 @@ var RecordDisplay = function( parent, curRecord ) {
 
     self.edit = function(e){
 		var form = new RecordForm(parent, record);
-		setTimeout(function  () {
-			//skipReDraw();
+		function callback () {
+			console.log('new edit form', record._key)
 			var $dom = $('#panel'+record._key+' .showForm');
-    		m.render($dom[0], form.view() )
+    		m.render($dom[0], form.view(form.controller()) )
     		$dom.removeClass('display');
-		},30);
+		};
+		callback();
+	}
+
+	this.controller = function() {
+		console.log('new RecordDisplay', typeof(mountCallBack))
+		this.onunload = function(e){
+			console.log('unload RecordDisplay', e)
+		}
+		self.ctrl = this;
+
+		if( typeof mountCallBack===FUNCTION ) mountCallBack(self);
 	}
 
     this.view= function(ctrl, args) {
         // console.log( record, record.toString() )
         return m("div", {config:null}, [
 
-        	Object.keys(template).map(function  (v) {
+        	_recordType.fields.map(function  (v) {
         		if(v=='_type') return [];
         		var t = template[v];
         		return m('div', [
@@ -458,41 +500,36 @@ var RecordDisplay = function( parent, curRecord ) {
 var RecordList = function defRecordList ( parent ) {
     var self = this;
 
-    self.module = {};
-    self.module.init = function (data, keyword) {
-        this.data = data;
-        this.rowsperpage = 10;
-        this.keyword = m.prop(keyword||'');
-    }
+    self.generateID = NewID();
+
 
     self.controller = function (args) {
-
-        self.module.init( parent.recordList() );
+    	parent.updateList();
         console.log('RecordList controller');
     };
 
 
     self.view =  function(ctrl, args) {
-        var newRec= new Record(RecordTypes.getTemplate('Computer'));
-    	console.log('RecordList view', self.module.data.length, parent.curTabID, parent.generateID);
-    	var active = self.module.data.length==parent.curTabID?'.active':'';
+    	var newRec = parent.module.newRec;
+    	// console.log('RecordList view', parent.module.data.length, parent.curTabID, parent.generateID);
+    	var active = parent.module.data.length==parent.curTabID?'.active':'';
 
-        return m('div', { }, [
+        return m('div', {key: parent.generateID }, [
 
             // m('.row', [
             //     m('input[placeholder="Filter by Name"][type="text"]', {
-            //         onkeyup: m.withAttr('value', self.module.keyword),
-            //         value: self.module.keyword()
+            //         onkeyup: m.withAttr('value', parent.module.keyword),
+            //         value: parent.module.keyword()
             //     })
             // ]),
 
             m('.row', {key: parent.generateID, config:initFundationTab}, [
 
-                m('ul.tabs[data-tab]', [
+                m('ul.tabs[data-tab]', {key: parent.generateID}, [
 
-                            self.module.data.map(function(obj,i){
+                            parent.module.data.map(function(obj,i){
                                 var active = i==parent.curTabID?'.active':'';
-                                // console.log( 'iter', obj._fields, obj )
+                                // console.log( 'iter',  obj.toString() )
                                 return m('li.tab-title'+active, { 'data-tabid':i, key:obj._key }, [
                                     m('a', {
                                         href:'#panel'+obj._key,
@@ -500,21 +537,22 @@ var RecordList = function defRecordList ( parent ) {
 
                                 ]);
 
-                            }).concat( m('li.tab-title'+active, { key:newRec._key, 'data-tabid': self.module.data.length , className:''}, [m('a.addTab[href="#addTab"]', "+")] ) )
+                            }).concat( m('li.tab-title'+active, { key:newRec._key, 'data-tabid': parent.module.data.length , className:''}, [m('a.addTab[href="#addTab"]', "+")] ) )
 
 
                 ]),
 
-                m('div.tabs-content', [
-                    self.module.data.map(function(obj,i){
+                m('div.tabs-content', {key: self.generateID }, [
+                    parent.module.data.map(function(obj,i){
                         var active = i==parent.curTabID?'active':'';
+                        // console.log( 'iter',  obj.toString() )
                         return m('div.content.panel#panel'+obj._key,
-                        	{class:active, key:obj._key, role:'tabpanel'},
-                    		[m('div.showForm.display', {className:''}, new RecordDisplay(parent, obj ) )]
+                        	{className:active, key:obj._key, role:'tabpanel'},
+                    		[m('div.showForm.display', {className:''}, parent.module.displayForms[obj._key]  )]
                         )
                     }).concat( function() {
                     	console.log(1234, active, newRec._key)
-                        return m('div.content.panel#addTab'+active, { key:newRec._key, className:''}, new RecordForm(parent, newRec ) )
+                        return m('div.content.panel#addTab'+active, { key:newRec._key, className:''}, [m('div.addForm', {key: newRec._key, className:''}, parent.module.newForm )] )
                     }() )
 
                 ])
