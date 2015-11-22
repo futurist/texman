@@ -3,6 +3,10 @@
  * [RecordTypes Dictionary]
  * @type _type is additional field key that using in RecordForm Component
  */
+/*
+Thank you for the detailed explain. I see, it's a direction of MVC to not touch some thing, and leave more to let developer decide what to do.
+And I'm thinking whether can using mithril as a node server to `route` request, that way better not touch more DOM and maybe the
+*/
 
 var DBDB =
 {
@@ -13,26 +17,26 @@ var DBDB =
             desc: 'computer list of company',
         },
         template:{
-        	'userid':{ tag:'input', attrs:{title:'UserID', readOnly:true} },
-        	'ip':{ tag:'input',
-        			attrs:{ value:'111.11.12.34', title:'IP', type:'text', required:true, pattern:"number", placeholder:'this is ip' } },
+          'userid':{ tag:'input', attrs:{title:'UserID', readOnly:true} },
+          'ip':{ tag:'input',
+              attrs:{ value:'111.11.12.34', title:'IP', type:'text', required:true, pattern:"number", placeholder:'this is ip' } },
           // 'client1':{ tag:'input', attrs:{value:'awefawef', title:'Client', pattern:'domain', placeholder:'this is client'} },
-        	'client2':{ tag:'select', attrs:{title:'Client', name:'Client', multiple:false, value:"下拉3" }, children:['下拉','下拉2','下拉3'] },
+          'client2':{ tag:'select', attrs:{title:'Client', name:'Client2', multiple:true, value:"下拉3" }, children:['下拉','下拉2','下拉3'] },
 
-          'client':{ tag:'select', attrs:{title:'Client', name:'Client', multiple:false, value:"下拉3" }, children:['下拉','下拉2','下拉3'] }
+          'client':{ tag:'span', attrs:{title:'Client', name:'Client', type:'checkbox', value:["下拉3"] }, children:['下拉','下拉2','下拉3'] }
 
         }
     },
 
     'Computer11':{
 
-    	meta:{
+      meta:{
             title: 'Computer List',
             mainKey:'ih7hcc94_yj5rk9',
             desc: 'computer list of company',
         },
 
-    	template:{
+      template:{
   "ih7hcc94_yj5rk9": {
     "tag": "input",
     "attrs": {

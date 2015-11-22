@@ -24,24 +24,124 @@
 <script src="mValidator.js"></script>
 <script src="dbdb.js"></script>
 <script>
+
+'use strict'
+
 var host="http://1111hui.com:88"
 
 var OBJECT = "[object Object]", ARRAY = "[object Array]", STRING = "[object String]", FUNCTION = "function";
 var type = {}.toString;
 
+/**
+ * http://stackoverflow.com/questions/4459928/how-to-deep-clone-in-javascript
+ */
+function clone(item) {
+    if (!item) { return item; } // null, undefined values check
+
+    var types = [ Number, String, Boolean ],
+        result;
+
+    // normalizing primitives if someone did new String('aaa'), or new Number('444');
+    types.forEach(function(type) {
+        if (item instanceof type) {
+            result = type( item );
+        }
+    });
+
+    if (typeof result == "undefined") {
+        if (Object.prototype.toString.call( item ) === "[object Array]") {
+            result = [];
+            item.forEach(function(child, index, array) {
+                result[index] = clone( child );
+            });
+        } else if (typeof item == "object") {
+            // testing that this is DOM
+            if (item.nodeType && typeof item.cloneNode == "function") {
+                var result = item.cloneNode( true );
+            } else if (!item.prototype) { // check that this is a literal
+                if (item instanceof Date) {
+                    result = new Date(item);
+                } else {
+                    // it is an object literal
+                    result = {};
+                    for (var i in item) {
+                        result[i] = clone( item[i] );
+                    }
+                }
+            } else {
+                // depending what you would like here,
+                // just keep the reference, or create new object
+                if (item.constructor) {
+                    result = new item.constructor();
+                } else {
+                    result = item;
+                }
+            }
+        } else {
+            result = item;
+        }
+    }
+    return result;
+}
+
+/**
+ * COPY First Layer, and Reference sub child
+ * @param  {obj:obj}, ...args
+ * @return {obj}
+ */
 function extend(obj) {
-	obj = obj || {};
-	if(arguments.length<2) return obj;
-	for(var i=1; i<arguments.length; i++){
-		var props = arguments[i];
-		for(var prop in props) {
-		    if(props.hasOwnProperty(prop)) {
-		        obj[prop] = props[prop];
-		    }
-		}
-	}
+    obj = obj || {};
+    if(arguments.length<2) return obj;
+    for(var i=1; i<arguments.length; i++){
+        var props = clone(arguments[i]);
+        for(var prop in props) {
+            if( props.hasOwnProperty(prop) ) {
+                obj[prop] = props[prop];
+            }
+        }
+    }
     return obj;
 }
+
+// helpers
+var futurist = {};
+
+futurist.arrayUnique = function(array) {
+  var a = [], i, j, l, o = {};
+  for(i = 0, l = array.length; i < l; i++) {
+    if(o[JSON.stringify(array[i])] === undefined) {
+      a.push(array[i]);
+      o[JSON.stringify(array[i])] = true;
+    }
+  }
+  return a;
+};
+// remove val from array
+futurist.removeFromTo = function(array, from, to) {
+  var rest = array.slice((to || from) + 1 || array.length);
+  array.length = from < 0 ? array.length + from : from;
+  array.push.apply(array, rest);
+  return array;
+};
+// remove val from array
+futurist.removeFromSet = function(array, val) {
+  var ret = array, tmp;
+  while( (tmp = array.indexOf(val))>-1 )
+    ret = futurist.removeFromTo(array, tmp);
+  return ret;
+};
+// last array element
+futurist.array_last_val = function(array) {
+  return array.length ? array[array.length-1] : null;
+};
+futurist.addToSet = function(arr, val) {
+    if( !arr || arr.constructor !== Array ) arr=[];
+    if(arr.indexOf(val)==-1){
+        arr.push(val)
+    }
+    return arr;
+}
+
 
 function NewID(){
     return +new Date() + "_" + (Math.round(Math.random() * 1e6)).toString(36)
@@ -54,13 +154,13 @@ function NewID(){
  * @param  {[type]} wait [description]
  * @return {[type]}      [description]
  */
-_delay = function(func, wait) {
+var _delay = function(func, wait) {
     var args = [].slice.call(arguments, 2);
     return setTimeout(function(){
       return func.apply(null, args);
     }, wait);
 }
-_debounce = function(func, wait, immediate) {
+var _debounce = function(func, wait, immediate) {
   var timeout, result;
   return function() {
     var context = this, args = arguments;
@@ -156,10 +256,10 @@ var mBindOnce = (function() {
 }())
 
 function skipReDraw(){
-	m.redraw.strategy("none");
+    m.redraw.strategy("none");
 }
 function beginReDraw(){
-	m.redraw.strategy("diff");
+    m.redraw.strategy("diff");
 }
 
 function persistent(el, isInit, context) {
@@ -208,39 +308,39 @@ function findKeyVal(data, key, val) {
 
 /**
  * [description]
- * @param  {Object} obj) {	var        self [description]
+ * @param  {Object} obj) {  var        self [description]
  * @return {[type]}      [description]
  */
 var RecordTypes = (function(obj) {
 
-	var self = {};
+    var self = {};
 
-	self.dataModule = {};
+    self.dataModule = {};
 
-	self.addModule = function( newObj ) {
-		for(var i in newObj){
-			newObj[i].template._type = i;
-			newObj[i].fields = Object.keys(newObj[i].template);
-			self.dataModule[i] = newObj[i];
-		}
-	}
+    self.addModule = function( newObj ) {
+        for(var i in newObj){
+            newObj[i].template._type = i;
+            newObj[i].fields = Object.keys(newObj[i].template);
+            self.dataModule[i] = newObj[i];
+        }
+    }
 
-	self.getModule = function( type ){
-		return self.dataModule[type];
-	}
+    self.getModule = function( type ){
+        return self.dataModule[type];
+    }
 
-	self.getTemplate = function( type ){
-		var newObj={}
-		var template = self.dataModule[type].template;
-		for(var i in template){
-			newObj[i] = i=='_type'? template[i] : template[i].attrs.value
-		}
-		return newObj;
-	}
+    self.getTemplate = function( type ){
+        var newObj={}
+        var template = self.dataModule[type].template;
+        for(var i in template){
+            newObj[i] = i=='_type'? template[i] : template[i].attrs.value
+        }
+        return newObj;
+    }
 
-	self.addModule(obj);
+    self.addModule(obj);
 
-	return self;
+    return self;
 
 })(DBDB)
 
@@ -259,7 +359,7 @@ var Record = function(data) {
 }
 
 Record.prototype.getFields = function(type) {
-	return RecordTypes.getModule(type||this._type()).fields||[];
+    return RecordTypes.getModule(type||this._type()).fields||[];
 }
 
 Record.prototype.toString = function() {
@@ -279,7 +379,7 @@ Record.prototype.clone = function(data) {
 }
 
 Record.prototype.copyFromRecord = function(obj, preserveKey) {
-	obj = obj || {}
+    obj = obj || {}
 
     this.getFields().forEach( function(v){
         this[v]( obj[v]()||'' )
@@ -299,12 +399,12 @@ Record.getRecordList = function(data) {
             return response.error;
         }
     }).then(function(data){
-    	return data;
+        return data;
     })
 }
 Record.saveRecord = function(data) {
     return m.request({method: "POST", url: '/views/dataJSON.json', data: data, initialValue:[], type:Record}).then(function(data){
-    	console.log(data)
+        console.log(data)
     })
 }
 
@@ -313,36 +413,36 @@ Record.saveRecord = function(data) {
  */
 var RecordListWidget = function() {
 
-	var self=this;
+    var self=this;
 
-	self.curTabID = 0;
-	self.generateID = NewID();
+    self.curTabID = 0;
+    self.generateID = NewID();
 
     self.module = {};
     self.module.init = function (data, keyword) {
         this.data = data;
         this.rowsperpage = 10;
         this.keyword = m.prop(keyword||'');
-	    this.newRec= new Record(RecordTypes.getTemplate('Computer'));
-	    this.newForm = new RecordForm(self, this.newRec );
-	    this.displayContainers = {}
-	    data.forEach(function(v){
-	    	 this.displayContainers[v._key] = new RecordDisplay( self, v )
-	    }.bind(this))
+        this.newRec= new Record(RecordTypes.getTemplate('Computer'));
+        this.newForm = new RecordForm(self, this.newRec );
+        this.displayContainers = {}
+        data.forEach(function(v){
+             this.displayContainers[v._key] = new RecordDisplay( self, v )
+        }.bind(this))
     }
 
     self.updateList= function update() {
-    	self.module.init( self.recordList() );
+        self.module.init( self.recordList() );
     }
 
     self.controller= function () {
-    	console.log( 'init RecordListWidget controller' )
+        console.log( 'init RecordListWidget controller' )
         self.recordList = Record.getRecordList()
         self.RecordList = new RecordList( self );
     },
     self.view= function(ctrl) {
         return [
-        	self.RecordList
+            self.RecordList
         ]
     }
 }
@@ -367,69 +467,70 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
     var record = !isNew&& curRecord.clone() || curRecord;
     var recordKeys = {}
     record.getFields().forEach(function  (v) {
-    	recordKeys[v] = NewID();
+        recordKeys[v] = NewID();
     })
 
-	var checkErrors = mValidator(function(record, patterns, errors){
-		var template = RecordTypes.getModule( record._type() ).template;
-	    record.getFields().forEach(function  (v) {
-	    	var pattern = template[v] &&  template[v].attrs && template[v].attrs.pattern;
-	    	if( pattern && !patterns[ pattern ].test(record[v]()) ) {
-	    		errors.add(v, template[v].errorMsg );
-	    	}
-	    })
-	})
+    var checkErrors = mValidator(function(record, patterns, errors){
+        var template = RecordTypes.getModule( record._type() ).template;
+        record.getFields().forEach(function  (v) {
+            var pattern = template[v] &&  template[v].attrs && template[v].attrs.pattern;
+            if( pattern && !patterns[ pattern ].test(record[v]()) ) {
+                errors.add(v, template[v].errorMsg );
+            }
+        })
+    })
 
     self.focusDiv = [];
 
     self.reset = function(e) {
-    	if(!window.confirm('已填的内容会丢失,确定重置?')){
-    		return
-    	}
-    	self.focusDiv = [];
-	    record = curRecord = new Record(RecordTypes.getTemplate( record._type() ));
+        if(!window.confirm('已填的内容会丢失,确定重置?')){
+            return
+        }
+        self.focusDiv = [];
+        record = curRecord = new Record(RecordTypes.getTemplate( record._type() ));
+        console.log(record['client']() )
         // record._key = NewID();
-    	console.log('reset', record._key)
-    	return;
+        console.log('reset', record._key)
+        return;
 
     }
     self.cancel = function() {
-    	if(!window.confirm('内容将会还原，确定继续？') ) return;
-		var form = new RecordDisplay(parent, curRecord, mountCallBack);
-		parent.module.displayContainers[curRecord._key] = form;
-		function mountCallBack () {
-			var $dom = $('#panel'+curRecord._key+' .showForm');
-			$dom.addClass('display');
-		};
+        if(!window.confirm('内容将会还原，确定继续？') ) return;
+        var form = new RecordDisplay(parent, curRecord, mountCallBack);
+        parent.module.displayContainers[curRecord._key] = form;
+        function mountCallBack () {
+            var $dom = $('#panel'+curRecord._key+' .showForm');
+            $dom.addClass('display');
+        };
 
     }
 
     self.save = function() {
-    	// console.log(curRecord&&curRecord.toString(), record.toString())
-    	if(isNew){
+        // console.log(curRecord&&curRecord.toString(), record.toString())
+        if(isNew){
             isNew = false;
             record[_mainKey](+new Date());
-        	parent.recordList().push( record )
-        	parent.updateList();
+            parent.recordList().push( record )
+            parent.updateList();
             parent.curTabID = parent.recordList().length-1;
 
         } else {
-        	parent.recordList().some(function(v,i){
-        		if(  v._key==curRecord._key ) {
-        			parent.curTabID = i;
-        			v.copyFromRecord(record, true);
+            parent.recordList().some(function(v,i){
+                if(  v._key==curRecord._key ) {
+                    parent.curTabID = i;
+                    v.copyFromRecord(record, true);
 
-        			var form = new RecordDisplay(parent, v, mountCallBack);
-					parent.module.displayContainers[v._key] = form;
-					function mountCallBack () {
-						var $dom = $('#panel'+v._key+' .showForm');
-			    		$dom.addClass('display');
-			    		m.redraw();
-					};
+                    var form = new RecordDisplay(parent, v, mountCallBack);
+                    parent.module.displayContainers[v._key] = form;
+                    function mountCallBack () {
+                        var $dom = $('#panel'+v._key+' .showForm');
+                        $dom.addClass('display');
+                        m.redraw();
+                    };
 
-        			return true;
-        		}
-        	})
+                    return true;
+                }
+            })
         }
 
         // _delay(m.redraw, 100);
@@ -439,73 +540,143 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
 
     self.delaySet = _debounce( function(isError){ return isError?'has-tip':'labelTitle' }, 1000 );
 
+
+    self.parseFormElement = function (v) {
+
+        var t = template[v];
+        var errors = checkErrors(record);
+
+        var isRequired = t.attrs&&t.attrs.required?'[required]':'';
+        var isError = (self.focusDiv.indexOf(v)>-1)&&errors&&errors[v];
+
+        var isCheckbox = t.tag=='span' && t.attrs.type=='checkbox';
+        var isSelect = t.tag=='select';
+
+        function updateSet(isSet, val){
+            record[v]( isSet ? futurist.addToSet(record[v](), val) : futurist.removeFromSet(record[v](), val) );
+        }
+
+        return m('div.inputWrap'+isRequired, {key:recordKeys[v], className:  isError?'valid-error':''  },  [
+
+            m("label", { for: recordKeys[v] }, [ m('span[data-tooltip]', {className: isError?'has-tip':'labelTitle' , title:'oisdjfoj'}, t.attrs.title)] ),
+
+            m(  t.tag,
+
+                (function() {
+                    var attrs = extend( {}, t.attrs);
+                    if( isSelect ){
+                        extend( attrs,
+                            {
+                                id:recordKeys[v],
+                                config: function(el){
+                                    $(el).val( record[v]() );
+                                },
+                                onfocus:function(){
+                                    futurist.addToSet(self.focusDiv, v);
+                                },
+                                oninput: function(){ record[v]( $(this).val() ); },
+                            }
+                        )
+                    } else if( isCheckbox ){
+                        delete attrs.name;
+                        extend( attrs,
+                        {
+                            id:recordKeys[v],
+                        }
+                        )
+                    } else {
+
+                        extend( attrs,
+                            {
+                                id:recordKeys[v],
+                                onfocus:function(){
+                                    futurist.addToSet(self.focusDiv, v);
+                                },
+                                oninput: function(){ record[v]( $(this).val() );  },
+                                value: record[v]()
+                            }
+                        )
+
+                    }
+                    return attrs;
+
+                })(),
+
+                (function(){
+                    if( isSelect ){
+
+                        var value = record[v]();
+                        var options = [].concat.apply([], t.children);
+                        if( value&&value.constructor==String ){
+                            if( options.indexOf( value ) == -1 ) options.unshift(value);
+                        }
+                        if( value&&value.constructor==Array ){
+                            value.forEach(function(val){
+                                if( val&&options.indexOf( val ) == -1 ) options.unshift(val);
+                            });
+                        }
+                        return options.map(function(v){ return m('option', v) });
+                    }
+                    if( isCheckbox ) {
+
+                        return t.children.map(function(checkBoxValue){
+                            console.log( t.attrs.value )
+                            var isChecked = t.attrs.value.indexOf( checkBoxValue )>-1;
+                            updateSet( isChecked, checkBoxValue );
+                            return   m('label', [
+                                        m('span.checkbox', checkBoxValue),
+                                        m('input', extend({}, t.attrs, {title:'', value:checkBoxValue, checked:isChecked, onchange:function(){
+                                            futurist.addToSet(self.focusDiv, v);
+                                            updateSet( this.checked, this.value );
+                                        } }) ) ] )
+                        });
+                    }
+                    return [];
+                })()
+
+            ),
+
+        ])
+
+    }
+
+
     this.controller= function(args) {
-    	console.log('New RecordForm render', isNew, record._key, curRecord._key);
+        console.log('New RecordForm render', isNew, record._key, curRecord._key);
 
         this.onunload = function() {
             console.log("unloading RecordForm component",record._key);
         }
 
-    	self.ctrl = this;
-    	if(typeof mountCallBack==FUNCTION) mountCallBack(self);
+        self.ctrl = this;
+        if(typeof mountCallBack==FUNCTION) mountCallBack(self);
 
     },
 
     this.view= function(ctrl, args) {
+
         // console.log( record, record.toString() )
         // to call from controller see github issue
-        var errors = checkErrors(record);
+
         return m("form.mValidator[novalidate]", {key:record._key, config: null  }, [
 
-        	_recordType.fields.map(function  (v) {
-        		if(v=='_type') return [];
-        		var t = template[v];
-        		var isRequired = t.attrs&&t.attrs.required?'[required]':'';
-        		var isError = (self.focusDiv.indexOf(v)>-1)&&errors&&errors[v];
-        		// console.log('view: ', record._key, self.focusDiv(), v)
-        		return m('div.inputWrap'+isRequired, {key:recordKeys[v], className:  isError?'valid-error':''  }, [
-        			m("label", [ m('span[data-tooltip]', {className: isError?'has-tip':'labelTitle' , title:'oisdjfoj'}, t.attrs.title)] ),  //, m('small.error', "必填")
-        			m(t.tag, extend({}, t.attrs,
-        				{
-        					config: function(el){
-        						if(t.tag=='select'){
-        							var val=[].concat.call([], el.value );
-        							val.forEach(function(v){
-        								$(el).find('[value="'+v+'"]').prop('selected', 'selected');
-        							})
-        						}
-        					},
-        				 	onfocus:function(){
-        				 		self.focusDiv.push(v);
-        				 	},
-        				 	oninput: function(){  record[v](this.value); },
-        					value: record[v]()
-        				} ),
+            _recordType.fields.map(function  (v) {
+                if(v=='_type') return [];
+                // console.log('view: ', record._key, self.focusDiv(), v)
+                return self.parseFormElement( v )
+            }),
 
-        				(function(){
-        					if(t.tag=='select'){
-        						if( record[v]()&& t.children.indexOf( record[v]() ) == -1 ) t.children.unshift(record[v]());
-        						return t.children.map(function(v){ return m('option', v) });
-        					}
-        					return [];
-        				})()
-
-        			),
-
-        		])
-        	}),
-
-        	m('div.buttons',{},
-        	[
-        	isNew ?m("button.secondary.button[type=button]", {onclick: self.reset }, "Reset")
-	              :m("button.secondary.button[type=button]", {onclick: self.cancel }, "Cancel"),
-	            m("button[type=button]", {onclick: function(e){
-	            	if(!errors){ self.save() }
-	            	else{
-	            		self.focusDiv = [].concat.apply([], _recordType.fields);
-	            		alert('请确保表单没有错误')
-	            	}
-	            } }, "Save")
+            m('div.buttons',{},
+            [
+            isNew ?m("button.secondary.button[type=button]", {onclick: self.reset }, "Reset")
+                  :m("button.secondary.button[type=button]", {onclick: self.cancel }, "Cancel"),
+                m("button[type=button]", {onclick: function(e){
+                    if(! checkErrors(record) ){ self.save() }
+                    else{
+                        self.focusDiv = [].concat.apply([], _recordType.fields);
+                        alert('请确保表单没有错误')
+                    }
+                } }, "Save")
             ])
         ]
 
@@ -530,39 +701,39 @@ var RecordDisplay = function( parent, curRecord, mountCallBack) {
 
     self.edit = function(e){
 
-		var form = new RecordForm(parent, record, mountCallBack);
-		parent.module.displayContainers[record._key] = form;
-		function mountCallBack () {
-			console.log('new edit form', record._key)
-			var $dom = $('#panel'+record._key+' .showForm');
-    		$dom.removeClass('display');
-		};
+        var form = new RecordForm(parent, record, mountCallBack);
+        parent.module.displayContainers[record._key] = form;
+        function mountCallBack () {
+            console.log('new edit form', record._key)
+            var $dom = $('#panel'+record._key+' .showForm');
+            $dom.removeClass('display');
+        };
 
-	}
+    }
 
-	this.controller = function() {
-		// console.log('new RecordDisplay', record._key, typeof(mountCallBack))
-		this.onunload = function(e){
-			// e.preventDefault();
-			console.log('unload RecordDisplay', record._key)
-		}
-		self.ctrl = this;
+    this.controller = function() {
+        // console.log('new RecordDisplay', record._key, typeof(mountCallBack))
+        this.onunload = function(e){
+            // e.preventDefault();
+            console.log('unload RecordDisplay', record._key)
+        }
+        self.ctrl = this;
 
-		if( typeof mountCallBack===FUNCTION ) mountCallBack(self);
-	}
+        if( typeof mountCallBack===FUNCTION ) mountCallBack(self);
+    }
 
     this.view= function(ctrl, args) {
         // console.log( record, record.toString() )
         return m("div", {config:null}, [
 
-        	_recordType.fields.map(function  (v) {
-        		if(v=='_type') return [];
-        		var t = template[v];
-        		return m('div', [
-        			m("label", t.attrs.title),
-        			m("input", extend( {}, t.attrs, {disabled:true,readOnly:true}, { value: record[v]() } )  )
-        		])
-        	}),
+            _recordType.fields.map(function  (v) {
+                if(v=='_type') return [];
+                var t = template[v];
+                return m('div', [
+                    m("label", t.attrs.title),
+                    m("input", extend( {}, t.attrs, {disabled:true,readOnly:true}, { value: record[v]() } )  )
+                ])
+            }),
 
             m("button.alert.button[type=button]", {onclick: self.remove }, "Delete"),
             m("button.success.button[type=button]", {onclick: self.edit }, "Edit"),
@@ -581,15 +752,15 @@ var RecordList = function defRecordList ( parent ) {
 
 
     self.controller = function (args) {
-    	parent.updateList();
+        parent.updateList();
         console.log('RecordList controller');
     };
 
 
     self.view =  function(ctrl, args) {
-    	var newRec = parent.module.newRec;
-    	// console.log('RecordList view', parent.module.data.length, parent.curTabID, parent.generateID);
-    	var active = parent.module.data.length==parent.curTabID?'.active':'';
+        var newRec = parent.module.newRec;
+        // console.log('RecordList view', parent.module.data.length, parent.curTabID, parent.generateID);
+        var active = parent.module.data.length==parent.curTabID?'.active':'';
 
         return m('div', {key: parent.generateID }, [
 
@@ -624,11 +795,11 @@ var RecordList = function defRecordList ( parent ) {
                         var active = i==parent.curTabID?'active':'';
                         // console.log( 'iter',  obj.toString() )
                         return m('div.content.panel#panel'+obj._key,
-                        	{className:active, key:obj._key, role:'tabpanel'},
-                    		[m('div.showForm.display', {className:''}, parent.module.displayContainers[obj._key]  )]
+                            {className:active, key:obj._key, role:'tabpanel'},
+                            [m('div.showForm.display', {className:''}, parent.module.displayContainers[obj._key]  )]
                         )
                     }).concat( function() {
-                    	// console.log(1234, active, newRec._key)
+                        // console.log(1234, active, newRec._key)
                         return m('div.content.panel#addTab'+active, { key:newRec._key, className:''}, [m('div.addForm', {key: newRec._key, className:''}, parent.module.newForm )] )
                     }() )
 
@@ -652,28 +823,28 @@ function initFundation(el, exists, context, vdom){
     tab: {
       callback : function (tab) {
 
-      	var curTabID = parseInt($(tab).data('tabid'))||0;
-      	// console.log(curTabID)
-      	var newUL = vdom.children[0].children[curTabID];
-      	var newDIV = vdom.children[1].children[curTabID];
+        var curTabID = parseInt($(tab).data('tabid'))||0;
+        // console.log(curTabID)
+        var newUL = vdom.children[0].children[curTabID];
+        var newDIV = vdom.children[1].children[curTabID];
 
         /**
          * below code to make addNew tab deselect by add a 'active' class to V-DOM when switched to
          */
         vdom.children[0].children.forEach(function(v){ if(v&&v.attrs.className) v.attrs.className=v.attrs.className.replace(/\b\s+active\b/g, '') });
         vdom.children[1].children.forEach(function(v){ if(v&&v.attrs.className) v.attrs.className=v.attrs.className.replace(/\b\s+active\b/g, '') });
-      	newUL.attrs.className+=' active';
-      	newDIV.attrs.className+=' active';
-      	// console.log(newUL.attrs.className, curTabID)
-      	RecordList1.curTabID = curTabID;
+        newUL.attrs.className+=' active';
+        newDIV.attrs.className+=' active';
+        // console.log(newUL.attrs.className, curTabID)
+        RecordList1.curTabID = curTabID;
 
-      	if( $(tab).find('.addTab')  ){
-
-
-      	} else {
+        if( $(tab).find('.addTab')  ){
 
 
-      	}
+        } else {
+
+
+        }
       }
     },
 
