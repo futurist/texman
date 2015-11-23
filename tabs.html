@@ -134,10 +134,10 @@ futurist.removeFromSet = function(array, val) {
 futurist.array_last_val = function(array) {
   return array.length ? array[array.length-1] : null;
 };
-futurist.addToSet = function(arr, val) {
+futurist.addToSet = function(arr, val, isFirst) {
     if( !arr || arr.constructor !== Array ) arr=[];
     if(arr.indexOf(val)==-1){
-        arr.push(val)
+        isFirst? arr.unshift(val) : arr.push(val)
     }
     return arr;
 }
@@ -556,7 +556,7 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
 
     self.parseFormElement = function (v) {
 
-        var t = (template[v]);
+        var t = clone(template[v]);
         var errors = checkErrors(record);
         var isRequired = t.attrs&&t.attrs.required?'[required]':'';
         var isError = (self.focusDiv.indexOf(v)>-1)&&errors&&errors[v];
@@ -564,6 +564,10 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
         var isRadio = t.tag=='span' && t.attrs.type=='radio';
         var isCheckbox = t.tag=='span' && t.attrs.type=='checkbox';
         var isSelect = t.tag=='select';
+        var SHOW_LABEL = true;
+        
+        // If default value not in options, then add it
+        if((isSelect||isCheckbox||isRadio)&&t.attrs.value) futurist.addToSet( t.children, t.attrs.value, true );
 
         function updateSet(isSet, key, val){
             record[key]( isSet ? futurist.addToSet(record[key](), val) : futurist.removeFromSet(record[key](), val) );
@@ -571,13 +575,13 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
 
         return m('div.inputWrap'+isRequired, {key:recordKeys[v], className:  isError?'valid-error':''  },  [
 
-            m("label", 
+            SHOW_LABEL? m("label", 
             	{ for: recordKeys[v], className:'title_'+ t.attrs.type }, 
             	[ m('span.labelTitle', 
             		!errorMsg? {className:'' } :{'data-tooltip':'tooltip_'+recordKeys[v], className:'has-tip', title:errorMsg, 
             		config:function(){ $('#tooltip_'+recordKeys[v]).html(errorMsg+'<span class="nub"></span>') } }, 
-            		t.attrs.title)]
-            ),
+            		t.attrs.title) ]
+            ) : [],
 
             m(  t.tag,
 
@@ -600,7 +604,6 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
                                 	} else {
                                 		record[v]( this.value );
                                 	}
-                                	console.log( record[v]() )
                                 },
                             }
                         )
@@ -639,29 +642,32 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
                 })(),
 
                 (function(){
-                    if( isSelect ){
 
-                        var value = record[v]();
-                        var options = [].concat.apply([], t.children);
-                        if( value&&value.constructor==String ){
-                            if( options.indexOf( value ) == -1 ) options.unshift(value);
-                        }
-                        if( value&&value.constructor==Array ){
-                            value.forEach(function(val){
-                                if( val&&options.indexOf( val ) == -1 ) options.unshift(val);
-                            });
-                        }
+                	if(isSelect||isCheckbox||isRadio){
+	                    var value = record[v]();
+	                    var options = [].concat.apply([], t.children);
+	                    if( value&&value.constructor==String ){
+	                        if( options.indexOf( value ) == -1 ) options.unshift(value);
+	                    }
+	                    if( value&&value.constructor==Array ){
+	                        value.forEach(function(val){
+	                            if( val&&options.indexOf( val ) == -1 ) options.unshift(val);
+	                        });
+	                    }
+                	}
+
+
+                    if( isSelect ){
                         options = options.map(function(v){ return m('option', v) });
-                        if( t.attrs.placeholder ) options.unshift( m('option', {value:''}, t.attrs.placeholder ) );
+                        if( t.attrs.placeholder ) options.unshift( m('option', {disabled:true, value:''}, t.attrs.placeholder ) );
                         return options;
 
                     } else if( isCheckbox ) {
-
-                        return t.children.map(function(value){
-                            var isChecked = record[v]().indexOf( value )>-1;
+                        return options.map(function(opt){
+                            var isChecked = record[v]().indexOf( opt )>-1;
                             return   m('label', [
-                                        m('span.checkbox', value),
-                                        m('input', extend({}, t.attrs, {title:'', value:value, checked: isChecked,
+                                        m('span.checkbox', opt),
+                                        m('input', extend({}, t.attrs, {title:'', value:opt, checked: isChecked,
                                         	onchange:function(){
                                             futurist.addToSet(self.focusDiv, v);
                                             updateSet( this.checked, v, this.value );
@@ -669,12 +675,11 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
                         });
 
                     } else if( isRadio ) {
-
-                        return t.children.map(function(value){
-                            var isChecked = record[v]().indexOf( value )>-1;
+                        return options.map(function(opt){
+                            var isChecked = record[v]().indexOf( opt )>-1;
                             return   m('label', [
-                                        m('span.checkbox', value),
-                                        m('input', extend({}, t.attrs, {title:'', value:value, checked: isChecked,
+                                        m('span.checkbox', opt),
+                                        m('input', extend({}, t.attrs, {title:'', value:opt, checked: isChecked,
                                         	onchange:function(){
                                             futurist.addToSet(self.focusDiv, v);
                                             record[v]( this.value )

@@ -19,13 +19,13 @@ var DBDB =
         template:{
           'userid':{ tag:'input', attrs:{title:'UserID', readOnly:true} },
           'ip':{ tag:'input',
-              attrs:{ value:'111.11.12.34', title:'IP', type:'text', required:true, pattern:["number"], placeholder:'this is ip' } },
+              attrs:{ value:'111.11.12.34', title:'IP', type:'text', required:true, pattern:"number", placeholder:'this is ip' } },
           // 'client1':{ tag:'input', attrs:{value:'awefawef', title:'Client', pattern:['domain'], placeholder:'this is client'} },
-          'client2':{ tag:'select', attrs:{title:'select', name:'Client2', placeholder:'select client...', required:true, multiple:false,  }, children:['下拉','下拉2','下拉3'] },
+          'client2':{ tag:'select', attrs:{title:'select', name:'Client2', placeholder:'select client...', value:'', required:true, multiple:false,  }, children:['下拉','下拉2','下拉3'] },
 
-          'client3':{ tag:'span', attrs:{title:'checkbox', name:'Client3',required:true, type:'checkbox' }, children:['下拉','下拉2','下拉3'] },
+          'client3':{ tag:'span', attrs:{title:'checkbox', name:'Client3',required:true, type:'checkbox', value:'新技术革命' }, children:['下拉','下拉2','下拉3'] },
 
-          'client':{ tag:'span', attrs:{title:'radio', name:'Client4',required:true, type:'radio' }, children:['下拉','下拉2','下拉3'] },
+          'client':{ tag:'span', attrs:{title:'radio', name:'Client4',required:true, type:'radio', value:'新技术革命' }, children:['下拉','下拉2','下拉3'] },
 
         }
     },
