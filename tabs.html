@@ -472,10 +472,17 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
 
     var checkErrors = mValidator(function(record, patterns, errors){
         var template = RecordTypes.getModule( record._type() ).template;
+
         record.getFields().forEach(function  (v) {
-            var pattern = template[v] &&  template[v].attrs && template[v].attrs.pattern;
-            if( pattern && !patterns[ pattern ].test(record[v]()) ) {
-                errors.add(v, template[v].errorMsg );
+        	var t = template[v];
+        	var value = record[v]();
+            var pattern = t &&  t.attrs && t.attrs.pattern;
+	        var isRequired = t.attrs&&t.attrs.required?'[required]':'';
+	        if(isRequired && ( typeof value=='object'&&!value.length || !value ) ) {
+	        	errors.add(v, '必填项' );
+	        }
+            if( pattern && !patterns[ pattern ].test(value) ) {
+                errors.add(v, t.errorMsg );
             }
         })
     })
@@ -549,6 +556,7 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
         var isRequired = t.attrs&&t.attrs.required?'[required]':'';
         var isError = (self.focusDiv.indexOf(v)>-1)&&errors&&errors[v];
 
+        var isRadio = t.tag=='span' && t.attrs.type=='radio';
         var isCheckbox = t.tag=='span' && t.attrs.type=='checkbox';
         var isSelect = t.tag=='select';
 
@@ -558,26 +566,41 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
 
         return m('div.inputWrap'+isRequired, {key:recordKeys[v], className:  isError?'valid-error':''  },  [
 
-            m("label", { for: recordKeys[v] }, [ m('span[data-tooltip]', {className: isError?'has-tip':'labelTitle' , title:'oisdjfoj'}, t.attrs.title)] ),
+            m("label", { for: recordKeys[v], className:'title_'+ t.attrs.type }, [ m('span[data-tooltip]', {className: isError?'has-tip':'labelTitle' , title:'oisdjfoj'}, t.attrs.title)] ),
 
             m(  t.tag,
 
                 (function() {
                     var attrs = extend( {}, t.attrs);
-                    if( isSelect ){
+                    if( isSelect ) {
                         extend( attrs,
                             {
                                 id:recordKeys[v],
                                 config: function(el){
+                                	if( attrs.multiple && !record[v]() ) record[v]([]);
                                     $(el).val( record[v]() );
                                 },
-                                onfocus:function(){
+                                oninput: function(){ 
                                     futurist.addToSet(self.focusDiv, v);
+                                	if( attrs.multiple ){
+	                                	$(this).find('option').each( function(){
+	                                		updateSet( this.selected&&this.value, v, this.value );
+	                                	});
+                                	} else {
+                                		record[v]( this.value );
+                                	}
+                                	console.log( record[v]() )
                                 },
-                                oninput: function(){ record[v]( $(this).val() ); },
                             }
                         )
                     } else if( isCheckbox ){
+                        delete attrs.name;
+                        extend( attrs,
+                        {
+                            id:recordKeys[v],
+                        }
+                        )
+                    } else if( isRadio ){
                         delete attrs.name;
                         extend( attrs,
                         {
@@ -589,10 +612,10 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
                         extend( attrs,
                             {
                                 id:recordKeys[v],
-                                onfocus:function(){
+                                oninput: function(){ 
                                     futurist.addToSet(self.focusDiv, v);
+                                	record[v]( $(this).val() );  
                                 },
-                                oninput: function(){ record[v]( $(this).val() );  },
                                 value: record[v]()
                             }
                         )
@@ -615,21 +638,42 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
                                 if( val&&options.indexOf( val ) == -1 ) options.unshift(val);
                             });
                         }
-                        return options.map(function(v){ return m('option', v) });
-                    }
-                    if( isCheckbox ) {
-                        return t.children.map(function(checkBoxValue){
-                            var isChecked = record[v]().indexOf( checkBoxValue )>-1;
+                        options = options.map(function(v){ return m('option', v) });
+                        if( t.attrs.placeholder ) options.unshift( m('option', {value:''}, t.attrs.placeholder ) );
+                        return options;
+
+                    } else if( isCheckbox ) {
+
+                        return t.children.map(function(value){
+                            var isChecked = record[v]().indexOf( value )>-1;
                             return   m('label', [
-                                        m('span.checkbox', checkBoxValue),
-                                        m('input', extend({}, t.attrs, {title:'', value:checkBoxValue, checked: isChecked,
+                                        m('span.checkbox', value),
+                                        m('input', extend({}, t.attrs, {title:'', value:value, checked: isChecked,
                                         	onchange:function(){
                                             futurist.addToSet(self.focusDiv, v);
                                             updateSet( this.checked, v, this.value );
                                         } }) ) ] )
                         });
+
+                    } else if( isRadio ) {
+
+                        return t.children.map(function(value){
+                            var isChecked = record[v]().indexOf( value )>-1;
+                            return   m('label', [
+                                        m('span.checkbox', value),
+                                        m('input', extend({}, t.attrs, {title:'', value:value, checked: isChecked,
+                                        	onchange:function(){
+                                            futurist.addToSet(self.focusDiv, v);
+                                            record[v]( this.value )
+                                        } }) ) ] )
+                        });
+
+                    } else {
+
+                    	return [];
+
                     }
-                    return [];
+                    
                 })()
 
             ),
