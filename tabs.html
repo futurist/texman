@@ -470,23 +470,6 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
         recordKeys[v] = NewID();
     })
 
-    var checkErrors = mValidator(function(record, patterns, errors){
-        var template = RecordTypes.getModule( record._type() ).template;
-
-        record.getFields().forEach(function  (v) {
-        	var t = template[v];
-        	var value = record[v]();
-            var pattern = t &&  t.attrs && t.attrs.pattern;
-	        var isRequired = t.attrs&&t.attrs.required?'[required]':'';
-	        if(isRequired && ( typeof value=='object'&&!value.length || !value ) ) {
-	        	errors.add(v, '必填项' );
-	        }
-            if( pattern && !patterns[ pattern ].test(value) ) {
-                errors.add(v, t.errorMsg );
-            }
-        })
-    })
-
     self.focusDiv = [];
 
     self.reset = function(e) {
@@ -547,15 +530,37 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
 
     self.delaySet = _debounce( function(isError){ return isError?'has-tip':'labelTitle' }, 1000 );
 
+    var checkErrors = mValidator(function(record, patterns, errorMsg, errors){
+        var template = RecordTypes.getModule( record._type() ).template;
+
+        record.getFields().forEach(function  (v) {
+        	var t = template[v];
+        	var value = record[v]();
+            var pattern = t &&  t.attrs && t.attrs.pattern;
+	        var isRequired = t.attrs&&t.attrs.required?'[required]':'';
+	        if(isRequired && ( !value || typeof value=='object'&&!value.length ) ) {
+	        	errors.add(v, '必填项' );
+	        }
+            if( pattern){
+				if(typeof pattern=='string' && !patterns[ pattern ].test(value) ) {
+	                errors.add(v, errorMsg[ pattern ] );
+	            } else if(typeof pattern=='object'){
+	            	pattern.forEach(function(pt){
+	            		if(!patterns[ pt ].test(value)) errors.add(v, errorMsg[ pt ] );
+	            	})
+	            }
+            }
+
+        })
+    })
 
     self.parseFormElement = function (v) {
 
         var t = (template[v]);
         var errors = checkErrors(record);
-
         var isRequired = t.attrs&&t.attrs.required?'[required]':'';
         var isError = (self.focusDiv.indexOf(v)>-1)&&errors&&errors[v];
-
+        var errorMsg = errors&&errors[v]&&errors[v].join('<br>')
         var isRadio = t.tag=='span' && t.attrs.type=='radio';
         var isCheckbox = t.tag=='span' && t.attrs.type=='checkbox';
         var isSelect = t.tag=='select';
@@ -566,7 +571,13 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
 
         return m('div.inputWrap'+isRequired, {key:recordKeys[v], className:  isError?'valid-error':''  },  [
 
-            m("label", { for: recordKeys[v], className:'title_'+ t.attrs.type }, [ m('span[data-tooltip]', {className: isError?'has-tip':'labelTitle' , title:'oisdjfoj'}, t.attrs.title)] ),
+            m("label", 
+            	{ for: recordKeys[v], className:'title_'+ t.attrs.type }, 
+            	[ m('span.labelTitle', 
+            		!errorMsg? {className:'' } :{'data-tooltip':'tooltip_'+recordKeys[v], className:'has-tip', title:errorMsg, 
+            		config:function(){ $('#tooltip_'+recordKeys[v]).html(errorMsg+'<span class="nub"></span>') } }, 
+            		t.attrs.title)]
+            ),
 
             m(  t.tag,
 
@@ -612,8 +623,10 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
                         extend( attrs,
                             {
                                 id:recordKeys[v],
+                                onfocus: function(){ 
+                                	futurist.addToSet(self.focusDiv, v);
+                                },
                                 oninput: function(){ 
-                                    futurist.addToSet(self.focusDiv, v);
                                 	record[v]( $(this).val() );  
                                 },
                                 value: record[v]()

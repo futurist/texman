@@ -28,6 +28,38 @@ validate(user);
  */
 var mValidator = function(validationFn){
 
+    var errorMsg = {
+        alpha : '请提供正确的字母',
+        alpha_numeric : '请提供正确的字母或数字',
+        integer : '请提供正确的整数',
+        number : '请提供正确的数字',
+
+        // amex, visa, diners
+        card : '请提供正确的信用卡号',
+        cvv : '请提供正确的CVV号码',
+
+        // http://www.whatwg.org/specs/web-apps/current-work/multipage/states-of-the-type-attribute.html#valid-e-mail-address
+        email : '请提供正确的邮箱地址',
+
+        // http://blogs.lse.ac.uk/lti/2008/04/23/a-regular-expression-to-match-any-url/
+        url: '请提供正确的网址',
+        // abc.de
+        domain : '请提供正确的域名',
+
+        datetime : '请提供正确的日期',
+        // YYYY-MM-DD
+        date : '请提供正确的日期',
+        // HH:MM:SS
+        time : '请提供正确的时间',
+        dateISO : '请提供正确的日期和时间',
+        // MM/DD/YYYY
+        month_day_year : '请提供正确的日期(月/日/年)',
+        // DD/MM/YYYY
+        day_month_year : '请提供正确的日期(日/月/年)',
+
+        // #FFF or #FFFFFF
+        color : '请提供正确的颜色'
+    }
 	var patterns = {
         alpha : /^[a-zA-Z]+$/,
         alpha_numeric : /^[a-zA-Z0-9]+$/,
@@ -88,7 +120,7 @@ var mValidator = function(validationFn){
 
 	return function(model){
 		errors.clear();
-		validationFn(model, patterns, errors);
+		validationFn(model, patterns, errorMsg, errors);
 		return errors.hasAny() ? errors.result() : undefined;
 	};
 
