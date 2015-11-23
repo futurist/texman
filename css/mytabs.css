@@ -31,3 +31,7 @@
 	font:16px FontAwesome;
 	content: " \f071";
 }
+
+input[type="file"], input[type="checkbox"], input[type="radio"], select{
+	margin:0.5rem 0 0.5rem 0;
+}

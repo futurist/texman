@@ -93,10 +93,10 @@ function extend(obj) {
     obj = obj || {};
     if(arguments.length<2) return obj;
     for(var i=1; i<arguments.length; i++){
-        var props = clone(arguments[i]);
+        var props = arguments[i];
         for(var prop in props) {
             if( props.hasOwnProperty(prop) ) {
-                obj[prop] = props[prop];
+                obj[prop] = clone(props[prop]);
             }
         }
     }
@@ -333,7 +333,7 @@ var RecordTypes = (function(obj) {
         var newObj={}
         var template = self.dataModule[type].template;
         for(var i in template){
-            newObj[i] = i=='_type'? template[i] : template[i].attrs.value
+            newObj[i] = clone(i=='_type'? template[i] : template[i].attrs.value)
         }
         return newObj;
     }
@@ -543,7 +543,7 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
 
     self.parseFormElement = function (v) {
 
-        var t = template[v];
+        var t = (template[v]);
         var errors = checkErrors(record);
 
         var isRequired = t.attrs&&t.attrs.required?'[required]':'';
@@ -552,8 +552,8 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
         var isCheckbox = t.tag=='span' && t.attrs.type=='checkbox';
         var isSelect = t.tag=='select';
 
-        function updateSet(isSet, val){
-            record[v]( isSet ? futurist.addToSet(record[v](), val) : futurist.removeFromSet(record[v](), val) );
+        function updateSet(isSet, key, val){
+            record[key]( isSet ? futurist.addToSet(record[key](), val) : futurist.removeFromSet(record[key](), val) );
         }
 
         return m('div.inputWrap'+isRequired, {key:recordKeys[v], className:  isError?'valid-error':''  },  [
@@ -618,16 +618,14 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
                         return options.map(function(v){ return m('option', v) });
                     }
                     if( isCheckbox ) {
-
                         return t.children.map(function(checkBoxValue){
-                            console.log( t.attrs.value )
-                            var isChecked = t.attrs.value.indexOf( checkBoxValue )>-1;
-                            updateSet( isChecked, checkBoxValue );
+                            var isChecked = record[v]().indexOf( checkBoxValue )>-1;
                             return   m('label', [
                                         m('span.checkbox', checkBoxValue),
-                                        m('input', extend({}, t.attrs, {title:'', value:checkBoxValue, checked:isChecked, onchange:function(){
+                                        m('input', extend({}, t.attrs, {title:'', value:checkBoxValue, checked: isChecked,
+                                        	onchange:function(){
                                             futurist.addToSet(self.focusDiv, v);
-                                            updateSet( this.checked, this.value );
+                                            updateSet( this.checked, v, this.value );
                                         } }) ) ] )
                         });
                     }
@@ -731,7 +729,7 @@ var RecordDisplay = function( parent, curRecord, mountCallBack) {
                 var t = template[v];
                 return m('div', [
                     m("label", t.attrs.title),
-                    m("input", extend( {}, t.attrs, {disabled:true,readOnly:true}, { value: record[v]() } )  )
+                    m("input", extend( {}, t.attrs, {disabled:true,readOnly:true, type:'text'}, { value: record[v]() } )  )
                 ])
             }),
 
