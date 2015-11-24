@@ -564,22 +564,43 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
         var isRadio = t.tag=='span' && t.attrs.type=='radio';
         var isCheckbox = t.tag=='span' && t.attrs.type=='checkbox';
         var isSelect = t.tag=='select';
+
+        // if isMultiple, the value is Array type, and element is string type
+        var isMultiple = isSelect&&t.attrs.multiple || isCheckbox;
         var SHOW_LABEL = true;
-        
-        // If default value not in options, then add it
-        if((isSelect||isCheckbox||isRadio)&&t.attrs.value) futurist.addToSet( t.children, t.attrs.value, true );
+
+        // multiple select & checkbox,  all the options is String type, so we convert
+        if( isMultiple && record[v]() && type.call( record[v]() )!==ARRAY ) record[v]( [String( record[v]() )] )
+
+        // If default value to options, if not exists
+        if((isSelect||isCheckbox||isRadio)&&t.attrs.value) futurist.addToSet( t.children, String(t.attrs.value), true );
+
+    	// add current value to children if it's not exists
+    	if(isSelect||isCheckbox||isRadio){
+            var value = curRecord[v]();
+            var options = [].concat.apply([], t.children);
+            if( value&&value.constructor!==Array ){
+                if( options.indexOf( value ) == -1 ) futurist.addToSet( options, String(value) );
+            }
+            if( value&&value.constructor==Array ){
+                value.forEach(function(val){
+                    if( val&&options.indexOf( val ) == -1 ) futurist.addToSet( options, String(val) );
+                });
+            }
+            t.children = options
+    	}
 
         function updateSet(isSet, key, val){
-            record[key]( isSet ? futurist.addToSet(record[key](), val) : futurist.removeFromSet(record[key](), val) );
+            record[key]( isSet ? futurist.addToSet(record[key](), val ) : futurist.removeFromSet(record[key](), val ) );
         }
 
         return m('div.inputWrap'+isRequired, {key:recordKeys[v], className:  isError?'valid-error':''  },  [
 
-            SHOW_LABEL? m("label", 
-            	{ for: recordKeys[v], className:'title_'+ t.attrs.type }, 
-            	[ m('span.labelTitle', 
-            		!errorMsg? {className:'' } :{'data-tooltip':'tooltip_'+recordKeys[v], className:'has-tip', title:errorMsg, 
-            		config:function(){ $('#tooltip_'+recordKeys[v]).html(errorMsg+'<span class="nub"></span>') } }, 
+            SHOW_LABEL? m("label",
+            	{ for: recordKeys[v], className:'title_'+ t.attrs.type },
+            	[ m('span.labelTitle',
+            		!errorMsg? {className:'' } :{'data-tooltip':'tooltip_'+recordKeys[v], className:'has-tip', title:errorMsg,
+            		config:function(){ $('#tooltip_'+recordKeys[v]).html(errorMsg+'<span class="nub"></span>') } },
             		t.attrs.title) ]
             ) : [],
 
@@ -595,8 +616,8 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
                                 	if( attrs.multiple && !record[v]() ) record[v]([]);
                                     $(el).val( record[v]() );
                                 },
-                                oninput: function(){ 
-                                    futurist.addToSet(self.focusDiv, v);
+                                oninput: function(){
+                                    futurist.addToSet(self.focusDiv, v );
                                 	if( attrs.multiple ){
 	                                	$(this).find('option').each( function(){
 	                                		updateSet( this.selected&&this.value, v, this.value );
@@ -614,6 +635,7 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
                             id:recordKeys[v],
                         }
                         )
+
                     } else if( isRadio ){
                         delete attrs.name;
                         extend( attrs,
@@ -626,11 +648,11 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
                         extend( attrs,
                             {
                                 id:recordKeys[v],
-                                onfocus: function(){ 
+                                onfocus: function(){
                                 	futurist.addToSet(self.focusDiv, v);
                                 },
-                                oninput: function(){ 
-                                	record[v]( $(this).val() );  
+                                oninput: function(){
+                                	record[v]( $(this).val() );
                                 },
                                 value: record[v]()
                             }
@@ -643,27 +665,14 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
 
                 (function(){
 
-                	if(isSelect||isCheckbox||isRadio){
-	                    var value = record[v]();
-	                    var options = [].concat.apply([], t.children);
-	                    if( value&&value.constructor==String ){
-	                        if( options.indexOf( value ) == -1 ) options.unshift(value);
-	                    }
-	                    if( value&&value.constructor==Array ){
-	                        value.forEach(function(val){
-	                            if( val&&options.indexOf( val ) == -1 ) options.unshift(val);
-	                        });
-	                    }
-                	}
-
 
                     if( isSelect ){
-                        options = options.map(function(v){ return m('option', v) });
-                        if( t.attrs.placeholder ) options.unshift( m('option', {disabled:true, value:''}, t.attrs.placeholder ) );
-                        return options;
+                        t.children = t.children.map(function(v){ return m('option', v) });
+                        if( t.attrs.placeholder ) t.children.unshift( m('option', {disabled:true, value:''}, t.attrs.placeholder ) );
+                        return t.children;
 
                     } else if( isCheckbox ) {
-                        return options.map(function(opt){
+                        return t.children.map(function(opt){
                             var isChecked = record[v]().indexOf( opt )>-1;
                             return   m('label', [
                                         m('span.checkbox', opt),
@@ -675,7 +684,7 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
                         });
 
                     } else if( isRadio ) {
-                        return options.map(function(opt){
+                        return t.children.map(function(opt){
                             var isChecked = record[v]().indexOf( opt )>-1;
                             return   m('label', [
                                         m('span.checkbox', opt),
@@ -691,7 +700,7 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
                     	return [];
 
                     }
-                    
+
                 })()
 
             ),
@@ -715,7 +724,7 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
 
     this.view= function(ctrl, args) {
 
-        // console.log( record, record.toString() )
+        // console.log( record, record.toString(), record['client3']() )
         // to call from controller see github issue
 
         return m("form.mValidator[novalidate]", {key:record._key, config: null  }, [
