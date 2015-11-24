@@ -798,9 +798,14 @@ var RecordDisplay = function( parent, curRecord, mountCallBack) {
             _recordType.fields.map(function  (v) {
                 if(v=='_type') return [];
                 var t = template[v];
+
+                // remove placeholder to hide from empty value
+                var attrs = extend( {}, t.attrs );
+                delete attrs.placeholder;
+
                 return m('div', [
                     m("label", t.attrs.title),
-                    m("input", extend( {}, t.attrs, {disabled:true,readOnly:true, type:'text'}, { value: record[v]() } )  )
+                    m("input", extend(attrs, {disabled:true,readOnly:true, type:'text'}, { value: record[v]() } )  )
                 ])
             }),
 
