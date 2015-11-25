@@ -17,7 +17,7 @@ var DBDB =
             desc: 'computer list of company',
         },
         template:{
-          'userid':{ tag:'input', attrs:{title:'UserID', readOnly:true} },
+          'userid':{ tag:'input', attrs:{type:'text', title:'UserID', readOnly:true} },
           'ip':{ tag:'input',
               attrs:{ value:'111.11.12.34', title:'IP', type:'text', required:true, pattern:"number", placeholder:'this is ip' } },
           // 'client1':{ tag:'input', attrs:{value:'awefawef', title:'Client', pattern:['domain'], placeholder:'this is client'} },

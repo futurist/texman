@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <link rel="stylesheet" href="css/normalize.css" />
-<link rel="stylesheet" href="css/foundation.css" />
+<link rel="stylesheet" href="css/foundation.min.css" />
 <link rel="stylesheet" href="css/font-awesome.min.css" />
 <link rel="stylesheet" href="css/mytabs.css" />
 
@@ -13,7 +13,6 @@
 <!-- <script src="js/vendor/fastclick.js"></script> -->
 
 <script src="js/foundation/foundation.js"></script>
-<script src="js/foundation/foundation.tab.js"></script>
 <script src="js/foundation/foundation.tooltip.js"></script>
 
 </head>
@@ -25,7 +24,7 @@
 <script src="dbdb.js"></script>
 <script>
 
-'use strict'
+// 'use strict'
 
 var host="http://1111hui.com:88"
 
@@ -214,8 +213,7 @@ var Observable = function() {
 // Production steps of ECMA-262, Edition 5, 15.4.4.17
 // Reference: http://es5.github.io/#x15.4.4.17
 if (!Array.prototype.some) {
-  Array.prototype.some = function(fun/*, thisArg*/) {
-    'use strict';
+  Array.prototype.some = function(fun) {
 
     if (this == null) {
       throw new TypeError('Array.prototype.some called on null or undefined');
@@ -239,7 +237,7 @@ if (!Array.prototype.some) {
   };
 }
 
-Array.prototype.lastEl = function(fun/*, thisArg*/) {
+Array.prototype.lastEl = function(fun) {
     return this.length? this[this.length-1] : null;
 }
 
@@ -463,8 +461,8 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
     var template = _recordType.template;
     var _mainKey = _recordType.meta.mainKey;
     var isNew = curRecord[ _mainKey ]() === '';
-
     var record = !isNew&& curRecord.clone() || curRecord;
+    console.log('isNew', isNew, record._key, curRecord._key)
     var recordKeys = {}
     record.getFields().forEach(function  (v) {
         recordKeys[v] = NewID();
@@ -557,6 +555,7 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
     self.parseFormElement = function (v) {
 
         var t = clone(template[v]);
+        t.attrs.type = t.attrs.type||'text';
         var errors = checkErrors(record);
         var isRequired = t.attrs&&t.attrs.required?'[required]':'';
         var isError = (self.focusDiv.indexOf(v)>-1)&&errors&&errors[v];
@@ -609,6 +608,16 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
                 (function() {
                     var attrs = extend( {}, t.attrs);
                     if( isSelect ) {
+                    	var oninputFunc = function(){
+                            futurist.addToSet(self.focusDiv, v );
+                        	if( attrs.multiple ) {
+                            	$(this).find('option').each( function(){
+                            		updateSet( this.selected&&this.value, v, this.value );
+                            	});
+                        	} else {
+                        		record[v]( this.value );
+                        	}
+                        }
                         extend( attrs,
                             {
                                 id:recordKeys[v],
@@ -616,16 +625,9 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
                                 	if( attrs.multiple && !record[v]() ) record[v]([]);
                                     $(el).val( record[v]() );
                                 },
-                                oninput: function(){
-                                    futurist.addToSet(self.focusDiv, v );
-                                	if( attrs.multiple ){
-	                                	$(this).find('option').each( function(){
-	                                		updateSet( this.selected&&this.value, v, this.value );
-	                                	});
-                                	} else {
-                                		record[v]( this.value );
-                                	}
-                                },
+                                onchange: oninputFunc,
+                                onblur: oninputFunc,
+                                onpaste: oninputFunc,
                             }
                         )
                     } else if( isCheckbox ){
@@ -644,16 +646,19 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
                         }
                         )
                     } else {
-
+                    	var oninputFunc=function(){
+                        	record[v]( $(this).val() );
+                        }
                         extend( attrs,
                             {
                                 id:recordKeys[v],
                                 onfocus: function(){
                                 	futurist.addToSet(self.focusDiv, v);
                                 },
-                                oninput: function(){
-                                	record[v]( $(this).val() );
-                                },
+                                onkeyup: oninputFunc,
+                                onchange: oninputFunc,
+                                onblur: oninputFunc,
+                                onpaste: oninputFunc,
                                 value: record[v]()
                             }
                         )
@@ -676,7 +681,8 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
                             var isChecked = record[v]().indexOf( opt )>-1;
                             return   m('label', [
                                         m('span.checkbox', opt),
-                                        m('input', extend({}, t.attrs, {title:'', value:opt, checked: isChecked,
+                                        m('input', extend({}, t.attrs, {title:'', value:opt,
+                                        	config:function(el){ if(isChecked) el.checked = 'checked'; },
                                         	onchange:function(){
                                             futurist.addToSet(self.focusDiv, v);
                                             updateSet( this.checked, v, this.value );
@@ -686,13 +692,16 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
                     } else if( isRadio ) {
                         return t.children.map(function(opt){
                             var isChecked = record[v]().indexOf( opt )>-1;
-                            return   m('label', [
-                                        m('span.checkbox', opt),
-                                        m('input', extend({}, t.attrs, {title:'', value:opt, checked: isChecked,
+                            var attr = extend({}, t.attrs, {title:'', value:opt,
+                            				config:function(el){ if(isChecked) el.checked = 'checked'; },
                                         	onchange:function(){
                                             futurist.addToSet(self.focusDiv, v);
                                             record[v]( this.value )
-                                        } }) ) ] )
+                                        } });
+
+                            return   m('label', [
+                                        m('span.checkbox', opt),
+                                        m('input', attr ) ] )
                         });
 
                     } else {
@@ -731,8 +740,10 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
 
             _recordType.fields.map(function  (v) {
                 if(v=='_type') return [];
-                // console.log('view: ', record._key, self.focusDiv(), v)
-                return self.parseFormElement( v )
+                // console.log('view: ', record._key, self.focusDiv, v)
+                var d = self.parseFormElement( v );
+                // console.log(JSON.stringify(d))
+                return d
             }),
 
             m('div.buttons',{},
@@ -750,6 +761,10 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
         ]
 
         )
+    }
+
+    this.getView=function(){
+    	return self.view( new self.controller() );
     }
 }
 
@@ -816,14 +831,15 @@ var RecordDisplay = function( parent, curRecord, mountCallBack) {
 
         )
     }
+
+    this.getView=function(){
+    	return self.view( new self.controller() );
+    }
 }
 
 
 var RecordList = function defRecordList ( parent ) {
     var self = this;
-
-    self.generateID = NewID();
-
 
     self.controller = function (args) {
         parent.updateList();
@@ -834,7 +850,7 @@ var RecordList = function defRecordList ( parent ) {
     self.view =  function(ctrl, args) {
         var newRec = parent.module.newRec;
         // console.log('RecordList view', parent.module.data.length, parent.curTabID, parent.generateID);
-        var active = parent.module.data.length==parent.curTabID?'.active':'';
+        var active = parent.module.data.length==parent.curTabID?'active':'';
 
         return m('div', {key: parent.generateID }, [
 
@@ -845,26 +861,30 @@ var RecordList = function defRecordList ( parent ) {
             //     })
             // ]),
 
-            m('.row', {key: parent.generateID, config:initFundation}, [
+            m('.row', {key: parent.generateID, config:null}, [
 
-                m('ul.tabs[data-tab]', {key: parent.generateID}, [
+                m('ul.tabs', {key: parent.generateID}, [
 
                             parent.module.data.map(function(obj,i){
-                                var active = i==parent.curTabID?'.active':'';
+                                var active = i==parent.curTabID?'active':'';
                                 // console.log( 'iter',  obj.toString() )
-                                return m('li.tab-title'+active, { 'data-tabid':i, key:obj._key }, [
+                                return m('li.tab-title', { className:active, 'data-tabid':i, key:obj._key }, [
                                     m('a', {
-                                        href:'#panel'+obj._key,
+                                        href:'javascript:;',
+                                        onclick:function(){ parent.curTabID=i; }
                                     }, obj[ RecordTypes.getModule(obj._type()).meta.mainKey ]() ||'newuser')
 
                                 ]);
 
-                            }).concat( m('li.tab-title'+active, { key:newRec._key, 'data-tabid': parent.module.data.length , className:''}, [m('a.addTab[href="#addTab"]', "+")] ) )
+                            }).concat( m('li.tab-title', { className:active, key:newRec._key, 'data-tabid': parent.module.data.length }, [m('a.addTab', { 
+                            			href:'javascript:;', 
+                            			onclick:function(){ parent.curTabID=parent.module.data.length; } 
+                            		}, "+")] ) )
 
 
                 ]),
 
-                m('div.tabs-content', {key: self.generateID }, [
+                m('div.tabs-content', {key: parent.generateID }, [
                     parent.module.data.map(function(obj,i){
                         var active = i==parent.curTabID?'active':'';
                         // console.log( 'iter',  obj.toString() )
@@ -872,9 +892,11 @@ var RecordList = function defRecordList ( parent ) {
                             {className:active, key:obj._key, role:'tabpanel'},
                             [m('div.showForm.display', {className:''}, parent.module.displayContainers[obj._key]  )]
                         )
-                    }).concat( function() {
+                    })
+                    .concat( function() {
                         // console.log(1234, active, newRec._key)
-                        return m('div.content.panel#addTab'+active, { key:newRec._key, className:''}, [m('div.addForm', {key: newRec._key, className:''}, parent.module.newForm )] )
+                        // alert( JSON.stringify( parent.module.newForm.getView() ) )
+                        return m('div.content.panel#addTab', { key:newRec._key, className:active}, [m('div.addForm', {key: newRec._key, className:''}, parent.module.newForm.getView() )] )
                     }() )
 
                 ])
@@ -893,38 +915,7 @@ m.mount(document.querySelector('#container'), RecordList1)
 function initFundation(el, exists, context, vdom){
 
     // console.log(a,b,c, d)
-    $(document).foundation({
-    tab: {
-      callback : function (tab) {
-
-        var curTabID = parseInt($(tab).data('tabid'))||0;
-        // console.log(curTabID)
-        var newUL = vdom.children[0].children[curTabID];
-        var newDIV = vdom.children[1].children[curTabID];
-
-        /**
-         * below code to make addNew tab deselect by add a 'active' class to V-DOM when switched to
-         */
-        vdom.children[0].children.forEach(function(v){ if(v&&v.attrs.className) v.attrs.className=v.attrs.className.replace(/\b\s+active\b/g, '') });
-        vdom.children[1].children.forEach(function(v){ if(v&&v.attrs.className) v.attrs.className=v.attrs.className.replace(/\b\s+active\b/g, '') });
-        newUL.attrs.className+=' active';
-        newDIV.attrs.className+=' active';
-        // console.log(newUL.attrs.className, curTabID)
-        RecordList1.curTabID = curTabID;
-
-        if( $(tab).find('.addTab')  ){
-
-
-        } else {
-
-
-        }
-      }
-    },
-
-
-    });
-
+    $(document).foundation();
 
 }
 
