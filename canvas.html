@@ -29,6 +29,11 @@ ul,li{
 .canvas div.layer{
 	position: absolute;
 }
+
+.selected{
+	border:1px dashed red;
+}
+
 #debug{
 	position: absolute;
 	top:0;
@@ -178,7 +183,7 @@ var curTool = 'div'
 
 var WidgetDiv = function(parent, prop){
 	var self = this;
-	self.Prop = extend( { style:{left:0, top:0, width:0, height:0, 'backgroundColor':'#eee' } }, prop||{} );
+	self.Prop = extend( { config : function(el){ applyStyle(el,self.Prop.style ) }, style:{left:0, top:0, width:0, height:0, 'backgroundColor':'#eee' } }, prop||{} );
 	self.controller = function(){
 		this.onunload = function(){
 
@@ -186,8 +191,9 @@ var WidgetDiv = function(parent, prop){
 	}
 
 	self.view = function(ctrl){
+
 		return self.Prop.style.width&&self.Prop.style.height 
-		? m('div.layer', { config:function(el){ applyStyle(el,self.Prop.style ) } } ) 
+		? m('div.layer', self.Prop )
 		: []
 	}
 
@@ -201,7 +207,7 @@ var WidgetCanvas = function(){
 	
 	self.PropCanvas = { eventData:{}, style:{left:10, top:10, width:800, height:500, 'background-color':'#ccc' } }
 	self.children = [];
-	self.currentWidget = null;
+	self.selectedWidget = [];
 
 	self.checkSelectElement = function( rect ){
 		var elArray = {}
@@ -228,62 +234,84 @@ var WidgetCanvas = function(){
 			var widget = self.checkSelectElement( {left:offsetX, top:offsetY, width:0,height:0} );
 			var index = Object.keys(widget).pop();
 			if(index===undefined){
-				self.currentWidget = new WidgetDiv( self, { style:{ backgroundColor:RandomColor() } } );
-				PropLayer = self.currentWidget.Prop;
+				widget = new WidgetDiv( self, { style:{ backgroundColor:RandomColor() } } );
+				PropLayer = widget.Prop
 				PropLayer.style.left = offsetX
 				PropLayer.style.top = offsetY
 				PropLayer.style.width = 0
 				PropLayer.style.height = 0
 				PropLayer.isNew = true
+				PropLayer.eventData = { el: e.target, type:evt.type, prevX:PropLayer.style.left, prevY:PropLayer.style.top, timeStamp:e.timeStamp }
+				self.selectedWidget = [widget]
+				self.children.push( widget )
 			}else{
-				self.currentWidget = widget[index];
-				console.log(widget, index)
+				if(e.shiftKey || self.selectedWidget.indexOf(widget[index])>-1 ){
+					self.selectedWidget.push( widget[index] );
+				} else {
+					self.selectedWidget=[ widget[index] ];
+				}
+				
 				self.children.splice(index,1);
-				self.children.push(self.currentWidget);
-				PropLayer = self.currentWidget.Prop;
+				self.children.push(widget[index]);
 			}
 
-			PropCanvas.eventData = {el: e.target, type:evt.type, prevX:PropLayer.style.left, prevY:PropLayer.style.top, startX:offsetX, startY:offsetY, timeStamp:e.timeStamp}
+			self.children.forEach(function(widget){
+				widget.Prop.className = ''
+			})
+			
+			self.selectedWidget.forEach(function(widget){
+				PropLayer = widget.Prop;
+				PropLayer.className = 'selected'
+				PropLayer.eventData = { el: e.target, type:evt.type, prevX:PropLayer.style.left, prevY:PropLayer.style.top, timeStamp:e.timeStamp }
+			})
+
+			PropCanvas.eventData = {el: e.target, type:evt.type, startX:offsetX, startY:offsetY, timeStamp:e.timeStamp}
 		}
 
 		this.canvasAttrs['on'+moveE] = function(evt) {
 			var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
-			if( !self.currentWidget ) return;
+			if( !self.selectedWidget.length ) return;
 			if( downE !== (PropCanvas.eventData && PropCanvas.eventData.type) ) return;
 			evt.preventDefault();
 			var offsetX = e.pageX - PropCanvas.style.left
 			var offsetY = e.pageY - PropCanvas.style.top
-			var PropLayer = self.currentWidget.Prop;
 			var width = offsetX-PropCanvas.eventData.startX
 			var height = offsetY-PropCanvas.eventData.startY
-			if( PropLayer.isNew ){
-				if(width>=0){
-					PropLayer.style.width = width;
+
+			self.selectedWidget.forEach(function(widget){
+				var PropLayer = widget.Prop;
+				if( PropLayer.isNew ){
+					if(width>=0){
+						PropLayer.style.width = width;
+					} else {
+						PropLayer.style.left = PropLayer.eventData.prevX+width;
+						PropLayer.style.width = -width;
+					}
+					if(height>=0){
+						PropLayer.style.height = height;
+					} else {
+						PropLayer.style.top = PropLayer.eventData.prevY+height;
+						PropLayer.style.height = -height;
+					}
 				} else {
-					PropLayer.style.left = PropCanvas.eventData.prevX+width;
-					PropLayer.style.width = -width;
+					PropLayer.style.left = PropLayer.eventData.prevX + width
+					PropLayer.style.top = PropLayer.eventData.prevY + height
 				}
-				if(height>=0){
-					PropLayer.style.height = height;
-				} else {
-					PropLayer.style.top = PropCanvas.eventData.prevY+height;
-					PropLayer.style.height = -height;
-				}
-			} else {
-				PropLayer.style.left = PropCanvas.eventData.prevX + width
-				PropLayer.style.top = PropCanvas.eventData.prevY + height
-			}
+			})
+
 		}
 
 		this.canvasAttrs['on'+upE] = function(evt) {
 			var e = /touch/.test(evt.type) ? evt.changedTouches[0] : evt;
-			if( !self.currentWidget ) return;
 			delete PropCanvas.eventData
-			if( self.currentWidget.Prop.isNew && self.currentWidget){
-				delete self.currentWidget.Prop.isNew
-				self.children.push( self.currentWidget )
-				self.currentWidget = null;
-			}
+			if( !self.selectedWidget.length ) return;
+			self.selectedWidget.forEach(function(widget){
+				if( widget.Prop.isNew){
+					delete widget.Prop.isNew
+					// self.selectedWidget = null;
+				}
+			})
+			
 		}
 
 	}
@@ -296,7 +324,6 @@ var WidgetCanvas = function(){
 				}()
 	         )
 	}
-
 }
 
 var Canvas1 = new WidgetCanvas();
