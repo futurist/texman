@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8>
+<title>canvas</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<script type="text/javascript" src="js/mithril.js"></script>
+<style type="text/css">
+html,body{
+	height: 100%;
+}
+body{
+	margin:0;
+	padding: 0;
+}
+#container{
+	height: 100%;
+}
+ul,li{
+    list-style: none
+}
+.canvas{
+	position: relative;
+}
+.canvas div.layer{
+	position: absolute;
+}
+</style>
+</head>
+<body>
+
+<div id="container"></div>
+
+</body>
+</html>
+
+<script type="text/javascript">
+
+var container = document.querySelector('#container');
+
+var PropCanvas = { eventData:{}, style:{left:100, top:100, width:800, height:500, 'background-color':'#ccc' } }
+var PropLayer = { style:{left:100, top:0, width:200, height:100, 'backgroundColor':'#eee' } }
+var PropForm = {}
+var curTool = 'div'
+
+function NewID(){
+    return +new Date() + "_" + (Math.round(Math.random() * 1e6)).toString(36)
+}
+
+function applyStyle(el, styleObj){
+	var pxArray = ['width', 'height', 'left', 'top']
+	for(var i in styleObj){
+		var attr = pxArray.indexOf(i)>-1 ? styleObj[i]+ 'px': styleObj[i] ;
+		el.style[i] = attr;
+	}
+}
+
+var app={}
+app.controller=function  () {
+    this.generateID = +new Date();
+}
+
+app.view = function  (ctrl) {
+	return m('.canvas', { config:function(el){ applyStyle(el, PropCanvas.style) } , 
+				onmousedown:function(e) {
+					var offsetX = e.pageX - PropCanvas.style.left
+					var offsetY = e.pageY - PropCanvas.style.top
+					PropLayer.style.left = offsetX
+					PropLayer.style.top = offsetY
+					PropLayer.style.width = 0
+					PropLayer.style.height = 0
+					PropCanvas.eventData = {el: e.target, type:e.type, timeStamp:e.timeStamp}
+				},
+				onmousemove:function(e) {
+					if( !/mousedown/i.test(PropCanvas.eventData && PropCanvas.eventData.type) ) return;
+					e.preventDefault();
+					var offsetX = e.pageX - PropCanvas.style.left
+					var offsetY = e.pageY - PropCanvas.style.top
+					var width = offsetX-PropLayer.style.left
+					var height = offsetY-PropLayer.style.top
+					if(width>=0) PropLayer.style.width = width;
+					if(height>=0) PropLayer.style.height = height;
+				},
+				onmouseup:function(e) {
+					PropCanvas.eventData = null
+				}
+			}, [
+            (function(){
+            	return PropLayer.style.width&&PropLayer.style.height ? m('div.layer', { config:function(el){ applyStyle(el, PropLayer.style) } } ) : []
+            })()
+         ])
+}
+
+m.mount(container, app);
+
+</script>
