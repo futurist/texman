@@ -682,26 +682,26 @@ var RecordForm = function( parent, curRecord, mountCallBack ) {
                             return   m('label', [
                                         m('span.checkbox', opt),
                                         m('input', extend({}, t.attrs, {title:'', value:opt,
-                                        	config:function(el){ if(isChecked) el.checked = 'checked'; },
-                                        	onchange:function(){
-                                            futurist.addToSet(self.focusDiv, v);
-                                            updateSet( this.checked, v, this.value );
-                                        } }) ) ] )
+	                                        	config:function(el){ if(isChecked) el.checked = 'checked'; },
+	                                        	onchange:function(){
+	                                            futurist.addToSet(self.focusDiv, v);
+	                                            updateSet( this.checked, v, this.value );
+	                                        } })
+                                        ) ] )
                         });
 
                     } else if( isRadio ) {
                         return t.children.map(function(opt){
                             var isChecked = record[v]().indexOf( opt )>-1;
-                            var attr = extend({}, t.attrs, {title:'', value:opt,
-                            				config:function(el){ if(isChecked) el.checked = 'checked'; },
-                                        	onchange:function(){
-                                            futurist.addToSet(self.focusDiv, v);
-                                            record[v]( this.value )
-                                        } });
-
                             return   m('label', [
                                         m('span.checkbox', opt),
-                                        m('input', attr ) ] )
+                                        m('input', extend({}, t.attrs, {title:'', value:opt,
+	                            				config:function(el){ if(isChecked) el.checked = 'checked'; },
+	                                        	onchange:function(){
+	                                            futurist.addToSet(self.focusDiv, v);
+	                                            record[v]( this.value )
+                                        	} })
+                                        ) ] )
                         });
 
                     } else {
@@ -888,15 +888,15 @@ var RecordList = function defRecordList ( parent ) {
                     parent.module.data.map(function(obj,i){
                         var active = i==parent.curTabID?'active':'';
                         // console.log( 'iter',  obj.toString() )
-                        return m('div.content.panel#panel'+obj._key,
+                        return active? m('div.content.panel#panel'+obj._key,
                             {className:active, key:obj._key, role:'tabpanel'},
                             [m('div.showForm.display', {className:''}, parent.module.displayContainers[obj._key]  )]
-                        )
+                        ) : []
                     })
                     .concat( function() {
                         // console.log(1234, active, newRec._key)
                         // alert( JSON.stringify( parent.module.newForm.getView() ) )
-                        return m('div.content.panel#addTab', { key:newRec._key, className:active}, [m('div.addForm', {key: newRec._key, className:''}, parent.module.newForm.getView() )] )
+                        return active? m('div.content.panel#addTab', { key:newRec._key, className:active}, [m('div.addForm', {key: newRec._key, className:''}, parent.module.newForm.getView() )] ) :[]
                     }() )
 
                 ])
