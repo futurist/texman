@@ -37,12 +37,82 @@ ul,li{
 
 <script type="text/javascript">
 
-var container = document.querySelector('#container');
+/**
+ * Helper functions
+ */
 
-var PropCanvas = { eventData:{}, style:{left:100, top:100, width:800, height:500, 'background-color':'#ccc' } }
-var PropLayer = { style:{left:100, top:0, width:200, height:100, 'backgroundColor':'#eee' } }
-var PropForm = {}
-var curTool = 'div'
+
+function clone(item) {
+    if (!item) { return item; } // null, undefined values check
+
+    var types = [ Number, String, Boolean ],
+        result;
+
+    // normalizing primitives if someone did new String('aaa'), or new Number('444');
+    types.forEach(function(type) {
+        if (item instanceof type) {
+            result = type( item );
+        }
+    });
+
+    if (typeof result == "undefined") {
+        if (Object.prototype.toString.call( item ) === "[object Array]") {
+            result = [];
+            item.forEach(function(child, index, array) {
+                result[index] = clone( child );
+            });
+        } else if (typeof item == "object") {
+            // testing that this is DOM
+            if (item.nodeType && typeof item.cloneNode == "function") {
+                var result = item.cloneNode( true );
+            } else if (!item.prototype) { // check that this is a literal
+                if (item instanceof Date) {
+                    result = new Date(item);
+                } else {
+                    // it is an object literal
+                    result = {};
+                    for (var i in item) {
+                        result[i] = clone( item[i] );
+                    }
+                }
+            } else {
+                // depending what you would like here,
+                // just keep the reference, or create new object
+                if (item.constructor) {
+                    result = new item.constructor();
+                } else {
+                    result = item;
+                }
+            }
+        } else {
+            result = item;
+        }
+    }
+    return result;
+}
+
+/**
+ * COPY First Layer, and Reference sub child
+ * @param  {obj:obj}, ...args
+ * @return {obj}
+ */
+function extend(obj) {
+    obj = obj || {};
+    if(arguments.length<2) return obj;
+    for(var i=1; i<arguments.length; i++){
+        var props = arguments[i];
+        for(var prop in props) {
+            if( props.hasOwnProperty(prop) ) {
+                obj[prop] = clone(props[prop]);
+            }
+        }
+    }
+    return obj;
+}
+
+function RandomColor(){
+	return '#'+Math.random().toString(16).slice(-6);
+}
 
 function NewID(){
     return +new Date() + "_" + (Math.round(Math.random() * 1e6)).toString(36)
@@ -55,43 +125,126 @@ function applyStyle(el, styleObj){
 		el.style[i] = attr;
 	}
 }
+var rectsIntersect = function (r1, r2) {
+  return r2.left < (r1.left + r1.width) &&
+    (r2.left + r2.width) > r1.left &&
+    r2.top < (r1.top + r1.height) &&
+    (r2.top + r2.height) > r1.top;
+};
 
-var app={}
-app.controller=function  () {
-    this.generateID = +new Date();
+
+/**
+ * Main Code below
+ */
+
+var container = document.querySelector('#container');
+
+var PropControlPoint = { normal:{ style:{ width:10, height:10 } }, selected:{ style:{ backgroundColor:'#333' } } }
+var PropForm = {}
+var curTool = 'div'
+
+var WidgetDiv = function(parent, prop){
+	var self = this;
+	self.Prop = extend( { style:{left:0, top:0, width:0, height:0, 'backgroundColor':'#eee' } }, prop||{} );
+	self.controller = function(){
+		this.onunload = function(){
+
+		}
+	}
+
+	self.view = function(ctrl){
+		return self.Prop.style.width&&self.Prop.style.height 
+		? m('div.layer', { config:function(el){ applyStyle(el,self.Prop.style ) } } ) 
+		: []
+	}
+
+	self.getView = function() {
+		return self.view( new self.controller() );
+	}
 }
 
-app.view = function  (ctrl) {
-	return m('.canvas', { config:function(el){ applyStyle(el, PropCanvas.style) } , 
-				onmousedown:function(e) {
-					var offsetX = e.pageX - PropCanvas.style.left
-					var offsetY = e.pageY - PropCanvas.style.top
-					PropLayer.style.left = offsetX
-					PropLayer.style.top = offsetY
-					PropLayer.style.width = 0
-					PropLayer.style.height = 0
-					PropCanvas.eventData = {el: e.target, type:e.type, timeStamp:e.timeStamp}
-				},
-				onmousemove:function(e) {
-					if( !/mousedown/i.test(PropCanvas.eventData && PropCanvas.eventData.type) ) return;
-					e.preventDefault();
-					var offsetX = e.pageX - PropCanvas.style.left
-					var offsetY = e.pageY - PropCanvas.style.top
-					var width = offsetX-PropLayer.style.left
-					var height = offsetY-PropLayer.style.top
-					if(width>=0) PropLayer.style.width = width;
-					if(height>=0) PropLayer.style.height = height;
-				},
-				onmouseup:function(e) {
-					PropCanvas.eventData = null
-				}
-			}, [
-            (function(){
-            	return PropLayer.style.width&&PropLayer.style.height ? m('div.layer', { config:function(el){ applyStyle(el, PropLayer.style) } } ) : []
-            })()
-         ])
+var WidgetCanvas = function(){
+	var self = this;
+	
+	self.PropCanvas = { eventData:{}, style:{left:10, top:10, width:800, height:500, 'background-color':'#ccc' } }
+	self.children = [];
+	self.currentWidget = null;
+
+	self.checkSelectElement = function( rect ){
+		var elArray = []
+		self.children.forEach(function(v){
+			if( rectsIntersect( rect, v.Prop.style) ){
+				elArray.push(v);
+			}
+		});
+		return elArray;
+	}
+
+	self.controller=function  () {
+	    this.generateID = +new Date();
+	}
+
+	self.view = function  (ctrl) {
+
+		var PropCanvas = self.PropCanvas;
+
+		return m('.canvas', { config:function(el){ applyStyle(el, PropCanvas.style) } , 
+					onmousedown:function(e) {
+						var offsetX = e.pageX - PropCanvas.style.left
+						var offsetY = e.pageY - PropCanvas.style.top
+						var PropLayer;
+						self.currentWidget = self.checkSelectElement( {left:offsetX, top:offsetY, width:0,height:0} ).pop();
+						if(!self.currentWidget){
+							self.currentWidget = new WidgetDiv( self, { style:{ backgroundColor:RandomColor() } } );
+							PropLayer = self.currentWidget.Prop;
+							PropLayer.style.left = offsetX
+							PropLayer.style.top = offsetY
+							PropLayer.style.width = 0
+							PropLayer.style.height = 0
+							PropLayer.isNew = true
+						}else{
+							PropLayer = self.currentWidget.Prop;
+						}
+
+						PropCanvas.eventData = {el: e.target, type:e.type, prevX:PropLayer.style.left, prevY:PropLayer.style.top, startX:offsetX, startY:offsetY, timeStamp:e.timeStamp}
+					},
+					onmousemove:function(e) {
+						if( !self.currentWidget ) return;
+						if( !/mousedown/i.test(PropCanvas.eventData && PropCanvas.eventData.type) ) return;
+						e.preventDefault();
+						var offsetX = e.pageX - PropCanvas.style.left
+						var offsetY = e.pageY - PropCanvas.style.top
+						var PropLayer = self.currentWidget.Prop;
+						var width = offsetX-PropCanvas.eventData.startX
+						var height = offsetY-PropCanvas.eventData.startY
+
+						if( PropLayer.isNew ){
+							if(width>=0) PropLayer.style.width = width;
+							if(height>=0) PropLayer.style.height = height;
+						} else {
+							PropLayer.style.left = PropCanvas.eventData.prevX + width
+							PropLayer.style.top = PropCanvas.eventData.prevY + height
+						}
+					},
+					onmouseup:function(e) {
+						if( !self.currentWidget ) return;
+						delete PropCanvas.eventData
+						if( self.currentWidget.Prop.isNew && self.currentWidget){
+							delete self.currentWidget.Prop.isNew
+							self.children.push( self.currentWidget )
+							self.currentWidget = null;
+						}
+					}
+				}, 
+				function(){
+		            return self.children.map(function(v){ return v.getView() })
+				}()
+	         )
+	}
+
 }
 
-m.mount(container, app);
+var Canvas1 = new WidgetCanvas();
+m.mount(container, Canvas1);
 
 </script>
