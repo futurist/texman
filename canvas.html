@@ -9,22 +9,36 @@
 <style type="text/css">
 html,body{
 	height: 100%;
+	overflow: hidden;
 }
 body{
 	margin:0;
 	padding: 0;
 }
 #container{
+	overflow: hidden;
 	height: 100%;
 }
 ul,li{
     list-style: none
 }
 .canvas{
+	overflow: hidden;
 	position: relative;
 }
 .canvas div.layer{
 	position: absolute;
+}
+#debug{
+	position: absolute;
+	top:0;
+	left: 0;
+	height: 80px;
+	width: 200px;
+	z-index: 999999;
+	background: #666;
+	color:white;
+	display: none;
 }
 </style>
 </head>
@@ -32,6 +46,7 @@ ul,li{
 
 <div id="container"></div>
 
+<div id="debug"></div>
 </body>
 </html>
 
@@ -40,6 +55,21 @@ ul,li{
 /**
  * Helper functions
  */
+
+var isAndroid = /(android)/i.test(navigator.userAgent);
+var isWeiXin = navigator.userAgent.match(/MicroMessenger\/([\d.]+)/i);
+var isiOS = /iPhone/i.test(navigator.userAgent) || /iPod/i.test(navigator.userAgent) || /iPad/i.test(navigator.userAgent);
+var isMobile = isAndroid||isWeiXin||isiOS;
+
+// whether it's touch screen
+var isTouch = ('ontouchstart' in window) || ('DocumentTouch' in window && document instanceof DocumentTouch);
+
+// touch event uniform to touchscreen & PC
+var downE = isMobile? 'touchstart' :'mousedown';
+var moveE = isMobile? 'touchmove' :'mousemove';
+var upE = isMobile? 'touchend' :'mouseup';
+var leaveE = isMobile? 'touchcancel' :'mouseleave';
+var clickE = isMobile? 'touchstart' :'click';
 
 
 function clone(item) {
@@ -132,6 +162,9 @@ var rectsIntersect = function (r1, r2) {
     (r2.top + r2.height) > r1.top;
 };
 
+var debug = function( msg ){
+	document.querySelector('#debug').innerHTML = msg
+}
 
 /**
  * Main Code below
@@ -171,10 +204,10 @@ var WidgetCanvas = function(){
 	self.currentWidget = null;
 
 	self.checkSelectElement = function( rect ){
-		var elArray = []
-		self.children.forEach(function(v){
+		var elArray = {}
+		self.children.forEach(function(v,i){
 			if( rectsIntersect( rect, v.Prop.style) ){
-				elArray.push(v);
+				elArray[i] = (v);
 			}
 		});
 		return elArray;
@@ -182,60 +215,82 @@ var WidgetCanvas = function(){
 
 	self.controller=function  () {
 	    this.generateID = +new Date();
+
+		var PropCanvas = self.PropCanvas;
+
+		this.canvasAttrs = { config:function(el){ applyStyle(el, PropCanvas.style) } }
+
+		this.canvasAttrs['on'+downE] = function(evt) {
+			var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
+			var offsetX = e.pageX - PropCanvas.style.left
+			var offsetY = e.pageY - PropCanvas.style.top
+			var PropLayer;
+			var widget = self.checkSelectElement( {left:offsetX, top:offsetY, width:0,height:0} );
+			var index = Object.keys(widget).pop();
+			if(index===undefined){
+				self.currentWidget = new WidgetDiv( self, { style:{ backgroundColor:RandomColor() } } );
+				PropLayer = self.currentWidget.Prop;
+				PropLayer.style.left = offsetX
+				PropLayer.style.top = offsetY
+				PropLayer.style.width = 0
+				PropLayer.style.height = 0
+				PropLayer.isNew = true
+			}else{
+				self.currentWidget = widget[index];
+				console.log(widget, index)
+				self.children.splice(index,1);
+				self.children.push(self.currentWidget);
+				PropLayer = self.currentWidget.Prop;
+			}
+
+			PropCanvas.eventData = {el: e.target, type:evt.type, prevX:PropLayer.style.left, prevY:PropLayer.style.top, startX:offsetX, startY:offsetY, timeStamp:e.timeStamp}
+		}
+
+		this.canvasAttrs['on'+moveE] = function(evt) {
+			var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
+			if( !self.currentWidget ) return;
+			if( downE !== (PropCanvas.eventData && PropCanvas.eventData.type) ) return;
+			evt.preventDefault();
+			var offsetX = e.pageX - PropCanvas.style.left
+			var offsetY = e.pageY - PropCanvas.style.top
+			var PropLayer = self.currentWidget.Prop;
+			var width = offsetX-PropCanvas.eventData.startX
+			var height = offsetY-PropCanvas.eventData.startY
+			if( PropLayer.isNew ){
+				if(width>=0){
+					PropLayer.style.width = width;
+				} else {
+					PropLayer.style.left = PropCanvas.eventData.prevX+width;
+					PropLayer.style.width = -width;
+				}
+				if(height>=0){
+					PropLayer.style.height = height;
+				} else {
+					PropLayer.style.top = PropCanvas.eventData.prevY+height;
+					PropLayer.style.height = -height;
+				}
+			} else {
+				PropLayer.style.left = PropCanvas.eventData.prevX + width
+				PropLayer.style.top = PropCanvas.eventData.prevY + height
+			}
+		}
+
+		this.canvasAttrs['on'+upE] = function(evt) {
+			var e = /touch/.test(evt.type) ? evt.changedTouches[0] : evt;
+			if( !self.currentWidget ) return;
+			delete PropCanvas.eventData
+			if( self.currentWidget.Prop.isNew && self.currentWidget){
+				delete self.currentWidget.Prop.isNew
+				self.children.push( self.currentWidget )
+				self.currentWidget = null;
+			}
+		}
+
 	}
 
 	self.view = function  (ctrl) {
 
-		var PropCanvas = self.PropCanvas;
-
-		return m('.canvas', { config:function(el){ applyStyle(el, PropCanvas.style) } , 
-					onmousedown:function(e) {
-						var offsetX = e.pageX - PropCanvas.style.left
-						var offsetY = e.pageY - PropCanvas.style.top
-						var PropLayer;
-						self.currentWidget = self.checkSelectElement( {left:offsetX, top:offsetY, width:0,height:0} ).pop();
-						if(!self.currentWidget){
-							self.currentWidget = new WidgetDiv( self, { style:{ backgroundColor:RandomColor() } } );
-							PropLayer = self.currentWidget.Prop;
-							PropLayer.style.left = offsetX
-							PropLayer.style.top = offsetY
-							PropLayer.style.width = 0
-							PropLayer.style.height = 0
-							PropLayer.isNew = true
-						}else{
-							PropLayer = self.currentWidget.Prop;
-						}
-
-						PropCanvas.eventData = {el: e.target, type:e.type, prevX:PropLayer.style.left, prevY:PropLayer.style.top, startX:offsetX, startY:offsetY, timeStamp:e.timeStamp}
-					},
-					onmousemove:function(e) {
-						if( !self.currentWidget ) return;
-						if( !/mousedown/i.test(PropCanvas.eventData && PropCanvas.eventData.type) ) return;
-						e.preventDefault();
-						var offsetX = e.pageX - PropCanvas.style.left
-						var offsetY = e.pageY - PropCanvas.style.top
-						var PropLayer = self.currentWidget.Prop;
-						var width = offsetX-PropCanvas.eventData.startX
-						var height = offsetY-PropCanvas.eventData.startY
-
-						if( PropLayer.isNew ){
-							if(width>=0) PropLayer.style.width = width;
-							if(height>=0) PropLayer.style.height = height;
-						} else {
-							PropLayer.style.left = PropCanvas.eventData.prevX + width
-							PropLayer.style.top = PropCanvas.eventData.prevY + height
-						}
-					},
-					onmouseup:function(e) {
-						if( !self.currentWidget ) return;
-						delete PropCanvas.eventData
-						if( self.currentWidget.Prop.isNew && self.currentWidget){
-							delete self.currentWidget.Prop.isNew
-							self.children.push( self.currentWidget )
-							self.currentWidget = null;
-						}
-					}
-				}, 
+		return m('.canvas', ctrl.canvasAttrs,
 				function(){
 		            return self.children.map(function(v){ return v.getView() })
 				}()
