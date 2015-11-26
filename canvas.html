@@ -177,13 +177,12 @@ var debug = function( msg ){
 
 var container = document.querySelector('#container');
 
-var PropControlPoint = { normal:{ style:{ width:10, height:10 } }, selected:{ style:{ backgroundColor:'#333' } } }
 var PropForm = {}
 var curTool = 'div'
 
-var WidgetDiv = function(parent, prop){
-	var self = this;
-	self.Prop = extend( { config : function(el){ applyStyle(el,self.Prop.style ) }, style:{left:0, top:0, width:0, height:0, 'backgroundColor':'#eee' } }, prop||{} );
+var ControlPoint = function(parent, prop){
+	var self=this;
+	self.Prop = extend( {  style:{ width:10, height:10 } }, prop||{} )
 	self.controller = function(){
 		this.onunload = function(){
 
@@ -191,9 +190,49 @@ var WidgetDiv = function(parent, prop){
 	}
 
 	self.view = function(ctrl){
+		self.Prop.config = function(el){ applyStyle(el,self.Prop.style ) };
+		return m('div.controlPoint', self.Prop )
+	}
 
-		return self.Prop.style.width&&self.Prop.style.height 
-		? m('div.layer', self.Prop )
+	self.getView = function() {
+		return self.view( new self.controller() );
+	}
+}
+
+var WidgetDiv = function(parent, prop){
+	var self = this;
+	self.Prop = extend( { style:{left:0, top:0, width:0, height:0, 'backgroundColor':'#eee' } }, prop||{} );
+
+	self.buildControlPoint = function(){
+
+		var getHalfPos = function(){
+
+		}
+		var pointsArray = [
+			[ 0, 0 ]
+			[ (self.Prop.style.width/2 - point.Prop.style.width/2), 0 ]
+		]
+
+		for(var i=0; i<8; i++){
+
+		}
+
+		point.Prop.style.left = 0
+		point.Prop.style.top = 0
+
+
+	}
+
+	self.controller = function(){
+		this.onunload = function(){
+
+		}
+	}
+
+	self.view = function(ctrl){
+		self.Prop.config = function(el){ applyStyle(el,self.Prop.style ) };
+		return self.Prop.style.width&&self.Prop.style.height
+		? m('div.layer', self.Prop, self.buildControlPoint() )
 		: []
 	}
 
@@ -202,10 +241,10 @@ var WidgetDiv = function(parent, prop){
 	}
 }
 
-var WidgetCanvas = function(){
+var WidgetCanvas = function(parent, prop){
 	var self = this;
-	
-	self.PropCanvas = { eventData:{}, style:{left:10, top:10, width:800, height:500, 'background-color':'#ccc' } }
+
+	self.Prop = extend({ style:{left:10, top:10, width:800, height:500, 'background-color':'#ccc' } }, prop||{})
 	self.children = [];
 	self.selectedWidget = [];
 
@@ -222,7 +261,7 @@ var WidgetCanvas = function(){
 	self.controller=function  () {
 	    this.generateID = +new Date();
 
-		var PropCanvas = self.PropCanvas;
+		var PropCanvas = self.Prop;
 
 		this.canvasAttrs = { config:function(el){ applyStyle(el, PropCanvas.style) } }
 
@@ -250,7 +289,7 @@ var WidgetCanvas = function(){
 				} else {
 					self.selectedWidget=[ widget[index] ];
 				}
-				
+
 				self.children.splice(index,1);
 				self.children.push(widget[index]);
 			}
@@ -258,7 +297,7 @@ var WidgetCanvas = function(){
 			self.children.forEach(function(widget){
 				widget.Prop.className = ''
 			})
-			
+
 			self.selectedWidget.forEach(function(widget){
 				PropLayer = widget.Prop;
 				PropLayer.className = 'selected'
@@ -306,12 +345,15 @@ var WidgetCanvas = function(){
 			delete PropCanvas.eventData
 			if( !self.selectedWidget.length ) return;
 			self.selectedWidget.forEach(function(widget){
+				if(!widget.Prop.style.width && !widget.Prop.style.height  ){
+					// self.children.remove(  );
+				}
+				delete widget.Prop.eventData
 				if( widget.Prop.isNew){
 					delete widget.Prop.isNew
-					// self.selectedWidget = null;
 				}
 			})
-			
+
 		}
 
 	}

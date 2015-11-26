@@ -888,9 +888,11 @@ var RecordList = function defRecordList ( parent ) {
                     parent.module.data.map(function(obj,i){
                         var active = i==parent.curTabID?'active':'';
                         // console.log( 'iter',  obj.toString() )
+                        var widget = parent.module.displayContainers[obj._key]
+                        var isDisplay = widget.constructor == RecordDisplay
                         return active? m('div.content.panel#panel'+obj._key,
                             {className:active, key:obj._key, role:'tabpanel'},
-                            [m('div.showForm.display', {className:''}, parent.module.displayContainers[obj._key]  )]
+                            [m('div.showForm', {className:isDisplay?'display':''}, widget  )]
                         ) : []
                     })
                     .concat( function() {
