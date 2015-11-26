@@ -202,6 +202,7 @@ var curTool = 'div'
 var ControlPoint = function(parent, prop){
 	var self=this;
 
+	self.parent = parent;
 	self.Prop = extend( { style:{ width:10, height:10 } }, prop||{} )
 
 	self.controller = function(){
@@ -222,6 +223,8 @@ var ControlPoint = function(parent, prop){
 
 var WidgetDiv = function(parent, prop){
 	var self = this;
+
+	self.parent = parent;
 	self.Prop = extend( { style:{left:0, top:0, width:0, height:0, 'backgroundColor':'#eee' } }, prop||{} );
 	
 
@@ -306,6 +309,7 @@ var WidgetDiv = function(parent, prop){
 var WidgetCanvas = function(parent, prop){
 	var self = this;
 
+	self.parent = parent;
 	self.Prop = extend({ style:{left:10, top:10, width:800, height:500, 'background-color':'#ccc' } }, prop||{})
 	self.children = [];
 	self.selectedWidget = [];
@@ -376,14 +380,12 @@ var WidgetCanvas = function(parent, prop){
 				PropLayer.isNew = true
 				PropLayer.eventData = { el: e.target, type:evt.type, prevX:PropLayer.style.left, prevY:PropLayer.style.top, timeStamp:e.timeStamp }
 
-				self.unSelect();
 				self.selectedWidget = [widget]
 				self.children.push( widget )
 			}else{
 				if(e.shiftKey || self.selectedWidget.indexOf(widget)>-1 ){
 					self.selectedWidget.push( widget );
 				} else {
-					self.unSelect();
 					self.selectedWidget=[ widget ];
 				}
 				self.children.splice(index,1);
@@ -394,6 +396,7 @@ var WidgetCanvas = function(parent, prop){
 				widget.Prop.className = ''
 			})
 
+			self.unSelect();
 			// on selected
 			self.selectedWidget.forEach(function(widget){
 				PropLayer = widget.Prop;
@@ -476,7 +479,9 @@ var WidgetCanvas = function(parent, prop){
 
 		this.canvasAttrs['on'+upE] = function(evt) {
 			var e = /touch/.test(evt.type) ? evt.changedTouches[0] : evt;
+
 			delete PropCanvas.eventData
+
 			if( !self.selectedWidget.length ) return;
 			self.selectedWidget.forEach(function(widget) {
 				if(!widget.Prop.style.width && !widget.Prop.style.height  ){
