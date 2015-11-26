@@ -197,7 +197,7 @@ function clone(item) {
  * @param  {obj:obj}, ...args
  * @return {obj}
  */
-function extend(obj) {
+function _deepCopy(obj) {
     obj = obj || {};
     if(arguments.length<2) return obj;
     for(var i=1; i<arguments.length; i++){
@@ -210,7 +210,7 @@ function extend(obj) {
     }
     return obj;
 }
-function mixin(obj) {
+function _extend(obj) {
     obj = obj || {};
     if(arguments.length<2) return obj;
     for(var i=1; i<arguments.length; i++){
@@ -223,6 +223,27 @@ function mixin(obj) {
     }
     return obj;
 }
+
+function _iterate(obj, condition){
+	var list = {};
+	for(var name in obj)
+	{
+	    if (obj.hasOwnProperty(name) && condition(name) )
+	    {
+	       list[name] = obj[name];
+	    }
+	}
+	return list;
+}
+function _pluck(obj, propArr){
+	if(!propArr||propArr.constructor!=Array) return obj;
+	return _iterate(obj, function(name) { return propArr.indexOf(name)>=0 });
+}
+function _exclude(obj, propArr){
+	if(!propArr||propArr.constructor!=Array) return obj;
+	return _iterate(obj, function(name) { return propArr.indexOf(name)<0 });
+}
+
 
 
 function RandomColor(){
@@ -264,7 +285,7 @@ var ControlPoint = function(parent, prop){
 	var self=this;
 
 	self.parent = parent;
-	self.Prop = extend( { style:{ width:10, height:10 } }, prop||{} )
+	self.Prop = _deepCopy( { style:{ width:10, height:10 } }, prop||{} )
 
 	self.controller = function(){
 		this.onunload = function(){
@@ -297,7 +318,7 @@ var LayerBaseClass = function(parent, prop){
 		return cur;
 	}
 
-	self.Prop = extend( { style:{left:0, top:0, width:0, height:0, 'backgroundColor':'#eee' } }, prop||{} );
+	self.Prop = _deepCopy( { className:'', style:{left:0, top:0, width:0, height:0, 'backgroundColor':'#eee' } }, prop||{} );
 	self.Prop.config = function(el){ applyStyle(el, self.Prop.style) }
 
 	self.ControlPoints = []
@@ -347,7 +368,7 @@ var LayerBaseClass = function(parent, prop){
 	}
 
 	self.getElementInside = function( rect ){
-		rect = extend({}, rect)
+		rect = _deepCopy({}, rect)
 		rect.left -= self.Prop.style.left
 		rect.top -= self.Prop.style.top
 		return self.ControlPoints.filter(function(v){
@@ -373,6 +394,10 @@ var ContainerBaseClass = function(parent, prop){
 	self.editing = undefined;
 	self.children = [];
 	self.selectedWidget = [];
+
+	self.Prop['on'+downE] = null;
+	self.Prop['on'+moveE] = null;
+	self.Prop['on'+upE] = null;
 
 	self.checkSelectElement = function( rect ){
 		var elArray = {}
@@ -402,11 +427,10 @@ var ContainerBaseClass = function(parent, prop){
 	var editing = self.getRoot().editing;
 	if(!editing) self.getRoot().editing = self.getRoot()
 	else {
-		self.Prop['onkeydown'] = function(evt) {
+		self.Prop['ondblclick'] = function(evt) {
 			console.log( self )
 			self.getRoot().editing = self;
 		}
-		console.log(self.Prop['onkeydown'])
 	}
 
 
@@ -417,7 +441,6 @@ var ContainerBaseClass = function(parent, prop){
 		var PropCanvas = self.Prop;
 
 		self.Prop['on'+downE] = function(evt) {
-			evt.stopPropagation();
 			var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
 			var offsetX = e.pageX - PropCanvas.style.left
 			var offsetY = e.pageY - PropCanvas.style.top
@@ -486,94 +509,103 @@ var ContainerBaseClass = function(parent, prop){
 
 			PropCanvas.eventData = {el: e.target, type:evt.type, widget:widget, point:point, prevX:PropCanvas.style.left, prevY:PropCanvas.style.top, prevW:PropCanvas.style.width, prevH:PropCanvas.style.height, startX:offsetX, startY:offsetY, timeStamp:e.timeStamp}
 
+
+			// set up move and up event
+
+				self.Prop['on'+moveE] = function(evt) {
+					var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
+					if( !self.selectedWidget.length ) return;
+					if( downE !== (PropCanvas.eventData && PropCanvas.eventData.type) ) return;
+					evt.preventDefault();
+					var offsetX = e.pageX - PropCanvas.style.left
+					var offsetY = e.pageY - PropCanvas.style.top
+
+					var width = offsetX-PropCanvas.eventData.startX
+					var height = offsetY-PropCanvas.eventData.startY
+
+					var point = PropCanvas.eventData.point
+
+					self.selectedWidget.forEach(function(widget){
+						var PropLayer = widget.Prop;
+						if(point) {
+							// PropLayer = point.parent.Prop;
+							// a number 0-7
+							var pointPosition = point.Prop.position;
+							// control point to resize layer
+							if([0,6,7].indexOf(pointPosition)>=0){
+								width = Math.min(PropLayer.eventData.prevW-1, width)
+								PropLayer.style.width = PropLayer.eventData.prevW - width
+								PropLayer.style.left = PropLayer.eventData.prevX + width
+							}
+							if([2,3,4].indexOf(pointPosition)>=0){
+								PropLayer.style.width = PropLayer.eventData.prevW + width
+							}
+
+
+							if([0,1,2].indexOf(pointPosition)>=0){
+								height = Math.min(PropLayer.eventData.prevH-1, height)
+								PropLayer.style.height = PropLayer.eventData.prevH - height
+								if( PropLayer.style.height>0 ) PropLayer.style.top = PropLayer.eventData.prevY + height
+							}
+							if([4,5,6].indexOf(pointPosition)>=0){
+								PropLayer.style.height = PropLayer.eventData.prevH + height
+							}
+
+
+							PropLayer.style.width = Math.max(1, PropLayer.style.width)
+							PropLayer.style.height = Math.max(1, PropLayer.style.height)
+
+						}else if( PropLayer.isNew ){
+							// create new layer
+							if(width>=0){
+								PropLayer.style.width = width;
+							} else {
+								PropLayer.style.left = PropLayer.eventData.prevX+width;
+								PropLayer.style.width = -width;
+							}
+							if(height>=0){
+								PropLayer.style.height = height;
+							} else {
+								PropLayer.style.top = PropLayer.eventData.prevY+height;
+								PropLayer.style.height = -height;
+							}
+						} else {
+							// move layer
+							PropLayer.style.left = PropLayer.eventData.prevX + width
+							PropLayer.style.top = PropLayer.eventData.prevY + height
+						}
+					})
+
+				}
+
+				self.Prop['on'+upE] = function(evt) {
+					var e = /touch/.test(evt.type) ? evt.changedTouches[0] : evt;
+
+					self.Prop['on'+moveE] = self.Prop['on'+upE] = null;
+
+					delete PropCanvas.eventData
+
+					if( !self.selectedWidget.length ) return;
+					self.selectedWidget.forEach(function(widget) {
+						if(!widget.Prop.style.width && !widget.Prop.style.height  ){
+							self.selectedWidget.splice( self.selectedWidget.indexOf(widget), 1 );
+							self.children.splice( self.children.indexOf(widget), 1 );
+						}
+						delete widget.Prop.eventData
+						if( widget.Prop.isNew){
+							delete widget.Prop.isNew
+						}
+					})
+
+				}
+
+				self.Prop.className = 'selected'
+
+
+
 		}
 
-		self.Prop['on'+moveE] = function(evt) {
-			var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
-			if( !self.selectedWidget.length ) return;
-			if( downE !== (PropCanvas.eventData && PropCanvas.eventData.type) ) return;
-			evt.preventDefault();
-			var offsetX = e.pageX - PropCanvas.style.left
-			var offsetY = e.pageY - PropCanvas.style.top
 
-			var width = offsetX-PropCanvas.eventData.startX
-			var height = offsetY-PropCanvas.eventData.startY
-
-			var point = PropCanvas.eventData.point
-
-			self.selectedWidget.forEach(function(widget){
-				var PropLayer = widget.Prop;
-				if(point) {
-					// PropLayer = point.parent.Prop;
-					// a number 0-7
-					var pointPosition = point.Prop.position;
-					// control point to resize layer
-					if([0,6,7].indexOf(pointPosition)>=0){
-						width = Math.min(PropLayer.eventData.prevW-1, width)
-						PropLayer.style.width = PropLayer.eventData.prevW - width
-						PropLayer.style.left = PropLayer.eventData.prevX + width
-					}
-					if([2,3,4].indexOf(pointPosition)>=0){
-						PropLayer.style.width = PropLayer.eventData.prevW + width
-					}
-
-
-					if([0,1,2].indexOf(pointPosition)>=0){
-						height = Math.min(PropLayer.eventData.prevH-1, height)
-						PropLayer.style.height = PropLayer.eventData.prevH - height
-						if( PropLayer.style.height>0 ) PropLayer.style.top = PropLayer.eventData.prevY + height
-					}
-					if([4,5,6].indexOf(pointPosition)>=0){
-						PropLayer.style.height = PropLayer.eventData.prevH + height
-					}
-
-
-					PropLayer.style.width = Math.max(1, PropLayer.style.width)
-					PropLayer.style.height = Math.max(1, PropLayer.style.height)
-
-				}else if( PropLayer.isNew ){
-					// create new layer
-					if(width>=0){
-						PropLayer.style.width = width;
-					} else {
-						PropLayer.style.left = PropLayer.eventData.prevX+width;
-						PropLayer.style.width = -width;
-					}
-					if(height>=0){
-						PropLayer.style.height = height;
-					} else {
-						PropLayer.style.top = PropLayer.eventData.prevY+height;
-						PropLayer.style.height = -height;
-					}
-				} else {
-					// move layer
-					PropLayer.style.left = PropLayer.eventData.prevX + width
-					PropLayer.style.top = PropLayer.eventData.prevY + height
-				}
-			})
-
-		}
-
-		self.Prop['on'+upE] = function(evt) {
-			var e = /touch/.test(evt.type) ? evt.changedTouches[0] : evt;
-
-			delete PropCanvas.eventData
-
-			if( !self.selectedWidget.length ) return;
-			self.selectedWidget.forEach(function(widget) {
-				if(!widget.Prop.style.width && !widget.Prop.style.height  ){
-					self.selectedWidget.splice( self.selectedWidget.indexOf(widget), 1 );
-					self.children.splice( self.children.indexOf(widget), 1 );
-				}
-				delete widget.Prop.eventData
-				if( widget.Prop.isNew){
-					delete widget.Prop.isNew
-				}
-			})
-
-		}
-
-		self.Prop.className = 'selected'
 	}
 
 }
@@ -608,15 +640,15 @@ var WidgetCanvas = function WidgetCanvas(parent, prop){
 	// this will inherit LayerBaseClass
 	ContainerBaseClass.apply(this, arguments);
 
+    self.generateID = NewID();
 
 	self.controller=function  () {
-	    this.generateID = +new Date();
+
 	}
 
 	self.view = function  (ctrl) {
 
-
-		return m('.canvas', self.Prop, [
+		return m('.canvas', _exclude( _extend({key:self.generateID}, self.Prop), ['eventData','isNew'] ), [
 
 					m('.content', [
 						function(){
