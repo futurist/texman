@@ -23,18 +23,23 @@ ul,li{
     list-style: none
 }
 .canvas{
+	overflow: visible;
+	position: absolute;
+}
+.canvas .content{
+	width:100%;
+	height:100%;
 	overflow: hidden;
-	position: relative;
 }
 .canvas div.layer{
 	position: absolute;
 	margin:1px;
 }
 
-.canvas div.layer.selected .controlPoint{
+.selected .controlPoint{
 	display: block;
 }
-.canvas div.layer.selected{
+.selected{
 	margin:0;
 	border:1px dashed red;
 }
@@ -71,6 +76,37 @@ ul,li{
 </html>
 
 <script type="text/javascript">
+
+/**
+ * Polyfills for IE8
+ */
+if (typeof Object.create != 'function') {
+  Object.create = (function() {
+    function Temp() {}
+
+    var hasOwn = Object.prototype.hasOwnProperty;
+
+    return function (O) {
+      if (typeof O != 'object') {
+        throw TypeError('Object prototype may only be an Object or null');
+      }
+
+      Temp.prototype = O;
+      var obj = new Temp();
+      Temp.prototype = null;
+
+      if (arguments.length > 1) {
+        var Properties = Object(arguments[1]);
+        for (var prop in Properties) {
+          if (hasOwn.call(Properties, prop)) {
+            obj[prop] = Properties[prop];
+          }
+        }
+      }
+      return obj;
+    };
+  })();
+}
 
 /**
  * Helper functions
@@ -180,10 +216,10 @@ function applyStyle(el, styleObj){
 	}
 }
 var rectsIntersect = function (r1, r2) {
-  return r2.left < (r1.left + r1.width) &&
-    (r2.left + r2.width) > r1.left &&
-    r2.top < (r1.top + r1.height) &&
-    (r2.top + r2.height) > r1.top;
+  return r2.left <= (r1.left + r1.width) &&
+    (r2.left + r2.width) >= r1.left &&
+    r2.top <= (r1.top + r1.height) &&
+    (r2.top + r2.height) >= r1.top;
 };
 
 var debug = function( msg ){
@@ -221,9 +257,9 @@ var ControlPoint = function(parent, prop){
 	}
 }
 
-var WidgetDiv = function(parent, prop){
-	var self = this;
 
+var LayerBaseClass = function(parent, prop){
+	var self = this;
 	self.parent = parent;
 	self.Prop = extend( { style:{left:0, top:0, width:0, height:0, 'backgroundColor':'#eee' } }, prop||{} );
 	
@@ -280,7 +316,6 @@ var WidgetDiv = function(parent, prop){
 		rect = extend({}, rect)
 		rect.left -= self.Prop.style.left
 		rect.top -= self.Prop.style.top
-
 		return self.ControlPoints.filter(function(v){
 			if( rectsIntersect( rect, v.Prop.style) ){
 				return true
@@ -288,29 +323,16 @@ var WidgetDiv = function(parent, prop){
 		})
 	}
 
-	self.controller = function(){
-		this.onunload = function(){
-
-		}
-	}
-
-	self.view = function(ctrl) {
-		self.Prop.config = function(el){ applyStyle(el,self.Prop.style ) };
-		return self.Prop.style.width&&self.Prop.style.height
-		? m('div.layer', self.Prop, self.buildControlPoint() )
-		: []
-	}
-
 	self.getView = function() {
 		return self.view( new self.controller() );
 	}
+
 }
 
-var WidgetCanvas = function(parent, prop){
-	var self = this;
+var ContainerBaseClass = function(parent){
+	var self =this;
 
 	self.parent = parent;
-	self.Prop = extend({ style:{left:10, top:10, width:800, height:500, 'background-color':'#ccc' } }, prop||{})
 	self.children = [];
 	self.selectedWidget = [];
 
@@ -329,27 +351,60 @@ var WidgetCanvas = function(parent, prop){
 			}
 
 		});
-		return {layer:elArray, point:pointArray};
+
+		return {layer:elArray, point:pointArray, selfPoint: self.getElementInside(rect).pop() };
 	}
 
-	self.unSelect = function(){
+	self.onUnSelected = function() {
 		self.selectedWidget.forEach(function(v){
 			v.onUnSelected()
 		})
 	}
 
+}
+
+var WidgetDiv = function WidgetDiv(parent, prop){
+
+	LayerBaseClass.apply(this, arguments);
+
+	var self = this;
+
+	self.controller = function(){
+		this.onunload = function(){
+
+		}
+	}
+
+	self.view = function(ctrl) {
+		self.Prop.config = function(el){ applyStyle(el,self.Prop.style ) };
+		return self.Prop.style.width&&self.Prop.style.height
+		? m('div.layer', self.Prop, [self.buildControlPoint()] )
+		: []
+	}
+}
+
+
+var WidgetCanvas = function WidgetCanvas(parent, prop){
+	var self = this;
+
+	LayerBaseClass.apply(this, arguments);
+	ContainerBaseClass.apply(this, [parent]);
+
 	self.controller=function  () {
 	    this.generateID = +new Date();
 
 		var PropCanvas = self.Prop;
-
 		this.canvasAttrs = { config:function(el){ applyStyle(el, PropCanvas.style) } }
 
 		this.canvasAttrs['on'+downE] = function(evt) {
+			evt.stopPropagation();
 			var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
 			var offsetX = e.pageX - PropCanvas.style.left
 			var offsetY = e.pageY - PropCanvas.style.top
 			var PropLayer;
+
+
+
 			var hitObject = self.checkSelectElement( {left:offsetX, top:offsetY, width:0,height:0} );
 
 			// widget
@@ -380,12 +435,14 @@ var WidgetCanvas = function(parent, prop){
 				PropLayer.isNew = true
 				PropLayer.eventData = { el: e.target, type:evt.type, prevX:PropLayer.style.left, prevY:PropLayer.style.top, timeStamp:e.timeStamp }
 
+				self.onUnSelected();
 				self.selectedWidget = [widget]
 				self.children.push( widget )
 			}else{
 				if(e.shiftKey || self.selectedWidget.indexOf(widget)>-1 ){
 					self.selectedWidget.push( widget );
 				} else {
+					self.onUnSelected();
 					self.selectedWidget=[ widget ];
 				}
 				self.children.splice(index,1);
@@ -396,9 +453,9 @@ var WidgetCanvas = function(parent, prop){
 				widget.Prop.className = ''
 			})
 
-			self.unSelect();
 			// on selected
 			self.selectedWidget.forEach(function(widget){
+				widget.activeControlPoint = undefined
 				PropLayer = widget.Prop;
 				PropLayer.className = 'selected'
 				PropLayer.eventData = { el: e.target, type:evt.type, prevX:PropLayer.style.left, prevY:PropLayer.style.top, prevW:PropLayer.style.width, prevH:PropLayer.style.height, timeStamp:e.timeStamp }
@@ -407,8 +464,11 @@ var WidgetCanvas = function(parent, prop){
 			if(point && widget){
 				widget.activeControlPoint = point.Prop.position;
 			}
+			if(!point){
+				point = hitObject.selfPoint;
+			}
 
-			PropCanvas.eventData = {el: e.target, type:evt.type, widget:widget, point:point, startX:offsetX, startY:offsetY, timeStamp:e.timeStamp}
+			PropCanvas.eventData = {el: e.target, type:evt.type, widget:widget, point:point, prevX:PropCanvas.style.left, prevY:PropCanvas.style.top, prevW:PropCanvas.style.width, prevH:PropCanvas.style.height, startX:offsetX, startY:offsetY, timeStamp:e.timeStamp}
 		}
 
 		this.canvasAttrs['on'+moveE] = function(evt) {
@@ -426,8 +486,8 @@ var WidgetCanvas = function(parent, prop){
 
 			self.selectedWidget.forEach(function(widget){
 				var PropLayer = widget.Prop;
-				if(point){
-
+				if(point) {
+					// PropLayer = point.parent.Prop;
 					// a number 0-7
 					var pointPosition = point.Prop.position;
 					// control point to resize layer
@@ -496,19 +556,27 @@ var WidgetCanvas = function(parent, prop){
 
 		}
 
+		this.canvasAttrs.className = 'selected'
+
 	}
 
 	self.view = function  (ctrl) {
 
-		return m('.canvas', ctrl.canvasAttrs,
-				function(){
-		            return self.children.map(function(v){ return v.getView() })
-				}()
+		return m('.canvas', ctrl.canvasAttrs, [
+					
+					self.buildControlPoint(),
+
+					m('.content', [
+						function(){
+				            return self.children.map(function(v){ return v.getView() })
+						}()
+					])
+				]
 	         )
 	}
 }
 
-var Canvas1 = new WidgetCanvas();
+var Canvas1 = new WidgetCanvas(null, { style:{left:0, top:0, width:800, height:500, backgroundColor:'#eee'} } );
 m.mount(container, Canvas1);
 
 </script>
