@@ -31,6 +31,9 @@ ul,li{
 	margin:1px;
 }
 
+.canvas div.layer.selected .controlPoint{
+	display: block;
+}
 .canvas div.layer.selected{
 	margin:0;
 	border:1px dashed red;
@@ -40,6 +43,7 @@ ul,li{
 	background: #E8E8E8;
 }
 .controlPoint{
+	display: none;
 	position: absolute;
 	border:1px solid #666;
 }
@@ -240,8 +244,8 @@ var WidgetDiv = function(parent, prop){
 		}
 
 		self.ControlPoints = []
-		var POINT_WIDTH = 50;
-		var POINT_HEIGHT = 50;
+		var POINT_WIDTH = 10;
+		var POINT_HEIGHT = 10;
 		var pointProp = { width:POINT_WIDTH, height:POINT_HEIGHT };
 		var pointPosition = new ControlPosition( self.Prop.style, pointProp )
 
@@ -264,6 +268,11 @@ var WidgetDiv = function(parent, prop){
 
 	}
 
+	self.onUnSelected = function(){
+		self.Prop.className = ''
+		self.activeControlPoint = undefined
+	}
+
 	self.getElementInside = function( rect ){
 		rect = extend({}, rect)
 		rect.left -= self.Prop.style.left
@@ -282,7 +291,7 @@ var WidgetDiv = function(parent, prop){
 		}
 	}
 
-	self.view = function(ctrl){
+	self.view = function(ctrl) {
 		self.Prop.config = function(el){ applyStyle(el,self.Prop.style ) };
 		return self.Prop.style.width&&self.Prop.style.height
 		? m('div.layer', self.Prop, self.buildControlPoint() )
@@ -319,6 +328,11 @@ var WidgetCanvas = function(parent, prop){
 		return {layer:elArray, point:pointArray};
 	}
 
+	self.unSelect = function(){
+		self.selectedWidget.forEach(function(v){
+			v.onUnSelected()
+		})
+	}
 
 	self.controller=function  () {
 	    this.generateID = +new Date();
@@ -361,12 +375,15 @@ var WidgetCanvas = function(parent, prop){
 				PropLayer.key = NewID()
 				PropLayer.isNew = true
 				PropLayer.eventData = { el: e.target, type:evt.type, prevX:PropLayer.style.left, prevY:PropLayer.style.top, timeStamp:e.timeStamp }
+
+				self.unSelect();
 				self.selectedWidget = [widget]
 				self.children.push( widget )
 			}else{
 				if(e.shiftKey || self.selectedWidget.indexOf(widget)>-1 ){
 					self.selectedWidget.push( widget );
 				} else {
+					self.unSelect();
 					self.selectedWidget=[ widget ];
 				}
 				self.children.splice(index,1);
@@ -377,6 +394,7 @@ var WidgetCanvas = function(parent, prop){
 				widget.Prop.className = ''
 			})
 
+			// on selected
 			self.selectedWidget.forEach(function(widget){
 				PropLayer = widget.Prop;
 				PropLayer.className = 'selected'
