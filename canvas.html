@@ -43,15 +43,17 @@ ul,li{
 	overflow: hidden;
 }
 
-.canvas .layer{
+.layer{
 	position: absolute;
 }
 
-.canvas .selected{
+.layer.selected,
+.canvas.selected,
+{
 	border:1px dashed red;
 }
 
-.canvas .selected .controlPoint{
+.selected>.controlPoint{
 	display: block;
 }
 
