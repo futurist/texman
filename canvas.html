@@ -243,10 +243,30 @@ function _exclude(obj, propArr){
 	if(!propArr||propArr.constructor!=Array) return obj;
 	return _iterate(obj, function(name) { return propArr.indexOf(name)<0 });
 }
+function _addToSet(){
+	var i, isFirst, args = Array.prototype.slice.call(arguments, 0);
+	if(typeof args[0]=='boolean') isFirst = args.shift();
+	var arr = args.shift();
+	if(arr===null || typeof arr!=='object') arr = [];
+	for(i in args) {
+		if( arr.indexOf( args[i] )<0 ){
+			isFirst?arr.unshift(args[i]):arr.push(args[i])
+		}
+	}
+	return arr
+}
 
-function removeClass(classProp, removed) {
+function removeClass(classProp) {
 	var list =classProp.split(/\s+/)
-	return list.filter(function(v){ return v!=removed }).join(' ')
+	var args = Array.prototype.slice.call(arguments, 1);
+	return list.filter(function(v){ return args.indexOf(v)==-1 }).join(' ')
+}
+
+function addClass(classProp, c1, c2, etc) {
+	var args = Array.prototype.slice.call(arguments, 0);
+	args[0] = args[0].split(/\s+/)
+	_addToSet.apply(null, args)
+	return args[0].join(' ')
 }
 
 function RandomColor(){
@@ -330,6 +350,15 @@ var LayerBaseClass = function(parent, prop){
 	self.getRoot = function getRoot() {
 		var cur=self, parent;
 		while(parent = cur.parent){ cur = parent; }
+		return cur;
+	}
+
+	self.iterateParent = function iterateParent(callback){
+		var cur=self, parent;
+		while( parent=cur.parent ){
+			callback&&callback(parent)
+			cur = parent
+		}
 		return cur;
 	}
 
@@ -436,14 +465,12 @@ var ContainerBaseClass = function(parent, prop){
 	}
 
 	self.onExitEditing = function() {
-		self.Prop.className = removeClass( self.Prop.className, 'editing');
-		self.Prop.className = removeClass( self.Prop.className, 'selected');
+		self.Prop.className = removeClass( self.Prop.className, 'editing', 'selected');
 		self.Prop['on'+downE] = null;
 		self.Prop['ondblclick'] = null;
 		delete self.Prop.editing;
 		console.log( 'onExitEditing', self.Prop, self.selectedWidget.length )
 		self.children.forEach(function(v){
-			console.log('children', v)
 			v.onUnSelected()
 		})
 		self.selectedWidget = []
@@ -464,7 +491,8 @@ var ContainerBaseClass = function(parent, prop){
 	 */
 	self.setupEvent = function() {
 		console.log( 'setupEvent', self.Prop.key , self.getRoot().editing.Prop.key  )
-		if( 1 && self.Prop.key == self.getRoot().editing.Prop.key ) {
+
+		if( self.Prop.key == self.getRoot().editing.Prop.key ) {
 
 			var PropCanvas = self.Prop;
 			self.Prop['on'+downE] = function(evt) {
@@ -509,7 +537,7 @@ var ContainerBaseClass = function(parent, prop){
 					self.selectedWidget = [widget]
 					self.children.push( widget )
 				}else{
-					if(e.shiftKey ){
+					if(e.shiftKey || widget ){
 						if(self.selectedWidget.indexOf(widget)==-1) self.selectedWidget.push( widget );
 					} else if(!point) {
 						self.onUnSelected();
@@ -520,7 +548,7 @@ var ContainerBaseClass = function(parent, prop){
 				}
 
 				self.children.forEach(function(widget){
-					widget.Prop.className = ''
+					widget.Prop.className = removeClass( widget.Prop.className, 'selected' )
 				})
 
 				console.log('select', self.selectedWidget)
@@ -639,29 +667,44 @@ var ContainerBaseClass = function(parent, prop){
 	}
 
 
-
-	if(!self.getRoot().editing){
-		self.getRoot().editing = self.getRoot()
-	}
-	
-
-	if( self.getRoot().editing.Prop.key!=self.Prop.key ) {
-
-			console.log('ondblclick', self.Prop.key, self.getRoot().editing.Prop.key, parent)
-
-		self.Prop['ondblclick'] = function(evt) {
-
-			self.getRoot().editing.onExitEditing();
-			self.Prop.className = removeClass( self.Prop.className, 'editing');
-
-			self.getRoot().editing = self;
-			self.Prop['editing'] = true;
-			console.log('after', self.Prop.key, self.getRoot().editing.Prop.key )
-			self.getRoot().editing.setupEvent()
+	self.setupEditing = function(){
+		if(!self.getRoot().editing){
+			self.getRoot().editing = self.getRoot()
 		}
+
+		if( 1 ) {
+
+			var dblClickList = [].concat.apply([], self.children.filter(function(v){ return v.constructor==WidgetCanvas }) );
+			self.iterateParent(function(parent){
+				dblClickList.push(parent)
+			})
+
+			console.log('list', dblClickList )
+			dblClickList.forEach(function(self){
+
+				self.Prop['ondblclick'] = function(evt) {
+
+					self.getRoot().editing.onExitEditing();
+					self.Prop.className = removeClass( self.Prop.className, 'editing');
+
+					self.getRoot().editing = self;
+					self.Prop['editing'] = true;
+					console.log('after', self.Prop.key, self.getRoot().editing.Prop.key )
+
+					self.setupEditing();
+
+				}
+
+			})
+		}
+
+
+
+
+		self.getRoot().editing.setupEvent()
 	}
 
-	self.getRoot().editing.setupEvent()
+	self.setupEditing();
 
 }
 
