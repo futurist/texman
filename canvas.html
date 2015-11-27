@@ -8,10 +8,10 @@
 <script type="text/javascript" src="js/mithril.js"></script>
 <style type="text/css">
 html {
-  /*box-sizing: border-box;*/
+  box-sizing: border-box;
 }
 *, *:before, *:after {
-  /*box-sizing: inherit;*/
+  box-sizing: inherit;
 }
 
 html,body{
@@ -285,6 +285,16 @@ var curTool = 'div'
 var SELECTED_CLASSNAME = 'selected';
 var EDITING_CLASSNAME = 'editing';
 
+var MIN_WIDTH = 2;
+
+var POINT_WIDTH = 10;
+var POINT_HEIGHT = 10;
+var BORDER_WIDTH = 1;
+
+var GRID_EDGE_SIZE = 2;
+var GRID_SIZE = 10;
+
+
 var ControlPoint = function(parent, prop){
 	var self=this;
 
@@ -311,9 +321,6 @@ var ControlPoint = function(parent, prop){
 var LayerBaseClass = function(parent, prop){
 	var self = this;
 
-	var POINT_WIDTH = 10;
-	var POINT_HEIGHT = 10;
-	var BORDER_WIDTH = 1;
 
 	self.parent = parent;
 	self.getPageOffset = function getPageOffset() {
@@ -368,7 +375,7 @@ var LayerBaseClass = function(parent, prop){
 
 		var pointProp = { width:POINT_WIDTH, height:POINT_HEIGHT };
 		var pointPosition = new ControlPosition( self.Prop.style, pointProp )
-		// var positionShift = self.Prop.className.indexOf(SELECTED_CLASSNAME)>=0 ? -BORDER_WIDTH : 0; 
+		// var positionShift = self.isSelected() ? -BORDER_WIDTH : 0;
 
 		for(var i=0; i<8; i++){
 			var point = new ControlPoint( self, {style: pointProp, position:i } )
@@ -389,12 +396,17 @@ var LayerBaseClass = function(parent, prop){
 
 	}
 
+	self.isSelected = function(){
+		return self.Prop.className.indexOf(SELECTED_CLASSNAME)>=0;
+	}
+
 	self.onUnSelected = function(){
 		self.Prop.className = removeClass( self.Prop.className, SELECTED_CLASSNAME);
 		self.activeControlPoint = undefined
 	}
 
 	self.getElementInside = function( rect ){
+		if( !self.isSelected() ) return [];
 		rect = _deepCopy({}, rect)
 		rect.left -= self.Prop.style.left
 		rect.top -= self.Prop.style.top
@@ -478,7 +490,7 @@ var ContainerBaseClass = function(parent, prop){
 	 * setup Event for Canvas, only it's the current editing
 	 * @return {none}
 	 */
-	
+
 	self.mouseUpFunc = function mouseUpFunc(evt) {
 
 		var e = /touch/.test(evt.type) ? evt.changedTouches[0] : evt;
@@ -490,7 +502,7 @@ var ContainerBaseClass = function(parent, prop){
 		if( !self.selectedWidget.length ) return;
 
 		self.selectedWidget.forEach(function(widget) {
-			if(!widget.Prop.style.width && !widget.Prop.style.height  ){
+			if( widget.Prop.style.width<MIN_WIDTH && widget.Prop.style.height<MIN_WIDTH  ){
 				self.selectedWidget.splice( self.selectedWidget.indexOf(widget), 1 );
 				self.children.splice( self.children.indexOf(widget), 1 );
 			}
@@ -503,16 +515,16 @@ var ContainerBaseClass = function(parent, prop){
 	}
 
 	self.setupContainerEvent = function() {
-		
+
 		console.log( 'setupContainerEvent', self.Prop.key , self.getRoot().editingContainer.Prop.key  )
 
 		/**
 		 * enter Container Mode, to move, resize etc.
 		 */
-		
+
 			var PropCanvas = self.Prop;
 
-			function checkChildMoveOut(evt) {
+			var checkChildMoveOut = function checkChildMoveOut(evt) {
 				var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
 				var offsetX = e.pageX - self.getPageOffset().left
 				var offsetY = e.pageY - self.getPageOffset().top
@@ -526,6 +538,17 @@ var ContainerBaseClass = function(parent, prop){
 				}
 			}
 
+			// http://stackoverflow.com/questions/6593447/snapping-to-grid-in-javascript
+			var snapToGrip = function snapToGrip(val){
+			    var snap_candidate = GRID_SIZE * Math.round(val/GRID_SIZE);
+			    if (Math.abs(val-snap_candidate) <= GRID_SIZE/2) {
+			        return snap_candidate;
+			    }
+			    else {
+			        return null;
+			    }
+			};
+
 			// when mouse down
 			self.Prop['on'+downE] = function(evt) {
 				// check: move, resize, create only apply to current editing container
@@ -535,12 +558,14 @@ var ContainerBaseClass = function(parent, prop){
 				var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
 				var offsetX = e.pageX - self.getPageOffset().left
 				var offsetY = e.pageY - self.getPageOffset().top
+
 				// console.log('ondown', offsetX, offsetY, self.Prop.key, self.getPageOffset().path )
 				var PropLayer;
 
-
-
 				var hitObject = self.checkSelectElement( {left:offsetX, top:offsetY, width:0,height:0} );
+
+				offsetX = snapToGrip(offsetX)
+				offsetY = snapToGrip(offsetY)
 
 				// widget
 				var widget = null;
@@ -605,7 +630,7 @@ var ContainerBaseClass = function(parent, prop){
 
 
 			// set up move and up event
-			// 
+			//
 			self.Prop['on'+moveE] = function(evt) {
 
 				if( !self.isContainerMode() ){
@@ -625,6 +650,9 @@ var ContainerBaseClass = function(parent, prop){
 				var width = offsetX-PropCanvas.eventData.startX
 				var height = offsetY-PropCanvas.eventData.startY
 
+				width = snapToGrip(width)
+				height = snapToGrip(height)
+
 				var point = PropCanvas.eventData.point
 
 				self.selectedWidget.forEach(function(widget){
@@ -635,7 +663,7 @@ var ContainerBaseClass = function(parent, prop){
 						var pointPosition = point.Prop.position;
 						// control point to resize layer
 						if([0,6,7].indexOf(pointPosition)>=0){
-							width = Math.min(PropLayer.eventData.prevW-1, width)
+							width = Math.min(PropLayer.eventData.prevW-MIN_WIDTH, width)
 							PropLayer.style.width = PropLayer.eventData.prevW - width
 							PropLayer.style.left = PropLayer.eventData.prevX + width
 						}
@@ -645,7 +673,7 @@ var ContainerBaseClass = function(parent, prop){
 
 
 						if([0,1,2].indexOf(pointPosition)>=0){
-							height = Math.min(PropLayer.eventData.prevH-1, height)
+							height = Math.min(PropLayer.eventData.prevH-MIN_WIDTH, height)
 							PropLayer.style.height = PropLayer.eventData.prevH - height
 							if( PropLayer.style.height>0 ) PropLayer.style.top = PropLayer.eventData.prevY + height
 						}
@@ -654,8 +682,8 @@ var ContainerBaseClass = function(parent, prop){
 						}
 
 
-						PropLayer.style.width = Math.max(1, PropLayer.style.width)
-						PropLayer.style.height = Math.max(1, PropLayer.style.height)
+						PropLayer.style.width = Math.max(MIN_WIDTH, PropLayer.style.width)
+						PropLayer.style.height = Math.max(MIN_WIDTH, PropLayer.style.height)
 
 					}else if( PropLayer.isNew ){
 						// create new layer
