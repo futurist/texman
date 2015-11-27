@@ -47,7 +47,7 @@ ul,li{
 	position: absolute;
 }
 
-.canvas .selected .bbox{
+.canvas .selected{
 	border:1px dashed red;
 }
 
@@ -256,13 +256,13 @@ function _addToSet(){
 	return arr
 }
 
-function removeClass(classProp) {
+function removeClass(classProp, class1, class2, etc) {
 	var list =classProp.split(/\s+/)
 	var args = Array.prototype.slice.call(arguments, 1);
 	return list.filter(function(v){ return args.indexOf(v)==-1 }).join(' ')
 }
 
-function addClass(classProp, c1, c2, etc) {
+function addClass(classProp, class1, class2, etc) {
 	var args = Array.prototype.slice.call(arguments, 0);
 	args[0] = args[0].split(/\s+/)
 	_addToSet.apply(null, args)
@@ -303,6 +303,8 @@ var container = document.querySelector('#container');
 
 var PropForm = {}
 var curTool = 'div'
+var SELECTED_CLASSNAME = 'selected';
+var EDITING_CLASSNAME = 'editing';
 
 var ControlPoint = function(parent, prop){
 	var self=this;
@@ -387,11 +389,12 @@ var LayerBaseClass = function(parent, prop){
 
 		var pointProp = { width:POINT_WIDTH, height:POINT_HEIGHT };
 		var pointPosition = new ControlPosition( self.Prop.style, pointProp )
+		var positionShift = self.Prop.className.indexOf(SELECTED_CLASSNAME)>=0 ? -BORDER_WIDTH : 0; 
 
 		for(var i=0; i<8; i++){
 			var point = new ControlPoint( self, {style: pointProp, position:i } )
-			point.Prop.style.left = pointPosition[i][0]
-			point.Prop.style.top = pointPosition[i][1]
+			point.Prop.style.left = pointPosition[i][0]+positionShift
+			point.Prop.style.top = pointPosition[i][1]+positionShift
 			self.ControlPoints.push(point)
 		}
 
@@ -408,7 +411,7 @@ var LayerBaseClass = function(parent, prop){
 	}
 
 	self.onUnSelected = function(){
-		self.Prop.className = removeClass( self.Prop.className, 'selected');
+		self.Prop.className = removeClass( self.Prop.className, SELECTED_CLASSNAME);
 		self.activeControlPoint = undefined
 	}
 
@@ -436,7 +439,7 @@ var ContainerBaseClass = function(parent, prop){
 	var self =this;
 
 	self.parent = parent;
-	self.editing = undefined;
+	self.currentContainer = undefined;
 	self.children = [];
 	self.selectedWidget = [];
 
@@ -464,11 +467,12 @@ var ContainerBaseClass = function(parent, prop){
 		return {layer:elArray, point:pointArray, selfPoint: self.getElementInside(rect).pop() };
 	}
 
+	self.isContainerMode = function() {
+		return self.Prop.key == self.getRoot().currentContainer.Prop.key;
+	}
+
 	self.onExitEditing = function() {
-		self.Prop.className = removeClass( self.Prop.className, 'editing', 'selected');
-		self.Prop['on'+downE] = null;
-		self.Prop['ondblclick'] = null;
-		delete self.Prop.editing;
+		self.Prop.className = removeClass( self.Prop.className, EDITING_CLASSNAME, SELECTED_CLASSNAME);
 		console.log( 'onExitEditing', self.Prop, self.selectedWidget.length )
 		self.children.forEach(function(v){
 			v.onUnSelected()
@@ -490,16 +494,41 @@ var ContainerBaseClass = function(parent, prop){
 	 * @return {none}
 	 */
 	self.setupEvent = function() {
-		console.log( 'setupEvent', self.Prop.key , self.getRoot().editing.Prop.key  )
-
-		if( self.Prop.key == self.getRoot().editing.Prop.key ) {
-
+		
+		console.log( 'setupEvent', self.Prop.key , self.getRoot().currentContainer.Prop.key  )
+		/**
+		 * enter Container Mode
+		 */
+		if( !self.isContainerMode() ){
+			self.Prop['ondblclick'] = function enterContainerMode(evt) {
+				// we are already in container mode, don't enter again
+				console.log('after', self.Prop.key, self.getRoot().currentContainer.Prop.key )
+				if( self.isContainerMode() ) return;
+				var editing = self.getRoot().currentContainer;
+				editing.onExitEditing();
+				self.Prop.className = addClass( self.Prop.className, EDITING_CLASSNAME);
+				self.getRoot().currentContainer = self;
+				self.setupEditing()
+				editing.setupEditing()
+			}
+		} else {
+			self.Prop['ondblclick'] = null;
+		}
+		/**
+		 * enter Container Mode, to move, resize etc.
+		 */
+		
 			var PropCanvas = self.Prop;
+
+			// when mouse down
 			self.Prop['on'+downE] = function(evt) {
+				// check: move, resize, create only apply to current editing container
+				if(!self.isContainerMode()) return;
+
 				var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
 				var offsetX = e.pageX - self.getPageOffset().left
 				var offsetY = e.pageY - self.getPageOffset().top
-				console.log('ondown', offsetX, offsetY, self.getPageOffset().path )
+				// console.log('ondown', offsetX, offsetY, self.Prop.key, self.getPageOffset().path )
 				var PropLayer;
 
 
@@ -537,7 +566,7 @@ var ContainerBaseClass = function(parent, prop){
 					self.selectedWidget = [widget]
 					self.children.push( widget )
 				}else{
-					if(e.shiftKey || widget ){
+					if(e.shiftKey || self.selectedWidget.indexOf(widget)>=0 ){
 						if(self.selectedWidget.indexOf(widget)==-1) self.selectedWidget.push( widget );
 					} else if(!point) {
 						self.onUnSelected();
@@ -548,7 +577,7 @@ var ContainerBaseClass = function(parent, prop){
 				}
 
 				self.children.forEach(function(widget){
-					widget.Prop.className = removeClass( widget.Prop.className, 'selected' )
+					widget.Prop.className = removeClass( widget.Prop.className, SELECTED_CLASSNAME )
 				})
 
 				console.log('select', self.selectedWidget)
@@ -556,7 +585,7 @@ var ContainerBaseClass = function(parent, prop){
 				self.selectedWidget.forEach(function(widget){
 					widget.activeControlPoint = undefined
 					PropLayer = widget.Prop;
-					PropLayer.className = 'selected'
+					PropLayer.className = addClass( PropLayer.className, SELECTED_CLASSNAME );
 					PropLayer.eventData = { el: e.target, type:evt.type, prevX:PropLayer.style.left, prevY:PropLayer.style.top, prevW:PropLayer.style.width, prevH:PropLayer.style.height, timeStamp:e.timeStamp }
 				})
 
@@ -570,6 +599,7 @@ var ContainerBaseClass = function(parent, prop){
 				// set up move and up event
 
 					self.Prop['on'+moveE] = function(evt) {
+
 						var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
 						if( !self.selectedWidget.length ) return;
 						if( downE !== (PropCanvas.eventData && PropCanvas.eventData.type) ) return;
@@ -636,6 +666,7 @@ var ContainerBaseClass = function(parent, prop){
 					}
 
 					self.Prop['on'+upE] = function(evt) {
+
 						var e = /touch/.test(evt.type) ? evt.changedTouches[0] : evt;
 
 						self.Prop['on'+moveE] = self.Prop['on'+upE] = null;
@@ -656,52 +687,21 @@ var ContainerBaseClass = function(parent, prop){
 
 					}
 
-					self.Prop.className = 'editing'
+					self.Prop.className = addClass( self.Prop.className, EDITING_CLASSNAME)
 
 
 
 			}
 
-
-		}
 	}
 
 
 	self.setupEditing = function(){
-		if(!self.getRoot().editing){
-			self.getRoot().editing = self.getRoot()
+		if(!self.getRoot().currentContainer){
+			self.getRoot().currentContainer = self.getRoot()
 		}
 
-		if( 1 ) {
-
-			var dblClickList = [].concat.apply([], self.children.filter(function(v){ return v.constructor==WidgetCanvas }) );
-			self.iterateParent(function(parent){
-				dblClickList.push(parent)
-			})
-
-			console.log('list', dblClickList )
-			dblClickList.forEach(function(self){
-
-				self.Prop['ondblclick'] = function(evt) {
-
-					self.getRoot().editing.onExitEditing();
-					self.Prop.className = removeClass( self.Prop.className, 'editing');
-
-					self.getRoot().editing = self;
-					self.Prop['editing'] = true;
-					console.log('after', self.Prop.key, self.getRoot().editing.Prop.key )
-
-					self.setupEditing();
-
-				}
-
-			})
-		}
-
-
-
-
-		self.getRoot().editing.setupEvent()
+		self.setupEvent()
 	}
 
 	self.setupEditing();
@@ -752,7 +752,6 @@ var WidgetCanvas = function WidgetCanvas(parent, prop){
 				            return self.children.map(function(v){ return v.getView() })
 						}()
 					]),
-
 					self.buildControlPoint(),
 				]
 	         )
