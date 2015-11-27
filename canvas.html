@@ -8,10 +8,10 @@
 <script type="text/javascript" src="js/mithril.js"></script>
 <style type="text/css">
 html {
-  box-sizing: border-box;
+  /*box-sizing: border-box;*/
 }
 *, *:before, *:after {
-  box-sizing: inherit;
+  /*box-sizing: inherit;*/
 }
 
 html,body{
@@ -33,7 +33,13 @@ ul,li{
 .canvas{
 	overflow: visible;
 	position: absolute;
+	border:1px dashed transparent;
 }
+.layer{
+	position: absolute;
+	border:1px dashed transparent;
+}
+
 .canvas .content,
 .canvas .bbox
 {
@@ -43,12 +49,9 @@ ul,li{
 	overflow: hidden;
 }
 
-.layer{
-	position: absolute;
-}
 
 .layer.selected,
-.canvas.selected,
+.canvas.selected
 {
 	border:1px dashed red;
 }
@@ -94,37 +97,6 @@ ul,li{
 </html>
 
 <script type="text/javascript">
-
-/**
- * Polyfills for IE8
- */
-if (typeof Object.create != 'function') {
-  Object.create = (function() {
-    function Temp() {}
-
-    var hasOwn = Object.prototype.hasOwnProperty;
-
-    return function (O) {
-      if (typeof O != 'object') {
-        throw TypeError('Object prototype may only be an Object or null');
-      }
-
-      Temp.prototype = O;
-      var obj = new Temp();
-      Temp.prototype = null;
-
-      if (arguments.length > 1) {
-        var Properties = Object(arguments[1]);
-        for (var prop in Properties) {
-          if (hasOwn.call(Properties, prop)) {
-            obj[prop] = Properties[prop];
-          }
-        }
-      }
-      return obj;
-    };
-  })();
-}
 
 /**
  * Helper functions
@@ -396,12 +368,12 @@ var LayerBaseClass = function(parent, prop){
 
 		var pointProp = { width:POINT_WIDTH, height:POINT_HEIGHT };
 		var pointPosition = new ControlPosition( self.Prop.style, pointProp )
-		var positionShift = self.Prop.className.indexOf(SELECTED_CLASSNAME)>=0 ? -BORDER_WIDTH : 0; 
+		// var positionShift = self.Prop.className.indexOf(SELECTED_CLASSNAME)>=0 ? -BORDER_WIDTH : 0; 
 
 		for(var i=0; i<8; i++){
 			var point = new ControlPoint( self, {style: pointProp, position:i } )
-			point.Prop.style.left = pointPosition[i][0]+positionShift
-			point.Prop.style.top = pointPosition[i][1]+positionShift
+			point.Prop.style.left = pointPosition[i][0]
+			point.Prop.style.top = pointPosition[i][1]
 			self.ControlPoints.push(point)
 		}
 
@@ -527,7 +499,7 @@ var ContainerBaseClass = function(parent, prop){
 				delete widget.Prop.isNew
 			}
 		})
-		
+
 	}
 
 	self.setupContainerEvent = function() {
@@ -710,12 +682,7 @@ var ContainerBaseClass = function(parent, prop){
 
 			self.Prop['on'+upE] = self.mouseUpFunc
 
-			self.Prop.className = addClass( self.Prop.className, EDITING_CLASSNAME)
-
-
-
-
-
+			if( self.isContainerMode() ) self.Prop.className = addClass( self.Prop.className, EDITING_CLASSNAME)
 
 	}
 
