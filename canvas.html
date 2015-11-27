@@ -493,27 +493,10 @@ var ContainerBaseClass = function(parent, prop){
 	 * setup Event for Canvas, only it's the current editing
 	 * @return {none}
 	 */
-	self.setupEvent = function() {
+	self.setupContainerEvent = function() {
 		
-		console.log( 'setupEvent', self.Prop.key , self.getRoot().currentContainer.Prop.key  )
-		/**
-		 * enter Container Mode
-		 */
-		if( !self.isContainerMode() ){
-			self.Prop['ondblclick'] = function enterContainerMode(evt) {
-				// we are already in container mode, don't enter again
-				console.log('after', self.Prop.key, self.getRoot().currentContainer.Prop.key )
-				if( self.isContainerMode() ) return;
-				var editing = self.getRoot().currentContainer;
-				editing.onExitEditing();
-				self.Prop.className = addClass( self.Prop.className, EDITING_CLASSNAME);
-				self.getRoot().currentContainer = self;
-				self.setupEditing()
-				editing.setupEditing()
-			}
-		} else {
-			self.Prop['ondblclick'] = null;
-		}
+		console.log( 'setupContainerEvent', self.Prop.key , self.getRoot().currentContainer.Prop.key  )
+
 		/**
 		 * enter Container Mode, to move, resize etc.
 		 */
@@ -696,15 +679,34 @@ var ContainerBaseClass = function(parent, prop){
 	}
 
 
-	self.setupEditing = function(){
+	self.setupContainerMode = function(){
 		if(!self.getRoot().currentContainer){
 			self.getRoot().currentContainer = self.getRoot()
 		}
 
-		self.setupEvent()
+		/**
+		 * enter Container Mode
+		 */
+		if( !self.isContainerMode() ){
+			self.Prop['ondblclick'] = function enterContainerMode(evt) {
+				// we are already in container mode, don't enter again
+				console.log('after', self.Prop.key, self.getRoot().currentContainer.Prop.key )
+				if( self.isContainerMode() ) return;
+				var editing = self.getRoot().currentContainer;
+				editing.onExitEditing();
+				self.Prop.className = addClass( self.Prop.className, EDITING_CLASSNAME);
+				self.getRoot().currentContainer = self;
+				self.setupContainerMode()
+				editing.setupContainerMode()
+			}
+		} else {
+			self.Prop['ondblclick'] = null;
+		}
+
 	}
 
-	self.setupEditing();
+	self.setupContainerMode();
+	self.setupContainerEvent()
 
 }
 
