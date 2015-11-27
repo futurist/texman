@@ -338,7 +338,7 @@ var LayerBaseClass = function(parent, prop){
 
 	self.parent = parent;
 	self.getPageOffset = function getPageOffset() {
-		var cur=self, parent, offset={left:self.Prop.style.left, top:self.Prop.style.left, path:[ self.Prop.key ]};
+		var cur=self, parent, offset={left:self.Prop.style.left, top:self.Prop.style.top, path:[ self.Prop.key ]};
 		while(parent = cur.parent) {
 			offset.left+=parent.Prop.style.left;
 			offset.top+=parent.Prop.style.top;
@@ -563,7 +563,6 @@ var ContainerBaseClass = function(parent, prop){
 					widget.Prop.className = removeClass( widget.Prop.className, SELECTED_CLASSNAME )
 				})
 
-				console.log('select', self.selectedWidget)
 				// on selected
 				self.selectedWidget.forEach(function(widget){
 					widget.activeControlPoint = undefined
@@ -587,8 +586,8 @@ var ContainerBaseClass = function(parent, prop){
 						if( !self.selectedWidget.length ) return;
 						if( downE !== (PropCanvas.eventData && PropCanvas.eventData.type) ) return;
 						evt.preventDefault();
-						var offsetX = e.pageX - PropCanvas.style.left
-						var offsetY = e.pageY - PropCanvas.style.top
+						var offsetX = e.pageX - self.getPageOffset().left
+						var offsetY = e.pageY - self.getPageOffset().top
 
 						var width = offsetX-PropCanvas.eventData.startX
 						var height = offsetY-PropCanvas.eventData.startY
