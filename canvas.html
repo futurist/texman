@@ -53,6 +53,11 @@ ul,li{
 	border:1px dashed red;
 }
 
+.canvas.editing
+{
+	border:1px dashed blue;
+}
+
 .selected>.controlPoint{
 	display: block;
 }
@@ -441,7 +446,7 @@ var ContainerBaseClass = function(parent, prop){
 	var self =this;
 
 	self.parent = parent;
-	self.currentContainer = undefined;
+	self.editingContainer = undefined;
 	self.children = [];
 	self.selectedWidget = [];
 
@@ -469,8 +474,14 @@ var ContainerBaseClass = function(parent, prop){
 		return {layer:elArray, point:pointArray, selfPoint: self.getElementInside(rect).pop() };
 	}
 
+	self.isChild = function isChild(obj) {
+		return self.children.some(function(v,i){
+			return v.Prop.key == obj.Prop.key
+		})
+	}
+
 	self.isContainerMode = function() {
-		return self.Prop.key == self.getRoot().currentContainer.Prop.key;
+		return self.Prop.key == self.getRoot().editingContainer.Prop.key;
 	}
 
 	self.onExitEditing = function() {
@@ -495,9 +506,33 @@ var ContainerBaseClass = function(parent, prop){
 	 * setup Event for Canvas, only it's the current editing
 	 * @return {none}
 	 */
+	
+	self.mouseUpFunc = function mouseUpFunc(evt) {
+
+		var e = /touch/.test(evt.type) ? evt.changedTouches[0] : evt;
+
+		// self.Prop['on'+moveE] = self.Prop['on'+upE] = null;
+
+		delete self.Prop.eventData
+
+		if( !self.selectedWidget.length ) return;
+
+		self.selectedWidget.forEach(function(widget) {
+			if(!widget.Prop.style.width && !widget.Prop.style.height  ){
+				self.selectedWidget.splice( self.selectedWidget.indexOf(widget), 1 );
+				self.children.splice( self.children.indexOf(widget), 1 );
+			}
+			delete widget.Prop.eventData
+			if( widget.Prop.isNew){
+				delete widget.Prop.isNew
+			}
+		})
+		
+	}
+
 	self.setupContainerEvent = function() {
 		
-		console.log( 'setupContainerEvent', self.Prop.key , self.getRoot().currentContainer.Prop.key  )
+		console.log( 'setupContainerEvent', self.Prop.key , self.getRoot().editingContainer.Prop.key  )
 
 		/**
 		 * enter Container Mode, to move, resize etc.
@@ -505,11 +540,26 @@ var ContainerBaseClass = function(parent, prop){
 		
 			var PropCanvas = self.Prop;
 
+			function checkChildMoveOut(evt) {
+				var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
+				var offsetX = e.pageX - self.getPageOffset().left
+				var offsetY = e.pageY - self.getPageOffset().top
+
+				var editingStyle = self.getRoot().editingContainer.Prop.style;
+
+				if(offsetX<editingStyle.left||offsetY<editingStyle.top||
+					offsetX>editingStyle.left+editingStyle.width||offsetY>editingStyle.top+editingStyle.height) {
+					console.log('move out')
+					return self.getRoot().editingContainer.mouseUpFunc(evt);
+				}
+			}
+
 			// when mouse down
 			self.Prop['on'+downE] = function(evt) {
 				// check: move, resize, create only apply to current editing container
-				if(!self.isContainerMode()) return;
-
+				if( !self.isContainerMode() ) {
+					return;
+				}
 				var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
 				var offsetX = e.pageX - self.getPageOffset().left
 				var offsetY = e.pageY - self.getPageOffset().top
@@ -579,110 +629,100 @@ var ContainerBaseClass = function(parent, prop){
 
 				PropCanvas.eventData = {el: e.target, type:evt.type, widget:widget, point:point, prevX:PropCanvas.style.left, prevY:PropCanvas.style.top, prevW:PropCanvas.style.width, prevH:PropCanvas.style.height, startX:offsetX, startY:offsetY, timeStamp:e.timeStamp}
 
-
-				// set up move and up event
-
-					self.Prop['on'+moveE] = function(evt) {
-
-						var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
-						if( !self.selectedWidget.length ) return;
-						if( downE !== (PropCanvas.eventData && PropCanvas.eventData.type) ) return;
-						evt.preventDefault();
-						var offsetX = e.pageX - self.getPageOffset().left
-						var offsetY = e.pageY - self.getPageOffset().top
-
-						var width = offsetX-PropCanvas.eventData.startX
-						var height = offsetY-PropCanvas.eventData.startY
-
-						var point = PropCanvas.eventData.point
-
-						self.selectedWidget.forEach(function(widget){
-							var PropLayer = widget.Prop;
-							if(point) {
-								// PropLayer = point.parent.Prop;
-								// a number 0-7
-								var pointPosition = point.Prop.position;
-								// control point to resize layer
-								if([0,6,7].indexOf(pointPosition)>=0){
-									width = Math.min(PropLayer.eventData.prevW-1, width)
-									PropLayer.style.width = PropLayer.eventData.prevW - width
-									PropLayer.style.left = PropLayer.eventData.prevX + width
-								}
-								if([2,3,4].indexOf(pointPosition)>=0){
-									PropLayer.style.width = PropLayer.eventData.prevW + width
-								}
+			}
 
 
-								if([0,1,2].indexOf(pointPosition)>=0){
-									height = Math.min(PropLayer.eventData.prevH-1, height)
-									PropLayer.style.height = PropLayer.eventData.prevH - height
-									if( PropLayer.style.height>0 ) PropLayer.style.top = PropLayer.eventData.prevY + height
-								}
-								if([4,5,6].indexOf(pointPosition)>=0){
-									PropLayer.style.height = PropLayer.eventData.prevH + height
-								}
+			// set up move and up event
+			// 
+			self.Prop['on'+moveE] = function(evt) {
+
+				if( !self.isContainerMode() ){
+					if( self.isChild( self.getRoot().editingContainer ) ) checkChildMoveOut(evt);
+					return;
+				}
+
+				var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
+				evt.preventDefault();
+
+				// check child mouse move out and info child to stop move
+				var offsetX = e.pageX - self.getPageOffset().left
+				var offsetY = e.pageY - self.getPageOffset().top
+
+				if( downE !== (PropCanvas.eventData && PropCanvas.eventData.type) ) return;
+
+				var width = offsetX-PropCanvas.eventData.startX
+				var height = offsetY-PropCanvas.eventData.startY
+
+				var point = PropCanvas.eventData.point
+
+				self.selectedWidget.forEach(function(widget){
+					var PropLayer = widget.Prop;
+					if(point) {
+						// PropLayer = point.parent.Prop;
+						// a number 0-7
+						var pointPosition = point.Prop.position;
+						// control point to resize layer
+						if([0,6,7].indexOf(pointPosition)>=0){
+							width = Math.min(PropLayer.eventData.prevW-1, width)
+							PropLayer.style.width = PropLayer.eventData.prevW - width
+							PropLayer.style.left = PropLayer.eventData.prevX + width
+						}
+						if([2,3,4].indexOf(pointPosition)>=0){
+							PropLayer.style.width = PropLayer.eventData.prevW + width
+						}
 
 
-								PropLayer.style.width = Math.max(1, PropLayer.style.width)
-								PropLayer.style.height = Math.max(1, PropLayer.style.height)
+						if([0,1,2].indexOf(pointPosition)>=0){
+							height = Math.min(PropLayer.eventData.prevH-1, height)
+							PropLayer.style.height = PropLayer.eventData.prevH - height
+							if( PropLayer.style.height>0 ) PropLayer.style.top = PropLayer.eventData.prevY + height
+						}
+						if([4,5,6].indexOf(pointPosition)>=0){
+							PropLayer.style.height = PropLayer.eventData.prevH + height
+						}
 
-							}else if( PropLayer.isNew ){
-								// create new layer
-								if(width>=0){
-									PropLayer.style.width = width;
-								} else {
-									PropLayer.style.left = PropLayer.eventData.prevX+width;
-									PropLayer.style.width = -width;
-								}
-								if(height>=0){
-									PropLayer.style.height = height;
-								} else {
-									PropLayer.style.top = PropLayer.eventData.prevY+height;
-									PropLayer.style.height = -height;
-								}
-							} else {
-								// move layer
-								PropLayer.style.left = PropLayer.eventData.prevX + width
-								PropLayer.style.top = PropLayer.eventData.prevY + height
-							}
-						})
 
+						PropLayer.style.width = Math.max(1, PropLayer.style.width)
+						PropLayer.style.height = Math.max(1, PropLayer.style.height)
+
+					}else if( PropLayer.isNew ){
+						// create new layer
+						if(width>=0){
+							PropLayer.style.width = width;
+						} else {
+							PropLayer.style.left = PropLayer.eventData.prevX+width;
+							PropLayer.style.width = -width;
+						}
+						if(height>=0){
+							PropLayer.style.height = height;
+						} else {
+							PropLayer.style.top = PropLayer.eventData.prevY+height;
+							PropLayer.style.height = -height;
+						}
+					} else {
+						// move layer
+						PropLayer.style.left = PropLayer.eventData.prevX + width
+						PropLayer.style.top = PropLayer.eventData.prevY + height
 					}
-
-					self.Prop['on'+upE] = function(evt) {
-
-						var e = /touch/.test(evt.type) ? evt.changedTouches[0] : evt;
-
-						self.Prop['on'+moveE] = self.Prop['on'+upE] = null;
-
-						delete PropCanvas.eventData
-
-						if( !self.selectedWidget.length ) return;
-						self.selectedWidget.forEach(function(widget) {
-							if(!widget.Prop.style.width && !widget.Prop.style.height  ){
-								self.selectedWidget.splice( self.selectedWidget.indexOf(widget), 1 );
-								self.children.splice( self.children.indexOf(widget), 1 );
-							}
-							delete widget.Prop.eventData
-							if( widget.Prop.isNew){
-								delete widget.Prop.isNew
-							}
-						})
-
-					}
-
-					self.Prop.className = addClass( self.Prop.className, EDITING_CLASSNAME)
-
-
+				})
 
 			}
+
+			self.Prop['on'+upE] = self.mouseUpFunc
+
+			self.Prop.className = addClass( self.Prop.className, EDITING_CLASSNAME)
+
+
+
+
+
 
 	}
 
 
 	self.setupContainerMode = function(){
-		if(!self.getRoot().currentContainer){
-			self.getRoot().currentContainer = self.getRoot()
+		if(!self.getRoot().editingContainer){
+			self.getRoot().editingContainer = self.getRoot()
 		}
 
 		/**
@@ -691,12 +731,12 @@ var ContainerBaseClass = function(parent, prop){
 		if( !self.isContainerMode() ){
 			self.Prop['ondblclick'] = function enterContainerMode(evt) {
 				// we are already in container mode, don't enter again
-				console.log('after', self.Prop.key, self.getRoot().currentContainer.Prop.key )
+				console.log('after', self.Prop.key, self.getRoot().editingContainer.Prop.key )
 				if( self.isContainerMode() ) return;
-				var editing = self.getRoot().currentContainer;
+				var editing = self.getRoot().editingContainer;
 				editing.onExitEditing();
 				self.Prop.className = addClass( self.Prop.className, EDITING_CLASSNAME);
-				self.getRoot().currentContainer = self;
+				self.getRoot().editingContainer = self;
 				self.setupContainerMode()
 				editing.setupContainerMode()
 			}
@@ -761,7 +801,12 @@ var WidgetCanvas = function WidgetCanvas(parent, prop){
 	}
 }
 
-var Canvas1 = new WidgetCanvas(null, { style:{left:0, top:0, width:800, height:500, backgroundColor:'#eee'} } );
+var Canvas1 = new WidgetCanvas(null, { style:{left:100, top:100, width:800, height:500, backgroundColor:'#eee'} } );
 m.mount(container, Canvas1);
+
+// check mouse out of Main Canvas, to prevent mouse out problem
+container.onmouseover = function(e){
+	if(e.target.id == 'container') Canvas1.mouseUpFunc(e)
+}
 
 </script>
