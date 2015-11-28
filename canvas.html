@@ -472,7 +472,7 @@ var ContainerBaseClass = function(parent, prop){
 	}
 
 	var duplicateChild = function(src, dest){
-		src.children.forEach(function(child){
+		src.children && src.children.forEach(function(child){
 			var newChild = new child.constructor( dest, {style:child.Prop.style} );
 			dest.children.push( newChild )
 			duplicateChild( child, newChild )
@@ -654,7 +654,7 @@ var ContainerBaseClass = function(parent, prop){
 				}
 
 				if(index==undefined){
-					widget = new WidgetCanvas( self, { style:{ backgroundColor:RandomColor() } } );
+					widget = evt.shiftKey? new WidgetDiv( self, { style:{ backgroundColor:RandomColor() } } ) : new WidgetCanvas( self, { style:{ backgroundColor:RandomColor() } } );
 					PropLayer = widget.Prop
 					PropLayer.style.left = offsetX
 					PropLayer.style.top = offsetY
