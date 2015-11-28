@@ -291,8 +291,7 @@ var POINT_WIDTH = 10;
 var POINT_HEIGHT = 10;
 var BORDER_WIDTH = 1;
 
-var GRID_EDGE_SIZE = 2;
-var GRID_SIZE = 10;
+var GRID_SIZE = 5;
 
 
 var ControlPoint = function(parent, prop){
@@ -353,6 +352,7 @@ var LayerBaseClass = function(parent, prop){
 	self.generateID = NewID();
 	self.Prop = _deepCopy( { key:self.generateID, className:'', style:{left:0, top:0, width:0, height:0, 'backgroundColor':'#eee' } }, prop||{} );
 	self.Prop.config = function(el){ applyStyle(el, self.Prop.style) }
+	self.Prop.onkeypress = function(e){ console.log(e)  }
 
 	self.ControlPoints = []
 	self.activeControlPoint = undefined;
@@ -396,10 +396,18 @@ var LayerBaseClass = function(parent, prop){
 
 	}
 
+	self.remove = function(){
+		self.parent.selectedWidget.splice( self.parent.selectedWidget.indexOf(self), 1 );
+		self.parent.children.splice( self.parent.children.indexOf(self), 1 );
+	}
+
 	self.isSelected = function(){
 		return self.Prop.className.indexOf(SELECTED_CLASSNAME)>=0;
 	}
 
+	self.onSelected = function(){
+		self.Prop.className = addClass( self.Prop.className, SELECTED_CLASSNAME);
+	}
 	self.onUnSelected = function(){
 		self.Prop.className = removeClass( self.Prop.className, SELECTED_CLASSNAME);
 		self.activeControlPoint = undefined
@@ -434,10 +442,50 @@ var ContainerBaseClass = function(parent, prop){
 	self.children = [];
 	self.selectedWidget = [];
 
-	self.Prop['on'+downE] = null;
-	self.Prop['on'+moveE] = null;
-	self.Prop['on'+upE] = null;
-	self.Prop['ondblclick'] = null;
+	self.resetAllEvent = function resetAllEvent(el){
+		el = el||self;
+		el.Prop['on'+downE] = null;
+		el.Prop['on'+moveE] = null;
+		el.Prop['on'+upE] = null;
+		el.Prop['ondblclick'] = null;
+	}
+	self.resetAllEvent()
+
+	self.moveSelectedBy = function moveSelectedBy( x, y ){
+		var editing = self.getRoot().editingContainer;
+		for(var i=0,v; v=editing.selectedWidget[i]; i++ ){
+			v.Prop.style.left+=x
+			v.Prop.style.top+=y
+		}
+		m.redraw()
+	}
+
+	self.duplicateSelected = function duplicateSelected( ){
+		var editing = self.getRoot().editingContainer;
+		var newWidget = []
+		for(var i=0,v; v=editing.selectedWidget[i]; i++ ) {
+			var widget = new v.constructor( v.parent, {style:v.Prop.style} )
+			if(v.constructor== WidgetCanvas) v.resetAllEvent()
+			editing.children.push(widget);
+			newWidget.push(widget)
+			v.onUnSelected()
+			widget.onSelected()
+			widget.Prop.style.left+=20
+			widget.Prop.style.top+=20
+		}
+		editing.selectedWidget = newWidget
+		m.redraw()
+	}
+	self.removeSelectedItem = function( ){
+		var editing = self.getRoot().editingContainer;
+		for(var i=0,v; v=editing.selectedWidget[i]; i++ ){
+			var index = editing.children.indexOf(v);
+			if(index>=0) editing.children.splice( index , 1 );
+			// if( v.isSelected() ) v.remove();
+		}
+		editing.selectedWidget = [];
+		m.redraw()
+	}
 
 	self.checkSelectElement = function( rect ){
 		var elArray = {}
@@ -502,9 +550,9 @@ var ContainerBaseClass = function(parent, prop){
 		if( !self.selectedWidget.length ) return;
 
 		self.selectedWidget.forEach(function(widget) {
-			if( widget.Prop.style.width<MIN_WIDTH && widget.Prop.style.height<MIN_WIDTH  ){
-				self.selectedWidget.splice( self.selectedWidget.indexOf(widget), 1 );
-				self.children.splice( self.children.indexOf(widget), 1 );
+			if( widget.Prop.isNew && widget.Prop.style.width<Math.max(20,MIN_WIDTH*2) && 
+					widget.Prop.style.height<Math.max(20,MIN_WIDTH*2)  ){
+				widget.remove();
 			}
 			delete widget.Prop.eventData
 			if( widget.Prop.isNew){
@@ -516,7 +564,7 @@ var ContainerBaseClass = function(parent, prop){
 
 	self.setupContainerEvent = function() {
 
-		console.log( 'setupContainerEvent', self.Prop.key , self.getRoot().editingContainer.Prop.key  )
+		// console.log( 'setupContainerEvent', self.Prop.key , self.getRoot().editingContainer.Prop.key  )
 
 		/**
 		 * enter Container Mode, to move, resize etc.
@@ -609,14 +657,14 @@ var ContainerBaseClass = function(parent, prop){
 				}
 
 				self.children.forEach(function(widget){
-					widget.Prop.className = removeClass( widget.Prop.className, SELECTED_CLASSNAME )
+					widget.onUnSelected()
 				})
 
 				// on selected
 				self.selectedWidget.forEach(function(widget){
 					widget.activeControlPoint = undefined
 					PropLayer = widget.Prop;
-					PropLayer.className = addClass( PropLayer.className, SELECTED_CLASSNAME );
+					widget.onSelected()
 					PropLayer.eventData = { el: e.target, type:evt.type, prevX:PropLayer.style.left, prevY:PropLayer.style.top, prevW:PropLayer.style.width, prevH:PropLayer.style.height, timeStamp:e.timeStamp }
 				})
 
@@ -799,9 +847,153 @@ var WidgetCanvas = function WidgetCanvas(parent, prop){
 var Canvas1 = new WidgetCanvas(null, { style:{left:100, top:100, width:800, height:500, backgroundColor:'#eee'} } );
 m.mount(container, Canvas1);
 
+
+/**
+ * DOM EVENT BELOW
+ */
 // check mouse out of Main Canvas, to prevent mouse out problem
 container.onmouseover = function(e){
 	if(e.target.id == 'container') Canvas1.mouseUpFunc(e)
 }
+
+
+// short key event
+window.addEventListener('keydown', handleShortKeyDown);
+window.addEventListener('keyup', handleShortKeyUp);
+
+var SHIFT_KEY_DOWN = 0;
+var CTRL_KEY_DOWN = 0;
+var META_KEY_DOWN = 0;
+
+function isInputElementActive(){
+
+  var isInput = false;
+  // Some shortcuts should not get handled if a control/input element
+  // is selected.
+  var curElement = document.activeElement || document.querySelector(':focus');
+
+  var curElementTagName = curElement && curElement.tagName.toUpperCase();
+  if (curElementTagName === 'INPUT' ||
+      curElementTagName === 'TEXTAREA' ||
+      curElementTagName === 'SELECT') {
+
+    isInput = true;
+  }
+  return isInput;
+}
+
+function handleShortKeyUp (evt) {
+  var cmd = (evt.ctrlKey ? 1 : 0) |
+        (evt.altKey ? 2 : 0) |
+        (evt.shiftKey ? 4 : 0) |
+        (evt.metaKey ? 8 : 0);
+
+    if ( /control/i.test(evt.keyIdentifier) ) {	//ctrl key
+		CTRL_KEY_DOWN = 0;
+	}
+    if ( /shift/i.test(evt.keyIdentifier) ) {	//ctrl key
+		SHIFT_KEY_DOWN = 0;
+	}
+
+    if ( /meta/i.test(evt.keyIdentifier) ) {	//ctrl key
+		META_KEY_DOWN = 0;
+	}
+
+}
+
+function handleShortKeyDown (evt) {
+	var handled = false;
+	var isInput = isInputElementActive();
+
+	var cmd = (evt.ctrlKey ? 1 : 0) |
+	    (evt.altKey ? 2 : 0) |
+	    (evt.shiftKey ? 4 : 0) |
+	    (evt.metaKey ? 8 : 0);
+
+	if (cmd === 8) { // meta
+		META_KEY_DOWN = 1;
+	}
+	if (cmd === 0) { // no control key pressed at all.
+
+		// console.log(evt, evt.keyCode);
+		switch (evt.keyCode) {
+		  case 8:  //backspace key : Delete the shape
+		  case 46:  //delete key : Delete the shape
+
+		    if(isInput) break;
+		    Canvas1.removeSelectedItem();
+		    handled = true;
+		    break;
+
+
+          case 37: // left
+            Canvas1.moveSelectedBy(-GRID_SIZE,0);
+            handled = true;
+          break;
+
+          case 38: // up
+            Canvas1.moveSelectedBy(0,-GRID_SIZE);
+            handled = true;
+          break;
+
+          case 39: // right
+            Canvas1.moveSelectedBy(GRID_SIZE,0);
+            handled = true;
+          break;
+
+          case 40: // down
+            Canvas1.moveSelectedBy(0,GRID_SIZE);
+            handled = true;
+          break;
+
+
+		}
+	}
+
+
+    if (cmd === 1 || cmd === 8) {	//ctrl key
+		  CTRL_KEY_DOWN = 1;
+      switch (evt.keyCode) {
+
+        case 68:  //Ctrl+D
+        	Canvas1.duplicateSelected();
+          handled = true;
+          break;
+
+          case 37: // ctrl+left
+            Canvas1.moveSelectedBy(-1,0);
+            handled = true;
+          break;
+
+          case 38: // ctrl+up
+            Canvas1.moveSelectedBy(0,-1);
+            handled = true;
+          break;
+
+          case 39: // ctrl+right
+            Canvas1.moveSelectedBy(1,0);
+            handled = true;
+          break;
+
+          case 40: // ctrl+down
+            Canvas1.moveSelectedBy(0,1);
+            handled = true;
+          break;
+
+
+        case 90:  //Ctrl+Z
+            handled = true;
+          break;
+      }
+    }
+
+    if(handled){
+      evt.preventDefault();
+      return;
+    }
+
+}
+
+
 
 </script>
