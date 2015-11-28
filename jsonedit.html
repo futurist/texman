@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8>
+<title>JSON Editor</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<script type="text/javascript" src="js/mithril.js"></script>
+
+<style type="text/css">
+html,body{
+	height: 100%;
+}
+#container{
+	height: 100%;
+}
+ul,li{
+    list-style: none
+}
+.canvas{
+	position: relative;
+}
+.canvas div.layer{
+	position: absolute;
+}
+</style>
+</head>
+<body>
+
+<div id="container"></div>
+
+    <script>
+
+var schema={
+  "title": "Person",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "First and Last name",
+      "minLength": 4,
+      "default": "Jeremy Dorn"
+    },
+    "age": {
+      "type": "integer",
+      "default": 25,
+      "minimum": 18,
+      "maximum": 99
+    },
+    "favorite_color": {
+      "type": "string",
+      "format": "color",
+      "title": "favorite color",
+      "default": "#ffa500"
+    },
+    "gender": {
+      "type": "string",
+      "enum": [
+        "male",
+        "female"
+      ]
+    },
+    "location": {
+      "type": "object",
+      "title": "Location",
+      "properties": {
+        "city": {
+          "type": "string",
+          "default": "San Francisco"
+        },
+        "state": {
+          "type": "string",
+          "default": "CA"
+        },
+        "citystate": {
+          "type": "string",
+          "description": "This is generated automatically from the previous two fields",
+          "template": "{{city}}, {{state}}",
+          "watch": {
+            "city": "location.city",
+            "state": "location.state"
+          }
+        }
+      }
+    },
+    "pets": {
+      "type": "array",
+      "format": "table",
+      "title": "Pets",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "title": "Pet",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "cat",
+              "dog",
+              "bird",
+              "reptile",
+              "other"
+            ],
+            "default": "dog"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "default": [
+        {
+          "type": "dog",
+          "name": "Walter"
+        }
+      ]
+    }
+  }
+}
+
+/**
+ * Only add to object key,val when key is not exists
+ * @param {object} obj   the obejct to check and add value to
+ * @param {string} key   key to check and add
+ * @param {any} value the value to add when key not exists
+ */
+function addToObject( obj, key, value ){
+	if( !(key in obj) ){
+		obj[key] = value;
+	}
+}
+
+var propBindingObj = {}
+
+var JSON_SCHEMA_MAP = (function(){
+  var obj = {}
+
+  obj.template = function(path, obj, key){
+    function replacer(match, placeholder, offset, string) {
+      return propBindingObj[path.slice(0,-1).join('.')+'.'+placeholder]();
+    }
+    propBindingObj[path.join('.')] = m.prop( obj[key].replace(/\{\{([^}]+)\}\}/g, replacer) )
+    return ['value', propBindingObj[path.join('.')](), 'disabled', true ]
+  },
+
+  obj.minLength = function(path, obj, key){ return ['pattern', '.{'+ obj[key] +',}' ] },
+
+  obj.minimum = 'min',
+
+  obj.maximum = 'max',
+
+  obj.description = 'placeholder',
+
+  obj.default = function(path, obj, key){
+    return ['value', propBindingObj[ path.join('.') ]() ]
+  }
+  return obj
+})()
+
+/**
+ * build m attrs from JSON schema property
+ * [dependancy] JSON_SCHEMA_KEY_MAP object
+ *
+ * @param  {object} props   JSON schema property object, undefined value will be ''
+ * @param  {object} include  include value to overwrite specified attrs
+ * @param  {array} exclude  array that exclude in returned attrs
+ * @return {object}         m attrs object
+ */
+function buildAttrs( path, props, include, exclude ){
+  var obj = {}, include=include||{}, exclude=exclude||[]
+  Object.keys(props).forEach(function(v){
+    var map = JSON_SCHEMA_MAP[v];
+    if(typeof map=='function') {
+      for(var i=0, val=map(path, props, v); i<val.length; i+=2){
+        obj[ val[i]  ] = val[i+1]||''
+      }
+    } else {
+      obj[ map || v  ] = props[v]||''
+    }
+  })
+  for(var i in include) {
+    obj[i] = include[i]
+  }
+  exclude.forEach(function(v){
+  	delete obj[v]
+  })
+  addToObject( obj, 'value', propBindingObj[ path.join('.') ]() )
+  return obj;
+}
+
+
+function parseSchema(schema, key, path) {
+  path = path || [key]
+  level=path.length-1
+  var jsonPath = path.join('.')
+  switch(schema.type){
+    case 'array':
+      addToObject( propBindingObj, jsonPath, m.prop(schema.default) )
+      return m('div.array', {'data-key': key, style:{marginLeft:level*10+'px'} }, [
+          m('h2', schema.title),
+          m('div.props', [
+            schema.format == 'table' ?
+            propBindingObj[ jsonPath ]().map(function (v, i) {
+              var keys = Object.keys(schema.items.properties)
+              return keys.map(function (key) {
+              	addToObject( propBindingObj, path.concat(i, key).join('.'), m.prop( v[key] ) )
+              	return parseSchema( schema.items.properties[key], key, path.concat(i, key) );
+              })
+
+            }) : ''
+          ])
+      ])
+      break;
+    case 'object':
+      var keys = Object.keys(schema.properties)
+      return m('div.object', {'data-key': key, style:{marginLeft:level*10+'px'} }, [
+          m('h2', schema.title),
+          m('div.props', [
+            keys.map(function (v) { return parseSchema( schema.properties[v], v, path.concat(v) ) })
+          ])
+      ])
+
+      break;
+
+    case 'integer':
+      addToObject( propBindingObj, jsonPath, m.prop(schema.default) )
+      return m('div.row', {'data-key': key, style:{marginLeft:level*10+'px'} }, [
+          m('strong', schema.title||key ),
+          m('input', buildAttrs(path, schema, {type:'number', oninput:function(){
+          	value = this.value;
+            propBindingObj[ jsonPath ]( parseInt(this.value,10) )
+          } }) ),
+        ] )
+
+      break;
+    case 'string':
+
+      addToObject( propBindingObj, jsonPath, m.prop(schema.default) )
+      return m('div.row', {'data-key': key, style:{marginLeft:level*10+'px'} }, [
+          m('strong', schema.title||key ),
+          schema.enum
+          ? m('select',
+	          	buildAttrs(path, schema, {
+	          		oninput:function(){
+			            propBindingObj[ jsonPath ]( this.value )
+			          } },
+			    	['enum', 'type']
+			    ),
+	          	schema.enum.map(function(v){ return m('option', v) } )
+          	)
+          : m('input',
+          		buildAttrs(path, schema, {
+          			type: schema.format=='color'?'color':'text',
+          			oninput:function(){
+            			propBindingObj[ jsonPath ]( this.value )
+          			} }
+          		)
+          	),
+
+        ] )
+
+      break;
+  }
+
+}
+
+
+m.mount( document.body, {view: function(){ return parseSchema(schema, 'root') } } )
+
+    </script>
+
+
+</body>
+</html>
+
