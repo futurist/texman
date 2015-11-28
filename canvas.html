@@ -460,18 +460,28 @@ var ContainerBaseClass = function(parent, prop){
 		m.redraw()
 	}
 
+	var duplicateChild = function(src, dest){
+		src.children.forEach(function(child){
+			var newChild = new child.constructor( dest, {style:child.Prop.style} );
+			dest.children.push( newChild )
+			duplicateChild( child, newChild )
+		})
+	}
+	
 	self.duplicateSelected = function duplicateSelected( ){
 		var editing = self.getRoot().editingContainer;
 		var newWidget = []
 		for(var i=0,v; v=editing.selectedWidget[i]; i++ ) {
 			var widget = new v.constructor( v.parent, {style:v.Prop.style} )
-			if(v.constructor== WidgetCanvas) v.resetAllEvent()
+			duplicateChild(v, widget)
 			editing.children.push(widget);
 			newWidget.push(widget)
-			v.onUnSelected()
-			widget.onSelected()
-			widget.Prop.style.left+=20
-			widget.Prop.style.top+=20
+			if(v.isSelected()) {
+				v.onUnSelected()
+				widget.onSelected()
+				widget.Prop.style.left+=20
+				widget.Prop.style.top+=20
+			}
 		}
 		editing.selectedWidget = newWidget
 		m.redraw()
