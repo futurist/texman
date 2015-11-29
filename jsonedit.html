@@ -101,7 +101,7 @@ var schema={
               "reptile",
               "other"
             ],
-            "default": "dog"
+            "default": "bird"
           },
           "name": {
             "type": "string"
@@ -112,12 +112,50 @@ var schema={
         {
           "type": "dog",
           "name": "Walter"
+        },
+        {
+          "type": "bird",
+          "name": "Walter"
         }
       ]
     }
   }
 }
 
+var DATA = {
+  "age": 43,
+  "favorite_color": "#ffa500",
+  "location": {
+    "state": "LA",
+    "citystate": "San Francisco, CA"
+  },
+  "pets":[
+	  {
+	    "type": "cat",
+	    "name": "1234"
+	  }
+  ]
+}
+
+function dotPathValue( path, value ){
+	if(typeof path=='string') path = path.split('.')
+	if(value===undefined){
+		var val = _dotPathValue(DATA, path);
+		return val===undefined? schemaDefaultValue[ path.join('.') ] : val;
+	} else {
+		return _dotPathValue(DATA, path, value)
+	}
+}
+function _dotPathValue( obj, path, value ){
+	if(path.length<2) {
+		return obj;
+	}
+	for(var i=1; v=path[i], i<path.length; i++ ){
+		if(value!==undefined&&i==path.length-1) obj[v] = value;
+		obj = obj&&obj[v]
+	}
+	return obj;
+}
 /**
  * Only add to object key,val when key is not exists
  * @param {object} obj   the obejct to check and add value to
@@ -130,30 +168,22 @@ function addToObject( obj, key, value ){
 	}
 }
 
-var propBindingObj = {}
+var schemaDefaultValue = {}
 
 var JSON_SCHEMA_MAP = (function(){
   var obj = {}
-
   obj.template = function(path, obj, key){
     function replacer(match, placeholder, offset, string) {
-      return propBindingObj[path.slice(0,-1).join('.')+'.'+placeholder]();
+      return dotPathValue( path.slice(0,-1).join('.')+'.'+placeholder );
     }
-    propBindingObj[path.join('.')] = m.prop( obj[key].replace(/\{\{([^}]+)\}\}/g, replacer) )
-    return ['value', propBindingObj[path.join('.')](), 'disabled', true ]
-  },
-
-  obj.minLength = function(path, obj, key){ return ['pattern', '.{'+ obj[key] +',}' ] },
-
-  obj.minimum = 'min',
-
-  obj.maximum = 'max',
-
-  obj.description = 'placeholder',
-
-  obj.default = function(path, obj, key){
-    return ['value', propBindingObj[ path.join('.') ]() ]
+    dotPathValue( path.join('.'), obj[key].replace(/\{\{([^}]+)\}\}/g, replacer) )
+    return ['value', dotPathValue( path.join('.') ), 'disabled', true ]
   }
+  obj.minLength = function(path, obj, key){ return ['pattern', '.{'+ obj[key] +',}' ] }
+  obj.minimum = 'min'
+  obj.maximum = 'max'
+  obj.description = 'placeholder'
+  // obj.default = 'defaultValue'
   return obj
 })()
 
@@ -184,7 +214,7 @@ function buildAttrs( path, props, include, exclude ){
   exclude.forEach(function(v){
   	delete obj[v]
   })
-  addToObject( obj, 'value', propBindingObj[ path.join('.') ]() )
+  addToObject( obj, 'value', dotPathValue(path) )
   return obj;
 }
 
@@ -195,19 +225,26 @@ function parseSchema(schema, key, path) {
   var jsonPath = path.join('.')
   switch(schema.type){
     case 'array':
-      addToObject( propBindingObj, jsonPath, m.prop(schema.default) )
+      addToObject( schemaDefaultValue, jsonPath, schema.default )
       return m('div.array', {'data-key': key, style:{marginLeft:level*10+'px'} }, [
           m('h2', schema.title),
           m('div.props', [
             schema.format == 'table' ?
-            propBindingObj[ jsonPath ]().map(function (v, i) {
-              var keys = Object.keys(schema.items.properties)
-              return keys.map(function (key) {
-              	addToObject( propBindingObj, path.concat(i, key).join('.'), m.prop( v[key] ) )
-              	return parseSchema( schema.items.properties[key], key, path.concat(i, key) );
-              })
+            (function(){
+            	var keys = Object.keys(schema.items.properties)
+            	schemaDefaultValue[ jsonPath ].map(function (v, i) {
+            		keys.map(function (key) {
+	            		addToObject( schemaDefaultValue, path.concat(i, key).join('.'), v[key] )
+	            	})
+            	})
+	            return dotPathValue( jsonPath ).map(function (v, i) {
+	              var keys = Object.keys(schema.items.properties)
+	              return keys.map(function (key) {
+	              	return parseSchema( schema.items.properties[key], key, path.concat(i, key) );
+	              })
 
-            }) : ''
+	            })
+	        }) () : ''
           ])
       ])
       break;
@@ -223,26 +260,24 @@ function parseSchema(schema, key, path) {
       break;
 
     case 'integer':
-      addToObject( propBindingObj, jsonPath, m.prop(schema.default) )
+      addToObject( schemaDefaultValue, jsonPath, schema.default )
       return m('div.row', {'data-key': key, style:{marginLeft:level*10+'px'} }, [
           m('strong', schema.title||key ),
           m('input', buildAttrs(path, schema, {type:'number', oninput:function(){
-          	value = this.value;
-            propBindingObj[ jsonPath ]( parseInt(this.value,10) )
+            dotPathValue( jsonPath , parseInt(this.value,10) )
           } }) ),
         ] )
 
       break;
     case 'string':
-
-      addToObject( propBindingObj, jsonPath, m.prop(schema.default) )
+      addToObject( schemaDefaultValue, jsonPath, schema.default )
       return m('div.row', {'data-key': key, style:{marginLeft:level*10+'px'} }, [
           m('strong', schema.title||key ),
           schema.enum
           ? m('select',
 	          	buildAttrs(path, schema, {
 	          		oninput:function(){
-			            propBindingObj[ jsonPath ]( this.value )
+	          			dotPathValue(path, this.value)
 			          } },
 			    	['enum', 'type']
 			    ),
@@ -252,7 +287,7 @@ function parseSchema(schema, key, path) {
           		buildAttrs(path, schema, {
           			type: schema.format=='color'?'color':'text',
           			oninput:function(){
-            			propBindingObj[ jsonPath ]( this.value )
+          				dotPathValue(path, this.value)
           			} }
           		)
           	),
