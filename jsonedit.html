@@ -111,11 +111,11 @@ var schema={
       "default": [
         {
           "type": "dog",
-          "name": "Walter"
+          "name": "234Walter"
         },
         {
           "type": "bird",
-          "name": "Walter"
+          "name": "W776alter"
         }
       ]
     }
@@ -129,19 +129,59 @@ var DATA = {
     "state": "LA",
     "citystate": "San Francisco, CA"
   },
-  "pets":[
-	  {
-	    "type": "cat",
-	    "name": "1234"
-	  }
-  ]
+
 }
 
-function dotPathValue( path, value ){
+
+/**
+ * Helper functions
+ */
+function clone(objectToBeCloned) {
+  // Basis.
+  if (!(objectToBeCloned instanceof Object)) {
+    return objectToBeCloned;
+  }
+
+  var objectClone;
+  
+  // Filter out special objects.
+  var Constructor = objectToBeCloned.constructor;
+  switch (Constructor) {
+    // Implement other special objects here.
+    case RegExp:
+      objectClone = new Constructor(objectToBeCloned);
+      break;
+    case Date:
+      objectClone = new Constructor(objectToBeCloned.getTime());
+      break;
+    default:
+      objectClone = new Constructor();
+  }
+  
+  // Clone each property.
+  for (var prop in objectToBeCloned) {
+    objectClone[prop] = clone(objectToBeCloned[prop]);
+  }
+  
+  return objectClone;
+}
+
+
+
+var schemaDefaultValue = {}
+
+function schemaPathValue( path, value ){
+	if(typeof path=='string') path = path.split('.');
+	var val = _dotPathValue(schemaDefaultValue, path);
+	if( arguments.length<2 ) return val;
+	else return val===undefined?_dotPathValue(schemaDefaultValue, path, value):value
+}
+
+function dataPathValue( path, value ){
 	if(typeof path=='string') path = path.split('.')
-	if(value===undefined){
+	if( arguments.length<2 ) {
 		var val = _dotPathValue(DATA, path);
-		return val===undefined? schemaDefaultValue[ path.join('.') ] : val;
+		return val===undefined? (schemaPathValue(path)||'' ) : val;
 	} else {
 		return _dotPathValue(DATA, path, value)
 	}
@@ -150,11 +190,20 @@ function _dotPathValue( obj, path, value ){
 	if(path.length<2) {
 		return obj;
 	}
-	for(var i=1; v=path[i], i<path.length; i++ ){
-		if(value!==undefined&&i==path.length-1) obj[v] = value;
-		obj = obj&&obj[v]
+	var data = obj;
+	for(var v, i=1; v=path[i], i<path.length; i++ ){
+		if(arguments.length>=3){
+			if(data===undefined){
+				data = clone(schemaPathValue( path.slice(0, i) ))
+				_dotPathValue(obj, path.slice(0, i), data)
+			}
+			if(i==path.length-1){
+				data[v] = value;
+			}
+		}
+		data = data&&data[v]
 	}
-	return obj;
+	return data;
 }
 /**
  * Only add to object key,val when key is not exists
@@ -163,21 +212,22 @@ function _dotPathValue( obj, path, value ){
  * @param {any} value the value to add when key not exists
  */
 function addToObject( obj, key, value ){
-	if( !(key in obj) ){
-		obj[key] = value;
+	if(typeof key=='string'){
+		if( !(key in obj) ){
+			obj[key] = value;
+		}
 	}
 }
 
-var schemaDefaultValue = {}
 
 var JSON_SCHEMA_MAP = (function(){
   var obj = {}
   obj.template = function(path, obj, key){
     function replacer(match, placeholder, offset, string) {
-      return dotPathValue( path.slice(0,-1).join('.')+'.'+placeholder );
+      return dataPathValue( path.slice(0,-1).join('.')+'.'+placeholder );
     }
-    dotPathValue( path.join('.'), obj[key].replace(/\{\{([^}]+)\}\}/g, replacer) )
-    return ['value', dotPathValue( path.join('.') ), 'disabled', true ]
+    dataPathValue( path.join('.'), obj[key].replace(/\{\{([^}]+)\}\}/g, replacer) )
+    return ['value', dataPathValue( path.join('.') ), 'disabled', true ]
   }
   obj.minLength = function(path, obj, key){ return ['pattern', '.{'+ obj[key] +',}' ] }
   obj.minimum = 'min'
@@ -214,7 +264,7 @@ function buildAttrs( path, props, include, exclude ){
   exclude.forEach(function(v){
   	delete obj[v]
   })
-  addToObject( obj, 'value', dotPathValue(path) )
+  addToObject( obj, 'value', dataPathValue(path) )
   return obj;
 }
 
@@ -222,22 +272,16 @@ function buildAttrs( path, props, include, exclude ){
 function parseSchema(schema, key, path) {
   path = path || [key]
   level=path.length-1
-  var jsonPath = path.join('.')
   switch(schema.type){
     case 'array':
-      addToObject( schemaDefaultValue, jsonPath, schema.default )
+      schemaPathValue(path, schema.default||[]);
       return m('div.array', {'data-key': key, style:{marginLeft:level*10+'px'} }, [
           m('h2', schema.title),
           m('div.props', [
             schema.format == 'table' ?
             (function(){
             	var keys = Object.keys(schema.items.properties)
-            	schemaDefaultValue[ jsonPath ].map(function (v, i) {
-            		keys.map(function (key) {
-	            		addToObject( schemaDefaultValue, path.concat(i, key).join('.'), v[key] )
-	            	})
-            	})
-	            return dotPathValue( jsonPath ).map(function (v, i) {
+	            return dataPathValue( path ).map(function (v, i) {
 	              var keys = Object.keys(schema.items.properties)
 	              return keys.map(function (key) {
 	              	return parseSchema( schema.items.properties[key], key, path.concat(i, key) );
@@ -249,6 +293,7 @@ function parseSchema(schema, key, path) {
       ])
       break;
     case 'object':
+      schemaPathValue(path, schema.default||{});
       var keys = Object.keys(schema.properties)
       return m('div.object', {'data-key': key, style:{marginLeft:level*10+'px'} }, [
           m('h2', schema.title),
@@ -260,24 +305,24 @@ function parseSchema(schema, key, path) {
       break;
 
     case 'integer':
-      addToObject( schemaDefaultValue, jsonPath, schema.default )
+      schemaPathValue(path, schema.default)
       return m('div.row', {'data-key': key, style:{marginLeft:level*10+'px'} }, [
           m('strong', schema.title||key ),
           m('input', buildAttrs(path, schema, {type:'number', oninput:function(){
-            dotPathValue( jsonPath , parseInt(this.value,10) )
+            dataPathValue( path , parseInt(this.value,10) )
           } }) ),
         ] )
 
       break;
     case 'string':
-      addToObject( schemaDefaultValue, jsonPath, schema.default )
+      schemaPathValue(path, schema.default)
       return m('div.row', {'data-key': key, style:{marginLeft:level*10+'px'} }, [
           m('strong', schema.title||key ),
           schema.enum
           ? m('select',
 	          	buildAttrs(path, schema, {
 	          		oninput:function(){
-	          			dotPathValue(path, this.value)
+	          			dataPathValue(path, this.value)
 			          } },
 			    	['enum', 'type']
 			    ),
@@ -287,7 +332,7 @@ function parseSchema(schema, key, path) {
           		buildAttrs(path, schema, {
           			type: schema.format=='color'?'color':'text',
           			oninput:function(){
-          				dotPathValue(path, this.value)
+          				dataPathValue(path, this.value)
           			} }
           		)
           	),
