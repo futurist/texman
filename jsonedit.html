@@ -48,6 +48,9 @@ h4{
 h2:before{
   content:"-";
 }
+.isTemplate{
+  display: none;
+}
 </style>
 </head>
 <body>
@@ -97,7 +100,7 @@ var testSchema = m.prop(
                 "properties": {
                   "width": {
                     "type": "integer",
-                    "default": 200,
+                    "default": 2,
                     "minimum": 0
                   },
                   "unit": {
@@ -116,7 +119,7 @@ var testSchema = m.prop(
               },
               "default": [
                 {
-                  "width": "2",
+                  "width": "200",
                   "unit": "px"
                 }
               ]
@@ -142,7 +145,6 @@ var testSchema = m.prop(
                 "properties": {
                   "width": {
                     "type": "integer",
-                    "default": 2,
                     "minimum": 0
                   },
                   "unit": {
@@ -252,10 +254,10 @@ m.mount(document.querySelector('.data'), {view:function () {
 m.mount( document.querySelector('.editor'), new JsonEditor( testSchema , testDATA, null, renderView ) )
 
 // update preview area when editor value changed
-function renderView(pathStr, data, templateObj) {
+function renderView(pathStr, data, templateObj, orgData) {
   // template will be delay updated, so don't display path 
   if( !templateObj[pathStr] ) document.querySelector('.debug').innerHTML = pathStr;
-  if(data.attrs) data.attrs.key = +new Date()
+  if(data.attrs) data.attrs.key = +new Date();
 }
 
 m.mount( document.querySelector('.preview'), {view: function(){ return testDATA() } } )

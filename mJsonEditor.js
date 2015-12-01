@@ -59,6 +59,7 @@ var addToObject = function addToObject( obj, key, value ){
  */
 var JsonEditor = function JsonEditor( SCHEMA, DATA, PROPS, CALLBACK ) {
 	PROPS = PROPS||{}
+	var orgData = clone( DATA() )
 	var schemaDefaultValue = {}
 	var templateFieldValue = {}
 	var LEVEL_MARGIN = 10;
@@ -71,6 +72,19 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, PROPS, CALLBACK ) {
 	  }
 	  return a;
 	}
+
+	function getOriginalKeyVal(objectToBeCloned, originDATA) {
+	  // Basis.
+	  if (!(objectToBeCloned instanceof Object)) {
+	    return objectToBeCloned;
+	  }
+	  var objectClone = new objectToBeCloned.constructor();
+	  for (var prop in objectToBeCloned) {
+	    if(originDATA && (prop in originDATA)) objectClone[prop] = getOriginalKeyVal(objectToBeCloned[prop], originDATA[prop] );
+	  }
+	  return objectClone;
+	}
+
 	function updateTemplates(schema){
 		// TODO: add some template field watcher, 
 		// and conditional determine which field change should trigger redraw
@@ -105,7 +119,7 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, PROPS, CALLBACK ) {
 			_dotPathValue(temp, path, value)
 			DATA(temp)
 			// below line will update the key for force update view
-			if(CALLBACK) CALLBACK(path.join('.'), temp, templateFieldValue);
+			if(CALLBACK) CALLBACK(path.join('.'), temp, templateFieldValue, getOriginalKeyVal( temp, orgData ) );
 			for(var i in templateFieldValue){
 				templateFieldValue[i].forEach(function(tempPath){
 					// here is all watched keys
@@ -194,6 +208,12 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, PROPS, CALLBACK ) {
 	  return obj;
 	}
 
+	function getClassName(schema){
+		var className = ''
+		if(schema.template) className+='isTemplate';
+		if(schema.format == 'color') className+=' isColor';
+		return className;
+	}
 
 	function parseSchema(schema, key, path) {
 	  path = path || [key]
@@ -243,8 +263,7 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, PROPS, CALLBACK ) {
 	      break;
 	    case 'string':
 	      schemaPathValue(path, schema.default)
-	      if(schema.template) return []
-	      return m('div.row', extend(initAttrs, {'data-key': key, key:path.join('.'), style:{marginLeft:level*LEVEL_MARGIN+'px'} },true), [
+	      return m('div.row', extend(initAttrs, {'data-key': key, className:getClassName(schema), key:path.join('.'), style:{marginLeft:level*LEVEL_MARGIN+'px'} },true), [
 	          m('strong', schema.title||key ),
 	          schema.enum
 	          ? m('select',
