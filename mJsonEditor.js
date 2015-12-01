@@ -42,8 +42,12 @@ var clone = function clone(objectToBeCloned) {
  */
 if(!addToObject)
 var addToObject = function addToObject( obj, key, value ){
-	if( !(key in obj) ){
-		obj[key] = value;
+	if(Object.prototype.toString.call(obj)=="[object Array]"){
+		if( obj.indexOf(key)<0 ) obj.push(key)
+	}else{
+		if( !(key in obj) ){
+			obj[key] = value;
+		}
 	}
 }
 
@@ -56,6 +60,7 @@ var addToObject = function addToObject( obj, key, value ){
 var JsonEditor = function JsonEditor( SCHEMA, DATA, PROPS, CALLBACK ) {
 	PROPS = PROPS||{}
 	var schemaDefaultValue = {}
+	var templateFieldValue = {}
 	var LEVEL_MARGIN = 10;
 	// clone json object
 	function clone(obj){ return JSON.parse(JSON.stringify(obj)) }
@@ -98,12 +103,18 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, PROPS, CALLBACK ) {
 		} else {
 			var temp = DATA()
 			_dotPathValue(temp, path, value)
-			DATA(temp)
 			// below line will update the key for force update view
-			if(CALLBACK) CALLBACK(path.join('.'), temp)
+			if(CALLBACK) CALLBACK(path.join('.'), temp, templateFieldValue);
+			for(var i in templateFieldValue){
+				templateFieldValue[i].forEach(function(tempPath){
+					// here is all watched keys
+				})
+			}
+			DATA(temp)
 			return value
 		}
 	}
+
 	/**
 	 * dot path value helper function
 	 * @param  {object} obj   the object to check for dot path
@@ -123,7 +134,8 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, PROPS, CALLBACK ) {
 					_dotPathValue(obj, path.slice(0, i), data);
 				}
 				if(i==path.length-1){
-					data[v] = value;
+					if(value!==undefined) data[v] = value;
+					// else delete data[v]
 				}
 			}
 			data = data&&data[v]
@@ -133,9 +145,11 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, PROPS, CALLBACK ) {
 
 	var JSON_SCHEMA_MAP = (function(){
 	  var obj = {}
-	  obj.template = function template(path, obj, key){
+	  obj.template = function template(path, obj, key) {
 	    function replacer(match, placeholder, offset, string) {
 	      var watchPath = path.slice(0,-1).join('.')+'.'+placeholder
+	      if( !templateFieldValue[path.join('.')] ) templateFieldValue[path.join('.')] = []
+	      addToObject( templateFieldValue[path.join('.')], watchPath );
 	      return dataPathValue( watchPath );
 	    }
 	    dataPathValue( path.join('.'), obj[key].replace(/\{\{([^}]+)\}\}/g, replacer) )
