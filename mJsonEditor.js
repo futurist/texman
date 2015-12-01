@@ -11,7 +11,7 @@ var clone = function clone(objectToBeCloned) {
   }
 
   var objectClone;
-  
+
   // Filter out special objects.
   var Constructor = objectToBeCloned.constructor;
   switch (Constructor) {
@@ -25,12 +25,12 @@ var clone = function clone(objectToBeCloned) {
     default:
       objectClone = new Constructor();
   }
-  
+
   // Clone each property.
   for (var prop in objectToBeCloned) {
     objectClone[prop] = clone(objectToBeCloned[prop]);
   }
-  
+
   return objectClone;
 }
 
@@ -49,14 +49,34 @@ var addToObject = function addToObject( obj, key, value ){
 
 /**
  * JsonEditor component
- * - Dependacy: function[ clone ]
  * @param {object} SCHEMA the json schema according to http://json-schema.org/
  * @param {object} DATA   the json data of user data
- * @param {string/number} key   key to pass to v-dom
+ * @param {object} PROPS   attrs to pass to root v-dom
  */
-var JsonEditor = function JsonEditor( SCHEMA, DATA, key ) {
+var JsonEditor = function JsonEditor( SCHEMA, DATA, PROPS, CALLBACK ) {
+	PROPS = PROPS||{}
 	var schemaDefaultValue = {}
 	var LEVEL_MARGIN = 10;
+	// clone json object
+	function clone(obj){ return JSON.parse(JSON.stringify(obj)) }
+	// extend objects
+	function extend( a, b, deepCopy ) {
+	  for ( var prop in b ) {
+	    a[ prop ] = deepCopy? clone(b[ prop ]) : b[ prop ];
+	  }
+	  return a;
+	}
+	function updateTemplates(schema){
+		// TODO: add some template field watcher, 
+		// and conditional determine which field change should trigger redraw
+		m.redraw()
+	}
+	/**
+	 * getter/setter Schema Object using dot path
+	 * @param  {array} path  do path array
+	 * @param  {any} value   value to set, if not present, it's a getter
+	 * @return {any}       the value for getter/setter
+	 */
 	function schemaPathValue( path, value ){
 		if(typeof path=='string') path = path.split('.');
 		var val = _dotPathValue(schemaDefaultValue, path);
@@ -64,15 +84,33 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, key ) {
 		else return val===undefined?_dotPathValue(schemaDefaultValue, path, value):value
 	}
 
+	/**
+	 * getter/setter DATA Object using dot path
+	 * @param  {array} path  do path array
+	 * @param  {any} value   value for setter; null for getter
+	 * @return {any}       the value for getter/setter
+	 */
 	function dataPathValue( path, value ){
 		if(typeof path=='string') path = path.split('.')
 		if( arguments.length<2 ) {
-			var val = _dotPathValue(DATA, path);
+			var val = _dotPathValue(DATA(), path);
 			return val===undefined? (schemaPathValue(path)||'' ) : val;
 		} else {
-			return _dotPathValue(DATA, path, value)
+			var temp = DATA()
+			_dotPathValue(temp, path, value)
+			DATA(temp)
+			// below line will update the key for force update view
+			if(CALLBACK) CALLBACK(path.join('.'), temp)
+			return value
 		}
 	}
+	/**
+	 * dot path value helper function
+	 * @param  {object} obj   the object to check for dot path
+	 * @param  {array} path  dot path array
+	 * @param  {any} value  value for setter; null for getter
+	 * @return {any}       the value for getter/setter
+	 */
 	function _dotPathValue( obj, path, value ){
 		if(path.length<2) {
 			return obj;
@@ -82,7 +120,7 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, key ) {
 			if(arguments.length>=3){
 				if(data===undefined){
 					data = clone(schemaPathValue( path.slice(0, i) ))
-					obj[ path.slice(0, i).pop() ] = data;
+					_dotPathValue(obj, path.slice(0, i), data);
 				}
 				if(i==path.length-1){
 					data[v] = value;
@@ -95,9 +133,10 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, key ) {
 
 	var JSON_SCHEMA_MAP = (function(){
 	  var obj = {}
-	  obj.template = function(path, obj, key){
+	  obj.template = function template(path, obj, key){
 	    function replacer(match, placeholder, offset, string) {
-	      return dataPathValue( path.slice(0,-1).join('.')+'.'+placeholder );
+	      var watchPath = path.slice(0,-1).join('.')+'.'+placeholder
+	      return dataPathValue( watchPath );
 	    }
 	    dataPathValue( path.join('.'), obj[key].replace(/\{\{([^}]+)\}\}/g, replacer) )
 	    return ['value', dataPathValue( path.join('.') ), 'disabled', true ]
@@ -112,8 +151,8 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, key ) {
 
 	/**
 	 * build m attrs from JSON schema property
-	 * [dependancy] JSON_SCHEMA_KEY_MAP object
-	 *
+	 * see JSON_SCHEMA_MAP format
+	 * @param  {array} path     Object property in json dot path, {a:{b:{c:1}}} -> ['root', 'a','b','c'] == 1
 	 * @param  {object} props   JSON schema property object, undefined value will be ''
 	 * @param  {object} include  include value to overwrite specified attrs
 	 * @param  {array} exclude  array that exclude in returned attrs
@@ -128,7 +167,7 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, key ) {
 	        obj[ val[i]  ] = val[i+1]||''
 	      }
 	    } else {
-	      obj[ map || v  ] = props[v]||''
+	      obj[ map || v  ] = props[v]===undefined?'':props[v]
 	    }
 	  })
 	  for(var i in include) {
@@ -145,10 +184,11 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, key ) {
 	function parseSchema(schema, key, path) {
 	  path = path || [key]
 	  level=path.length-1
-	  switch(schema.type){
+	  var initAttrs = level==0? extend({ key:+new Date() }, PROPS) : {}
+	  switch(schema.type) {
 	    case 'array':
 	      schemaPathValue(path, schema.default||[]);
-	      return m('div.array', {'data-key': key, style:{marginLeft:level*LEVEL_MARGIN+'px'} }, [
+	      return m('div.array', extend(initAttrs, {'data-key': key, key:path.join('.'), style:{marginLeft:level*LEVEL_MARGIN+'px'} },true), [
 	          m('h2', schema.title),
 	          m('div.props', [
 	            schema.format == 'table' ?
@@ -159,7 +199,6 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, key ) {
 		              return keys.map(function (key) {
 		              	return parseSchema( schema.items.properties[key], key, path.concat(i, key) );
 		              })
-
 		            })
 		        }) () : ''
 	          ])
@@ -168,7 +207,7 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, key ) {
 	    case 'object':
 	      schemaPathValue(path, schema.default||{});
 	      var keys = Object.keys(schema.properties)
-	      return m('div.object', {'data-key': key, style:{marginLeft:level*LEVEL_MARGIN+'px'} }, [
+	      return m('div.object', extend(initAttrs, {'data-key': key, key:path.join('.'), style:{marginLeft:level*LEVEL_MARGIN+'px'} },true), [
 	          m('h2', schema.title),
 	          m('div.props', [
 	            keys.map(function (v) { return parseSchema( schema.properties[v], v, path.concat(v) ) })
@@ -179,33 +218,36 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, key ) {
 
 	    case 'integer':
 	      schemaPathValue(path, schema.default)
-	      return m('div.row', {'data-key': key, style:{marginLeft:level*LEVEL_MARGIN+'px'} }, [
+	      return m('div.row', extend(initAttrs, {'data-key': key, key:path.join('.'), style:{marginLeft:level*LEVEL_MARGIN+'px'} },true), [
 	          m('strong', schema.title||key ),
 	          m('input', buildAttrs(path, schema, {type:'number', oninput:function(){
 	            dataPathValue( path , parseInt(this.value,10) )
+	            updateTemplates(schema)
 	          } }) ),
 	        ] )
 
 	      break;
 	    case 'string':
 	      schemaPathValue(path, schema.default)
-	      return m('div.row', {'data-key': key, style:{marginLeft:level*LEVEL_MARGIN+'px'} }, [
+	      return m('div.row', extend(initAttrs, {'data-key': key, key:path.join('.'), style:{marginLeft:level*LEVEL_MARGIN+'px'} },true), [
 	          m('strong', schema.title||key ),
 	          schema.enum
 	          ? m('select',
 		          	buildAttrs(path, schema, {
 		          		oninput:function(){
 		          			dataPathValue(path, this.value)
+		          			updateTemplates(schema)
 				          } },
 				    	['enum', 'type']
 				    ),
 		          	schema.enum.map(function(v){ return m('option', v) } )
 	          	)
-	          : m('input',
+	          : m(schema.format=='textarea'? 'textarea': 'input',
 	          		buildAttrs(path, schema, {
 	          			type: schema.format=='color'?'color':'text',
 	          			oninput:function(){
 	          				dataPathValue(path, this.value)
+	          				updateTemplates(schema)
 	          			} }
 	          		)
 	          	),
@@ -220,12 +262,12 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, key ) {
 	this.controller = function(args){
 	}
 	this.view = function(ctrl){
-		return parseSchema(SCHEMA, 'root')
+		return parseSchema(SCHEMA(), 'root');
 	}
 	this.getView = function() {
 		return this.view( new this.controller() );
 	}
 }
 
-// Usage: 
-// m.render( document.body, new JsonEditor( testSchema, testDATA, +new Date() ) )
+// Usage:
+// m.render( document.body, new JsonEditor( testSchema, testDATA, {props...} ) )

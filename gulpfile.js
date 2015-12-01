@@ -1,0 +1,33 @@
+// http://www.sitepoint.com/transpiling-es6-modules-to-amd-commonjs-using-babel-gulp/
+
+var gulp = require('gulp');
+var babel = require('gulp-babel'),
+    browserify = require('browserify'),
+    source = require('vinyl-source-stream'),
+    buffer = require('vinyl-buffer'),
+    rename = require('gulp-rename'),
+    uglify = require('gulp-uglify'),
+    del = require('del');
+
+gulp.task('clean-temp', function(){
+  return del(['compiled']);
+});
+
+gulp.task('es6-commonjs',['clean-temp'], function(){
+  return gulp.src(['app/*.js','app/**/*.js'])
+    .pipe(babel({
+      presets: ['es2015']
+    }))
+    .pipe(gulp.dest('compiled/temp'));
+});
+
+// commonjs-bundle
+gulp.task('default',['es6-commonjs'], function(){
+  return browserify(['compiled/temp/es6Class.js']).bundle()
+    .pipe(source('app.js'))
+    .pipe(buffer())
+    // .pipe(uglify())
+    .pipe(rename('app.js'))
+    .pipe(gulp.dest('compiled/commonjs'));
+});
+
