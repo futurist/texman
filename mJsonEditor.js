@@ -103,6 +103,7 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, PROPS, CALLBACK ) {
 		} else {
 			var temp = DATA()
 			_dotPathValue(temp, path, value)
+			DATA(temp)
 			// below line will update the key for force update view
 			if(CALLBACK) CALLBACK(path.join('.'), temp, templateFieldValue);
 			for(var i in templateFieldValue){
@@ -110,7 +111,6 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, PROPS, CALLBACK ) {
 					// here is all watched keys
 				})
 			}
-			DATA(temp)
 			return value
 		}
 	}
@@ -243,6 +243,7 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, PROPS, CALLBACK ) {
 	      break;
 	    case 'string':
 	      schemaPathValue(path, schema.default)
+	      if(schema.template) return []
 	      return m('div.row', extend(initAttrs, {'data-key': key, key:path.join('.'), style:{marginLeft:level*LEVEL_MARGIN+'px'} },true), [
 	          m('strong', schema.title||key ),
 	          schema.enum

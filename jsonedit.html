@@ -87,10 +87,45 @@ var testSchema = m.prop(
               "type": "string",
               "default": "block"
             },
+            "widthValueUnit": {
+              "type": "array",
+              "format": "table",
+              "title": "width value unit",
+              "items": {
+                "type": "object",
+                "title": "width",
+                "properties": {
+                  "width": {
+                    "type": "integer",
+                    "default": 200,
+                    "minimum": 0
+                  },
+                  "unit": {
+                    "type": "string",
+                    "enum": [
+                      "px",
+                      "pt",
+                      "em",
+                      "ex",
+                      "vw",
+                      "vh"
+                    ],
+                    "default": "px"
+                  }
+                }
+              },
+              "default": [
+                {
+                  "width": "2",
+                  "unit": "px"
+                }
+              ]
+            },
             "width": {
               "title": "width",
               "type": "string",
-              "default": "100px"
+              "template": "{{widthValueUnit.0.width}}{{widthValueUnit.0.unit}}",
+              "default":"100px"
             },
             "height": {
               "title": "height",
@@ -203,7 +238,7 @@ function inputChange(obj){
 // render schema text area
 m.mount(document.querySelector('.schema'), {view:function () { 
   return [m('h4', "SCHEMA"), m('textarea',  {key:'text-schema', oninput:inputChange(testSchema) },
-            m.trust( JSON.stringify(testSchema(), null, 2) ) 
+            m.trust( JSON.stringify(testSchema(), null, 2) )
         )]
 }})
 // render data text area
@@ -221,10 +256,9 @@ function renderView(pathStr, data, templateObj) {
   // template will be delay updated, so don't display path 
   if( !templateObj[pathStr] ) document.querySelector('.debug').innerHTML = pathStr;
   if(data.attrs) data.attrs.key = +new Date()
-  m.render( document.querySelector('.preview'),  data )
-  m.redraw()
 }
 
+m.mount( document.querySelector('.preview'), {view: function(){ return testDATA() } } )
 
 </script>
 
