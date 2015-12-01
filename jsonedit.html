@@ -19,9 +19,12 @@ textarea{
 ul,li{
     list-style: none
 }
-#data, #schema{
+.data, .schema{
   position: relative;
   margin-left: 80px;
+}
+.debug{
+  background:#888;
 }
 .error{
   background: #e99;
@@ -31,17 +34,26 @@ h4{
   top:0;
   left: -80px;
 }
+.left{
+  width:400px; height:300px;
+}
+.right{
+  float:right;margin-right:400px;
+}
+.right>div{
+  margin-bottom:10px;
+}
 </style>
 </head>
 <body>
 
-<div style="float:right;margin-right:400px;">
-  <div id="editor"></div>
-  <div id="debug"></div>
-  <div id="preview"></div>
+<div class="right">
+  <div class="editor"></div>
+  <div class="debug"></div>
+  <div class="preview"></div>
 </div>
-<div id="schema" style="width:400px; height:300px;"></div>
-<div id="data" style="width:400px; height:300px;"></div>
+<div class="left schema"></div>
+<div class="left data"></div>
 
 
     <script>
@@ -155,6 +167,14 @@ var testDATA = m.prop({
       "display": "block",
       "width": "100px",
       "height": "100px",
+      "borderWidth": [
+        {
+          "width": 1,
+          "unit": "px"
+        }
+      ],
+      "borderColor":'#993333',
+      "borderStyle":'solid',
       "border": "1px solid #933"
     }
   },
@@ -169,25 +189,28 @@ function inputChange(obj){
   }
 }
 // render schema text area
-m.mount(document.querySelector('#schema'), {view:function () { 
+m.mount(document.querySelector('.schema'), {view:function () { 
   return [m('h4', "SCHEMA"), m('textarea',  {key:'text-schema', oninput:inputChange(testSchema) },
             m.trust( JSON.stringify(testSchema(), null, 2) ) 
         )]
 }})
 // render data text area
-m.mount(document.querySelector('#data'), {view:function () { 
+m.mount(document.querySelector('.data'), {view:function () { 
   return [m('h4', "DATA"), m('textarea',  {key:'text-data', oninput:inputChange(testDATA) },
             m.trust( JSON.stringify(testDATA(), null, 2) ) 
         )]
 }})
 
 // render json editor window
-m.mount( document.querySelector('#editor'), new JsonEditor( testSchema , testDATA, null, renderView ) )
+m.mount( document.querySelector('.editor'), new JsonEditor( testSchema , testDATA, null, renderView ) )
 
 // update preview area when editor value changed
+var notWatched = ['root.attrs.style.border'];
 function renderView(pathStr, data) {
+  if(notWatched.indexOf(pathStr)<0) document.querySelector('.debug').innerHTML = pathStr;
   if(data.attrs) data.attrs.key = +new Date()
-  m.render( document.querySelector('#preview'),  testDATA() )
+  m.render( document.querySelector('.preview'),  testDATA() )
+  m.redraw()
 }
 
 
