@@ -49,7 +49,7 @@ h2:before{
   content:"-";
 }
 .isTemplate{
-  display: none;
+  /*display: none;*/
 }
 </style>
 </head>
@@ -215,22 +215,11 @@ var originDATA = {
   "children": "div content"
 }
 
-var testDATA = m.prop( clone(originDATA) )
-
-function getOriginalKeyVal(objectToBeCloned, originDATA) {
-  // Basis.
-  if (!(objectToBeCloned instanceof Object)) {
-    return objectToBeCloned;
-  }
-  var objectClone = new objectToBeCloned.constructor();
-  for (var prop in objectToBeCloned) {
-    if(originDATA && (prop in originDATA)) objectClone[prop] = getOriginalKeyVal(objectToBeCloned[prop], originDATA[prop] );
-  }
-  return objectClone;
-}
+var testDATA = m.prop( (originDATA) )
 
 
-function inputChange(obj){ 
+
+function inputChange(obj){
   return function() {
     this.className=''
     try{var data = JSON.parse(this.value)}catch(e){ return this.className='error' }
@@ -238,15 +227,15 @@ function inputChange(obj){
   }
 }
 // render schema text area
-m.mount(document.querySelector('.schema'), {view:function () { 
+m.mount(document.querySelector('.schema'), {view:function () {
   return [m('h4', "SCHEMA"), m('textarea',  {key:'text-schema', oninput:inputChange(testSchema) },
             m.trust( JSON.stringify(testSchema(), null, 2) )
         )]
 }})
 // render data text area
-m.mount(document.querySelector('.data'), {view:function () { 
+m.mount(document.querySelector('.data'), {view:function () {
   return [m('h4', "DATA"), m('textarea',  {key:'text-data', oninput:inputChange(testDATA) },
-            m.trust( JSON.stringify(testDATA(), null, 2) ) 
+            m.trust( JSON.stringify(testDATA(), null, 2) )
         )]
 }})
 
@@ -255,9 +244,10 @@ m.mount( document.querySelector('.editor'), new JsonEditor( testSchema , testDAT
 
 // update preview area when editor value changed
 function renderView(pathStr, data, templateObj, orgData) {
-  // template will be delay updated, so don't display path 
+  // template will be delay updated, so don't display path
   if( !templateObj[pathStr] ) document.querySelector('.debug').innerHTML = pathStr;
   if(data.attrs) data.attrs.key = +new Date();
+  // console.log( orgData )
 }
 
 m.mount( document.querySelector('.preview'), {view: function(){ return testDATA() } } )

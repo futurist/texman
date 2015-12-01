@@ -85,11 +85,6 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, PROPS, CALLBACK ) {
 	  return objectClone;
 	}
 
-	function updateTemplates(schema){
-		// TODO: add some template field watcher, 
-		// and conditional determine which field change should trigger redraw
-		m.redraw()
-	}
 	/**
 	 * getter/setter Schema Object using dot path
 	 * @param  {array} path  do path array
@@ -119,11 +114,20 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, PROPS, CALLBACK ) {
 			_dotPathValue(temp, path, value)
 			DATA(temp)
 			// below line will update the key for force update view
-			if(CALLBACK) CALLBACK(path.join('.'), temp, templateFieldValue, getOriginalKeyVal( temp, orgData ) );
+			var shouldCallback = true;
 			for(var i in templateFieldValue){
-				templateFieldValue[i].forEach(function(tempPath){
-					// here is all watched keys
-				})
+				if(i==path.join('.')) shouldCallback = false;
+				var updated = templateFieldValue[i].some(function(watchPath){
+					if(watchPath == path.join('.')) {
+						var updateFunc = templateFieldValue[i][0]
+						updateFunc()
+						return true;
+					}
+				});
+			}
+			// only callback when it's not update the template
+			if(shouldCallback){
+				if(CALLBACK) CALLBACK(path.join('.'), temp, templateFieldValue, getOriginalKeyVal( temp, orgData ) );
 			}
 			return value
 		}
@@ -162,12 +166,17 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, PROPS, CALLBACK ) {
 	  obj.template = function template(path, obj, key) {
 	    function replacer(match, placeholder, offset, string) {
 	      var watchPath = path.slice(0,-1).join('.')+'.'+placeholder
-	      if( !templateFieldValue[path.join('.')] ) templateFieldValue[path.join('.')] = []
+	      if( !templateFieldValue[path.join('.')] ) templateFieldValue[path.join('.')] = [updateValue]
 	      addToObject( templateFieldValue[path.join('.')], watchPath );
 	      return dataPathValue( watchPath );
 	    }
-	    dataPathValue( path.join('.'), obj[key].replace(/\{\{([^}]+)\}\}/g, replacer) )
-	    return ['value', dataPathValue( path.join('.') ), 'disabled', true ]
+	    var attrs = ['value', '' , 'disabled', true ]
+	    function updateValue(){
+	    	dataPathValue( path.join('.'), obj[key].replace(/\{\{([^}]+)\}\}/g, replacer) )
+	    	attrs[1] = dataPathValue( path.join('.') )
+	    }
+	    updateValue();
+	    return attrs
 	  }
 	  obj.minLength = function(path, obj, key){ return ['pattern', '.{'+ obj[key] +',}' ] }
 	  obj.minimum = 'min'
@@ -256,7 +265,6 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, PROPS, CALLBACK ) {
 	          m('strong', schema.title||key ),
 	          m('input', buildAttrs(path, schema, {type:'number', oninput:function(){
 	            dataPathValue( path , parseInt(this.value,10) )
-	            updateTemplates(schema)
 	          } }) ),
 	        ] )
 
@@ -270,7 +278,6 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, PROPS, CALLBACK ) {
 		          	buildAttrs(path, schema, {
 		          		oninput:function(){
 		          			dataPathValue(path, this.value)
-		          			updateTemplates(schema)
 				          } },
 				    	['enum', 'type']
 				    ),
@@ -281,7 +288,6 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, PROPS, CALLBACK ) {
 	          			type: schema.format=='color'?'color':'text',
 	          			oninput:function(){
 	          				dataPathValue(path, this.value)
-	          				updateTemplates(schema)
 	          			} }
 	          		)
 	          	),
@@ -293,6 +299,9 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, PROPS, CALLBACK ) {
 
 	}
 
+	this.getVal = function(args){
+		return getOriginalKeyVal( DATA(), orgData )
+	}
 	this.controller = function(args){
 	}
 	this.view = function(ctrl){
