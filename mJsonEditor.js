@@ -190,21 +190,21 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, PROPS, CALLBACK ) {
 	 * build m attrs from JSON schema property
 	 * see JSON_SCHEMA_MAP format
 	 * @param  {array} path     Object property in json dot path, {a:{b:{c:1}}} -> ['root', 'a','b','c'] == 1
-	 * @param  {object} props   JSON schema property object, undefined value will be ''
+	 * @param  {object} schema   JSON schema object, undefined value will be ''
 	 * @param  {object} include  include value to overwrite specified attrs
 	 * @param  {array} exclude  array that exclude in returned attrs
 	 * @return {object}         m attrs object
 	 */
-	function buildAttrs( path, props, include, exclude ){
+	function buildAttrs( path, schema, include, exclude ){
 	  var obj = {}, include=include||{}, exclude=exclude||[]
-	  Object.keys(props).forEach(function(v){
+	  Object.keys(schema).forEach(function(v){
 	    var map = JSON_SCHEMA_MAP[v];
 	    if(typeof map=='function') {
-	      for(var i=0, val=map(path, props, v); i<val.length; i+=2){
+	      for(var i=0, val=map(path, schema, v); i<val.length; i+=2){
 	        obj[ val[i]  ] = val[i+1]||''
 	      }
 	    } else {
-	      obj[ map || v  ] = props[v]===undefined?'':props[v]
+	      obj[ map || v  ] = schema[v]===undefined?'':schema[v]
 	    }
 	  })
 	  for(var i in include) {
@@ -213,7 +213,10 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, PROPS, CALLBACK ) {
 	  exclude.forEach(function(v){
 	  	delete obj[v]
 	  })
-	  if( !('value' in obj) ) obj['value'] = dataPathValue(path);
+	  if( !('value' in obj) ){
+	  	if(schema.type!=='boolean') obj['value'] = dataPathValue(path);
+	  	else obj['checked'] = dataPathValue(path)
+	  }
 	  return obj;
 	}
 
@@ -259,12 +262,24 @@ var JsonEditor = function JsonEditor( SCHEMA, DATA, PROPS, CALLBACK ) {
 
 	      break;
 
+	    case 'number':
 	    case 'integer':
 	      schemaPathValue(path, schema.default)
 	      return m('div.row', extend(initAttrs, {'data-key': key, key:path.join('.'), style:{marginLeft:level*LEVEL_MARGIN+'px'} },true), [
 	          m('strong', schema.title||key ),
 	          m('input', buildAttrs(path, schema, {type:'number', oninput:function(){
-	            dataPathValue( path , parseInt(this.value,10) )
+	            dataPathValue( path , schema.type=='number'? this.value : parseInt(this.value,10) )
+	          } }) ),
+	        ] )
+
+	      break;
+
+	    case 'boolean':
+	      schemaPathValue(path, schema.default)
+	      return m('div.row', extend(initAttrs, {'data-key': key, key:path.join('.'), style:{marginLeft:level*LEVEL_MARGIN+'px'} },true), [
+	          m('strong', schema.title||key ),
+	          m('input', buildAttrs(path, schema, {type:'checkbox', onchange:function(){
+	            dataPathValue( path , this.checked )
 	          } }) ),
 	        ] )
 
