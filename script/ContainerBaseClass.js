@@ -3,6 +3,7 @@ import * as Global from './global'
 import LayerBaseClass from './LayerBaseClass'
 import WidgetDiv from './WidgetDiv'
 import WidgetCanvas from './WidgetCanvas'
+import EE from './Events'
 
 export default class ContainerBaseClass extends LayerBaseClass {
 	constructor(parent, prop) {
@@ -12,9 +13,30 @@ export default class ContainerBaseClass extends LayerBaseClass {
 		this.children = [];
 		this.selectedWidget = [];
 		this.resetAllEvent()
-		this.setupContainerMode();
+		this.setupContainerMode()
 		this.setupContainerEvent()
+		this.setupShortKeyEvent()
 	}
+
+	setupShortKeyEvent (){
+		EE.on('duplicate', (evt)=>{
+			if( !this.isContainerMode() ) return;
+			this.duplicateSelected();
+		})
+		EE.on('remove', (evt)=>{
+			if( !this.isContainerMode() ) return;
+			this.removeSelectedItem();
+		})
+		EE.on('moveBy', (data)=>{
+			if( !this.isContainerMode() ) return;
+			this.moveSelectedBy(data.x, data.y);
+		})
+		EE.on('resizeBy', (data)=>{
+			if( !this.isContainerMode() ) return;
+			this.resizeSelectedBy(data.w, data.h);
+		})
+	}
+
 	resetAllEvent(el){
 		el = el||this;
 		el.Prop['on'+Global.downE] = null;

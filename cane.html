@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8>
+<title>canvas</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<script type="text/javascript" src="js/mithril.js"></script>
+<style type="text/css">
+html {
+  box-sizing: border-box;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+html,body{
+	height: 100%;
+	overflow: hidden;
+}
+
+body{
+	margin:0;
+	padding: 0;
+}
+#container{
+	overflow: hidden;
+	height: 100%;
+}
+ul,li{
+    list-style: none
+}
+.canvas{
+	overflow: visible;
+	position: absolute;
+	border:1px dashed transparent;
+}
+.layer{
+	position: absolute;
+	border:1px dashed transparent;
+}
+
+.canvas .content,
+.canvas .bbox
+{
+	position: absolute;
+	width:100%;
+	height:100%;
+	overflow: hidden;
+}
+
+
+.layer.selected,
+.canvas.selected
+{
+	border:1px dashed red;
+}
+
+.canvas.editing
+{
+	border:1px dashed blue;
+}
+
+.selected>.controlPoint{
+	display: block;
+}
+
+.controlPoint.activePoint{
+	background: #E8E8E8;
+}
+.controlPoint{
+	display: none;
+	position: absolute;
+	border:1px solid #666;
+}
+
+
+.resizeBar{
+	position: absolute;
+	z-index: 9999;
+	top:0;
+	left:0;
+	height: 100%;
+	width: 10px;
+	background: #efefef;
+}
+.editor{
+	margin-left: 20px;
+	margin-bottom: 50px;
+}
+.editorDragContainer{
+	overflow: auto;
+	height: 100%;
+	width: 100%;
+}
+.editorContainer{
+	position: fixed;
+	top:0;
+	width: 200px;
+	right:0;
+	height: 100%;
+}
+
+#debug{
+	position: absolute;
+	top:0;
+	left: 0;
+	height: 80px;
+	width: 200px;
+	z-index: 999999;
+	background: #666;
+	color:white;
+	display: none;
+}
+</style>
+</head>
+<body>
+
+<div id="container"></div>
+
+<div class="editorContainer">
+	<div class="editorDragContainer">
+		<div class="editor"></div>
+		<div class="resizeBar"></div>
+	</div>
+</div>
+
+<div id="debug"></div>
+</body>
+</html>
+
+<script type="text/javascript" src="testdata.js"></script>
+<script type="text/javascript" src="app.js"></script>
+<script type="text/javascript">
+var old = 300;
+var eventData={}
+var con = document.querySelector('.editorContainer');
+con.style.width = old+'px'
+
+var editorContainer = (function(){
+	var obj = {}
+	obj.view = function(){
+		return [m('.editorDragContainer', {
+			config: function (el){
+				window.initEditor()
+			}
+		}, [
+				m('.editor'),
+			]),
+
+			m('.resizeBar', {
+				onmousedown: function(e){
+					eventData.x = e.pageX
+					eventData.y = e.pageY
+					eventData.type = e.type
+				},
+			}),
+
+		]
+	}
+	return obj;
+})()
+
+document.onmousemove = function(e){
+	if( !/down/i.test(eventData.type) )return;
+	e.preventDefault()
+	var dx = eventData.dx = eventData.x - e.pageX
+	var dy = eventData.dy = eventData.y - e.pageY
+	con.style.width = old + dx +'px'
+}
+document.onmouseup = function(){
+	eventData.type = null
+	old+=eventData.dx
+}
+
+m.mount( con , editorContainer )
+
+</script>

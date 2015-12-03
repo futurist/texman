@@ -64,6 +64,7 @@ export default class JsonEditor {
 				}
 				// only callback when it's not update the template
 				if(shouldCallback){
+				    if(temp.attrs) temp.attrs.key = +new Date();
 					if(CALLBACK) CALLBACK(path.join('.'), temp, templateFieldValue, getOriginalKeyVal( temp, orgData ) );
 				}
 				return value
@@ -85,7 +86,7 @@ export default class JsonEditor {
 			for(var v, i=1; v=path[i], i<path.length; i++ ){
 				if(arguments.length>=3){
 					if(data===undefined){
-						data = clone(schemaPathValue( path.slice(0, i) ))
+						data = Global.clone(schemaPathValue( path.slice(0, i) ))
 						_dotPathValue(obj, path.slice(0, i), data);
 					}
 					if(i==path.length-1){
@@ -171,7 +172,7 @@ export default class JsonEditor {
 		  switch(schema.type) {
 		    case 'array':
 		      schemaPathValue(path, schema.default||[]);
-		      return m('div.array', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), style:{marginLeft:level*LEVEL_MARGIN+'px'} }), [
+		      return m('div.array', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), className:'level'+level }), [
 		          m('h2', schema.title),
 		          m('div.props', [
 		            schema.format == 'table' ?
@@ -190,7 +191,7 @@ export default class JsonEditor {
 		    case 'object':
 		      schemaPathValue(path, schema.default||{});
 		      var keys = Object.keys(schema.properties)
-		      return m('div.object', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), style:{marginLeft:level*LEVEL_MARGIN+'px'} }), [
+		      return m('div.object', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), className:'level'+level }), [
 		          m('h2', schema.title),
 		          m('div.props', [
 		            keys.map( (v)=> { return this.parseSchema( schema.properties[v], v, path.concat(v) ) })
@@ -202,7 +203,7 @@ export default class JsonEditor {
 		    case 'number':
 		    case 'integer':
 		      schemaPathValue(path, schema.default)
-		      return m('div.row', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), style:{marginLeft:level*LEVEL_MARGIN+'px'} }), [
+		      return m('div.row', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), className:'level'+level }), [
 		          m('strong', schema.title||key ),
 		          m('input', buildAttrs(path, schema, {type:'number', oninput:function(){
 		            dataPathValue( path , schema.type=='number'? this.value : parseInt(this.value,10) )
@@ -213,7 +214,7 @@ export default class JsonEditor {
 
 		    case 'boolean':
 		      schemaPathValue(path, schema.default)
-		      return m('div.row', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), style:{marginLeft:level*LEVEL_MARGIN+'px'} }), [
+		      return m('div.row', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), className:'level'+level }), [
 		          m('strong', schema.title||key ),
 		          m('input', buildAttrs(path, schema, {type:'checkbox', onchange:function(){
 		            dataPathValue( path , this.checked )
@@ -223,7 +224,7 @@ export default class JsonEditor {
 		      break;
 		    case 'string':
 		      schemaPathValue(path, schema.default)
-		      return m('div.row', Global._deepCopy(initAttrs, {'data-key': key, className:getClassName(schema), key:path.join('.'), style:{marginLeft:level*LEVEL_MARGIN+'px'} }), [
+		      return m('div.row', Global._deepCopy(initAttrs, {'data-key': key, className:getClassName(schema)+' level'+level, key:path.join('.') }), [
 		          m('strong', schema.title||key ),
 		          schema.enum
 		          ? m('select',

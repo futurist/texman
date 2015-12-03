@@ -1,5 +1,5 @@
 // http://www.sitepoint.com/transpiling-es6-modules-to-amd-commonjs-using-babel-gulp/
-// npm install mithril gulp gulp-babel babel-preset-es2015 babel-plugin-transform-object-assign browserify gulp-browserify vinyl-source-stream vinyl-buffer gulp-uglify del gulp-rename --save-dev
+// npm install mithril gulp gulp-babel event-keeper babel-preset-es2015 babel-plugin-transform-object-assign browserify gulp-browserify vinyl-source-stream vinyl-buffer gulp-uglify del gulp-rename --save-dev
 
 var gulp = require('gulp');
 var babel = require('gulp-babel'),
@@ -26,7 +26,7 @@ gulp.task('es6-commonjs',['clean-temp'], function(){
 gulp.task('default',['es6-commonjs'], function(){
   return browserify(['compiled/temp/app.js']).bundle()
     .pipe(source('app.js'))
-    .pipe(buffer())
+    // .pipe(buffer())
     // .pipe(uglify())
     .pipe(rename('app.js'))
     .pipe(gulp.dest('./'));
