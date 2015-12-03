@@ -1,1046 +1,335 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
-
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-
-var _mithril = require('mithril');
-
-var _mithril2 = _interopRequireDefault(_mithril);
 
 var _global = require('./global');
 
 var Global = _interopRequireWildcard(_global);
 
-var _LayerBaseClass2 = require('./LayerBaseClass');
+var _mithril = require('mithril');
 
-var _LayerBaseClass3 = _interopRequireDefault(_LayerBaseClass2);
-
-var _WidgetDiv = require('./WidgetDiv');
-
-var _WidgetDiv2 = _interopRequireDefault(_WidgetDiv);
-
-var _WidgetCanvas = require('./WidgetCanvas');
-
-var _WidgetCanvas2 = _interopRequireDefault(_WidgetCanvas);
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+var _mithril2 = _interopRequireDefault(_mithril);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+var JsonEditor = function JsonEditor(SCHEMA, DATA) {
+	var PROPS = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+	var CALLBACK = arguments.length <= 3 || arguments[3] === undefined ? function () {} : arguments[3];
 
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	_classCallCheck(this, JsonEditor);
 
-var ContainerBaseClass = (function (_LayerBaseClass) {
-	_inherits(ContainerBaseClass, _LayerBaseClass);
+	var orgData = Global.clone(DATA());
+	var schemaDefaultValue = {};
+	var templateFieldValue = {};
+	var LEVEL_MARGIN = 10;
 
-	function ContainerBaseClass(parent, prop) {
-		_classCallCheck(this, ContainerBaseClass);
+	var getOriginalKeyVal = function getOriginalKeyVal(objectToBeCloned, originDATA) {
+		// Basis.
+		if (!(objectToBeCloned instanceof Object)) {
+			return objectToBeCloned;
+		}
+		var objectClone = new objectToBeCloned.constructor();
+		for (var prop in objectToBeCloned) {
+			if (originDATA && prop in originDATA) objectClone[prop] = getOriginalKeyVal(objectToBeCloned[prop], originDATA[prop]);
+		}
+		return objectClone;
+	};
 
-		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ContainerBaseClass).call(this, parent, prop));
-
-		_this.parent = parent;
-		_this.editingContainer = undefined;
-		_this.children = [];
-		_this.selectedWidget = [];
-		_this.resetAllEvent();
-		_this.setupContainerMode();
-		_this.setupContainerEvent();
-		return _this;
+	/**
+  * getter/setter Schema Object using dot path
+  * @param  {array} path  do path array
+  * @param  {any} value   value to set, if not present, it's a getter
+  * @return {any}       the value for getter/setter
+  */
+	function schemaPathValue(path, value) {
+		if (typeof path == 'string') path = path.split('.');
+		var val = _dotPathValue(schemaDefaultValue, path);
+		if (arguments.length < 2) return val;else return val === undefined ? _dotPathValue(schemaDefaultValue, path, value) : value;
 	}
 
-	_createClass(ContainerBaseClass, [{
-		key: 'resetAllEvent',
-		value: function resetAllEvent(el) {
-			el = el || this;
-			el.Prop['on' + Global.downE] = null;
-			el.Prop['on' + Global.moveE] = null;
-			el.Prop['on' + Global.upE] = null;
-			el.Prop['ondblclick'] = null;
-		}
-	}, {
-		key: 'resizeSelectedBy',
-		value: function resizeSelectedBy(x, y) {
-			var editing = this.getRoot().editingContainer;
-			for (var i = 0, v; v = editing.selectedWidget[i]; i++) {
-				v.Prop.style.width += x;
-				v.Prop.style.height += y;
-				v.Prop.style.width = Math.max(Global.MIN_WIDTH, v.Prop.style.width);
-				v.Prop.style.height = Math.max(Global.MIN_WIDTH, v.Prop.style.height);
-			}
-			_mithril2.default.redraw();
-		}
-	}, {
-		key: 'moveSelectedBy',
-		value: function moveSelectedBy(x, y) {
-			var editing = this.getRoot().editingContainer;
-			for (var i = 0, v; v = editing.selectedWidget[i]; i++) {
-				v.Prop.style.left += x;
-				v.Prop.style.top += y;
-			}
-			_mithril2.default.redraw();
-		}
-	}, {
-		key: 'duplicateChild',
-		value: function duplicateChild(src, dest) {
-			var _this2 = this;
-
-			src.children && src.children.forEach(function (child) {
-				var newChild = new child.constructor(dest, { style: child.Prop.style });
-				dest.children.push(newChild);
-				_this2.duplicateChild(child, newChild);
-			});
-		}
-	}, {
-		key: 'duplicateSelected',
-		value: function duplicateSelected() {
-			var editing = this.getRoot().editingContainer;
-			var newWidget = [];
-			for (var i = 0, v; v = editing.selectedWidget[i]; i++) {
-				var widget = new v.constructor(v.parent, { style: v.Prop.style });
-				this.duplicateChild(v, widget);
-				editing.children.push(widget);
-				newWidget.push(widget);
-				if (v.isSelected()) {
-					v.onUnSelected();
-					widget.onSelected();
-					widget.Prop.style.left += 20;
-					widget.Prop.style.top += 20;
-				}
-			}
-			editing.selectedWidget = newWidget;
-			_mithril2.default.redraw();
-		}
-	}, {
-		key: 'removeSelectedItem',
-		value: function removeSelectedItem() {
-			var editing = this.getRoot().editingContainer;
-			for (var i = 0, v; v = editing.selectedWidget[i]; i++) {
-				var index = editing.children.indexOf(v);
-				if (index >= 0) editing.children.splice(index, 1);
-				// if( v.isSelected() ) v.remove();
-			}
-			editing.selectedWidget = [];
-			_mithril2.default.redraw();
-		}
-	}, {
-		key: 'checkSelectElement',
-		value: function checkSelectElement(rect) {
-			var elArray = {};
-			var pointArray = {};
-			this.children.forEach(function (v, i) {
-
-				if (Global.rectsIntersect(rect, v.Prop.style)) {
-					elArray[i] = v;
-				}
-
-				var point = v.getElementInside(rect).pop();
-				if (point) {
-					pointArray[i] = point;
-				}
-			});
-
-			return { layer: elArray, point: pointArray, selfPoint: this.getElementInside(rect).pop() };
-		}
-	}, {
-		key: 'isChild',
-		value: function isChild(obj) {
-			return this.children.some(function (v, i) {
-				return v.Prop.key == obj.Prop.key;
-			});
-		}
-	}, {
-		key: 'isContainerMode',
-		value: function isContainerMode() {
-			return this.Prop.key == this.getRoot().editingContainer.Prop.key;
-		}
-	}, {
-		key: 'onExitEditing',
-		value: function onExitEditing() {
-			this.Prop.className = Global.removeClass(this.Prop.className, Global.EDITING_CLASSNAME);
-			console.log('onExitEditing', this.Prop, this.selectedWidget.length);
-			this.children.forEach(function (v) {
-				v.onUnSelected();
-			});
-			this.selectedWidget = [];
-		}
-	}, {
-		key: 'onUnSelected',
-		value: function onUnSelected() {
-			this.selectedWidget.forEach(function (v) {
-				v.onUnSelected();
-			});
-			this.selectedWidget = [];
-			_get(Object.getPrototypeOf(ContainerBaseClass.prototype), 'onUnSelected', this).call(this);
-		}
-
-		/**
-   * setup Event for Canvas, only it's the current editing
-   * @return {none}
-   */
-
-	}, {
-		key: 'mouseUpFunc',
-		value: function mouseUpFunc(evt) {
-
-			var e = /touch/.test(evt.type) ? evt.changedTouches[0] : evt;
-
-			// this.Prop['on'+Global.moveE] = this.Prop['on'+Global.upE] = null;
-
-			delete this.Prop.eventData;
-
-			if (!this.selectedWidget.length) return;
-
-			this.selectedWidget.forEach(function (widget) {
-				if (widget.Prop.isNew && widget.Prop.style.width < Math.max(20, Global.MIN_WIDTH * 2) && widget.Prop.style.height < Math.max(20, Global.MIN_WIDTH * 2)) {
-					widget.remove();
-				}
-				delete widget.Prop.eventData;
-				if (widget.Prop.isNew) {
-					delete widget.Prop.isNew;
-				}
-			});
-		}
-	}, {
-		key: 'setupContainerEvent',
-		value: function setupContainerEvent() {
-
-			var self = this;
-			// console.log( 'setupContainerEvent', self.Prop.key , self.getRoot().editingContainer.Prop.key  )
-
-			/**
-    * enter Container Mode, to move, resize etc.
-    */
-
-			var PropCanvas = self.Prop;
-
-			var checkChildMoveOut = function checkChildMoveOut(evt) {
-				var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
-				var offsetX = e.pageX - self.getPageOffset().left;
-				var offsetY = e.pageY - self.getPageOffset().top;
-
-				var editingStyle = self.getRoot().editingContainer.Prop.style;
-
-				if (offsetX < editingStyle.left || offsetY < editingStyle.top || offsetX > editingStyle.left + editingStyle.width || offsetY > editingStyle.top + editingStyle.height) {
-					console.log('move out');
-					return self.getRoot().editingContainer.mouseUpFunc(evt);
-				}
-			};
-
-			// http://stackoverflow.com/questions/6593447/snapping-to-grid-in-javascript
-			var snapToGrip = function snapToGrip(val) {
-				var snap_candidate = Global.GRID_SIZE * Math.round(val / Global.GRID_SIZE);
-				if (Math.abs(val - snap_candidate) <= Global.GRID_SIZE / 2) {
-					return snap_candidate;
-				} else {
-					return null;
-				}
-			};
-
-			// when mouse down
-			self.Prop['on' + Global.downE] = function (evt) {
-				// check: move, resize, create only apply to current editing container
-				if (!self.isContainerMode()) {
-					return;
-				}
-				var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
-				var offsetX = e.pageX - self.getPageOffset().left;
-				var offsetY = e.pageY - self.getPageOffset().top;
-
-				// console.log('ondown', offsetX, offsetY, self.Prop.key, self.getPageOffset().path )
-				var PropLayer;
-
-				var hitObject = self.checkSelectElement({ left: offsetX, top: offsetY, width: 0, height: 0 });
-
-				offsetX = snapToGrip(offsetX);
-				offsetY = snapToGrip(offsetY);
-
-				// widget
-				var widget = null;
-				// controlPoint
-				var point = null;
-
-				// widget index
-				var index = Object.keys(hitObject.point).pop();
-
-				if (index) {
-					point = hitObject.point[index];
-					widget = self.children[index];
-				} else {
-					point = null;
-					index = Object.keys(hitObject.layer).pop();
-					widget = hitObject.layer[index];
-				}
-
-				if (index == undefined) {
-					widget = evt.shiftKey ? new _WidgetDiv2.default(self, { style: { backgroundColor: Global.RandomColor() } }) : new _WidgetCanvas2.default(self, { style: { backgroundColor: Global.RandomColor() } });
-					PropLayer = widget.Prop;
-					PropLayer.style.left = offsetX;
-					PropLayer.style.top = offsetY;
-					PropLayer.style.width = 0;
-					PropLayer.style.height = 0;
-					PropLayer.key = Global.NewID();
-					PropLayer.isNew = true;
-					PropLayer.eventData = { el: e.target, type: evt.type, prevX: PropLayer.style.left, prevY: PropLayer.style.top, timeStamp: e.timeStamp };
-					self.onUnSelected();
-					self.selectedWidget = [widget];
-					self.children.push(widget);
-				} else {
-					if (e.shiftKey || self.selectedWidget.indexOf(widget) >= 0) {
-						if (self.selectedWidget.indexOf(widget) == -1) self.selectedWidget.push(widget);
-					} else if (!point) {
-						self.onUnSelected();
-						self.selectedWidget = [widget];
-					}
-					self.children.splice(index, 1);
-					self.children.push(widget);
-				}
-
-				self.children.forEach(function (widget) {
-					widget.onUnSelected();
-				});
-
-				// on selected
-				self.selectedWidget.forEach(function (widget) {
-					widget.activeControlPoint = undefined;
-					PropLayer = widget.Prop;
-					widget.onSelected();
-					PropLayer.eventData = { el: e.target, type: evt.type, prevX: PropLayer.style.left, prevY: PropLayer.style.top, prevW: PropLayer.style.width, prevH: PropLayer.style.height, timeStamp: e.timeStamp };
-				});
-
-				if (point && widget) {
-					widget.activeControlPoint = point.Prop.position;
-				}
-
-				PropCanvas.eventData = { el: e.target, type: evt.type, widget: widget, point: point, prevX: PropCanvas.style.left, prevY: PropCanvas.style.top, prevW: PropCanvas.style.width, prevH: PropCanvas.style.height, startX: offsetX, startY: offsetY, timeStamp: e.timeStamp };
-			};
-
-			// set up move and up event
-			//
-			self.Prop['on' + Global.moveE] = function (evt) {
-
-				if (!self.isContainerMode()) {
-					if (self.isChild(self.getRoot().editingContainer)) checkChildMoveOut(evt);
-					return;
-				}
-
-				var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
-				evt.preventDefault();
-
-				// check child mouse move out and info child to stop move
-				var offsetX = e.pageX - self.getPageOffset().left;
-				var offsetY = e.pageY - self.getPageOffset().top;
-
-				if (Global.downE !== (PropCanvas.eventData && PropCanvas.eventData.type)) return;
-
-				var width = offsetX - PropCanvas.eventData.startX;
-				var height = offsetY - PropCanvas.eventData.startY;
-
-				width = snapToGrip(width);
-				height = snapToGrip(height);
-
-				var point = PropCanvas.eventData.point;
-
-				self.selectedWidget.forEach(function (widget) {
-					var PropLayer = widget.Prop;
-					if (point) {
-						// PropLayer = point.parent.Prop;
-						// a number 0-7
-						var pointPosition = point.Prop.position;
-						// control point to resize layer
-						if ([0, 6, 7].indexOf(pointPosition) >= 0) {
-							width = Math.min(PropLayer.eventData.prevW - Global.MIN_WIDTH, width);
-							PropLayer.style.width = PropLayer.eventData.prevW - width;
-							PropLayer.style.left = PropLayer.eventData.prevX + width;
-						}
-						if ([2, 3, 4].indexOf(pointPosition) >= 0) {
-							PropLayer.style.width = PropLayer.eventData.prevW + width;
-						}
-
-						if ([0, 1, 2].indexOf(pointPosition) >= 0) {
-							height = Math.min(PropLayer.eventData.prevH - Global.MIN_WIDTH, height);
-							PropLayer.style.height = PropLayer.eventData.prevH - height;
-							if (PropLayer.style.height > 0) PropLayer.style.top = PropLayer.eventData.prevY + height;
-						}
-						if ([4, 5, 6].indexOf(pointPosition) >= 0) {
-							PropLayer.style.height = PropLayer.eventData.prevH + height;
-						}
-
-						PropLayer.style.width = Math.max(Global.MIN_WIDTH, PropLayer.style.width);
-						PropLayer.style.height = Math.max(Global.MIN_WIDTH, PropLayer.style.height);
-					} else if (PropLayer.isNew) {
-						// create new layer
-						if (width >= 0) {
-							PropLayer.style.width = width;
-						} else {
-							PropLayer.style.left = PropLayer.eventData.prevX + width;
-							PropLayer.style.width = -width;
-						}
-						if (height >= 0) {
-							PropLayer.style.height = height;
-						} else {
-							PropLayer.style.top = PropLayer.eventData.prevY + height;
-							PropLayer.style.height = -height;
-						}
-					} else {
-						// move layer
-						PropLayer.style.left = PropLayer.eventData.prevX + width;
-						PropLayer.style.top = PropLayer.eventData.prevY + height;
+	/**
+  * getter/setter DATA Object using dot path
+  * @param  {array} path  do path array
+  * @param  {any} value   value for setter; null for getter
+  * @return {any}       the value for getter/setter
+  */
+	function dataPathValue(path, value) {
+		if (typeof path == 'string') path = path.split('.');
+		if (arguments.length < 2) {
+			var val = _dotPathValue(DATA(), path);
+			return val === undefined ? schemaPathValue(path) || '' : val;
+		} else {
+			var temp = DATA();
+			_dotPathValue(temp, path, value);
+			DATA(temp);
+			// below line will update the key for force update view
+			var shouldCallback = true;
+			for (var i in templateFieldValue) {
+				if (i == path.join('.')) shouldCallback = false;
+				var updated = templateFieldValue[i].some(function (watchPath) {
+					if (watchPath == path.join('.')) {
+						var updateFunc = templateFieldValue[i][0];
+						updateFunc();
+						return true;
 					}
 				});
-			};
-
-			self.Prop['on' + Global.upE] = function (e) {
-				return self.mouseUpFunc(e);
-			};
-
-			if (self.isContainerMode()) self.Prop.className = Global.addClass(self.Prop.className, Global.EDITING_CLASSNAME);
-		}
-	}, {
-		key: 'setupContainerMode',
-		value: function setupContainerMode() {
-			var self = this;
-			if (!self.getRoot().editingContainer) {
-				self.getRoot().editingContainer = self.getRoot();
 			}
+			// only callback when it's not update the template
+			if (shouldCallback) {
+				if (CALLBACK) CALLBACK(path.join('.'), temp, templateFieldValue, getOriginalKeyVal(temp, orgData));
+			}
+			return value;
+		}
+	}
 
-			/**
-    * enter Container Mode
-    */
-			if (!self.isContainerMode()) {
-				self.Prop['ondblclick'] = function enterContainerMode(evt) {
-					// we are already in container mode, don't enter again
-					console.log('after', self.Prop.key, self.getRoot().editingContainer.Prop.key);
-					if (self.isContainerMode()) return;
-					var editing = self.getRoot().editingContainer;
-					editing.onExitEditing();
-					self.Prop.className = Global.addClass(self.Prop.className, Global.EDITING_CLASSNAME);
-					self.getRoot().editingContainer = self;
-					self.setupContainerMode();
-					editing.setupContainerMode();
-				};
+	/**
+  * dot path value helper function
+  * @param  {object} obj   the object to check for dot path
+  * @param  {array} path  dot path array
+  * @param  {any} value  value for setter; null for getter
+  * @return {any}       the value for getter/setter
+  */
+	function _dotPathValue(obj, path, value) {
+		if (path.length < 2) {
+			return obj;
+		}
+		var data = obj;
+		for (var v, i = 1; v = path[i], i < path.length; i++) {
+			if (arguments.length >= 3) {
+				if (data === undefined) {
+					data = clone(schemaPathValue(path.slice(0, i)));
+					_dotPathValue(obj, path.slice(0, i), data);
+				}
+				if (i == path.length - 1) {
+					if (value !== undefined) data[v] = value;
+					// else delete data[v]
+				}
+			}
+			data = data && data[v];
+		}
+		return data;
+	}
+
+	var JSON_SCHEMA_MAP = (function () {
+		var obj = {};
+		obj.template = function template(path, obj, key) {
+			function replacer(match, placeholder, offset, string) {
+				var watchPath = path.slice(0, -1).join('.') + '.' + placeholder;
+				if (!templateFieldValue[path.join('.')]) templateFieldValue[path.join('.')] = [updateValue];
+				Global.addToObject(templateFieldValue[path.join('.')], watchPath);
+				return dataPathValue(watchPath);
+			}
+			var attrs = ['value', '', 'disabled', true];
+			function updateValue() {
+				dataPathValue(path.join('.'), obj[key].replace(/\{\{([^}]+)\}\}/g, replacer));
+				attrs[1] = dataPathValue(path.join('.'));
+			}
+			updateValue();
+			return attrs;
+		};
+		obj.minLength = function (path, obj, key) {
+			return ['pattern', '.{' + obj[key] + ',}'];
+		};
+		obj.minimum = 'min';
+		obj.maximum = 'max';
+		obj.description = 'placeholder';
+		// obj.default = 'defaultValue'
+		return obj;
+	})();
+
+	/**
+  * build m attrs from JSON schema property
+  * see JSON_SCHEMA_MAP format
+  * @param  {array} path     Object property in json dot path, {a:{b:{c:1}}} -> ['root', 'a','b','c'] == 1
+  * @param  {object} schema   JSON schema object, undefined value will be ''
+  * @param  {object} include  include value to overwrite specified attrs
+  * @param  {array} exclude  array that exclude in returned attrs
+  * @return {object}         m attrs object
+  */
+	function buildAttrs(path, schema, include, exclude) {
+		var obj = {},
+		    include = include || {},
+		    exclude = exclude || [];
+		Object.keys(schema).forEach(function (v) {
+			var map = JSON_SCHEMA_MAP[v];
+			if (typeof map == 'function') {
+				for (var i = 0, val = map(path, schema, v); i < val.length; i += 2) {
+					obj[val[i]] = val[i + 1] || '';
+				}
 			} else {
-				self.Prop['ondblclick'] = null;
+				obj[map || v] = schema[v] === undefined ? '' : schema[v];
 			}
+		});
+		for (var i in include) {
+			obj[i] = include[i];
 		}
-	}]);
-
-	return ContainerBaseClass;
-})(_LayerBaseClass3.default);
-
-exports.default = ContainerBaseClass;
-},{"./LayerBaseClass":3,"./WidgetCanvas":4,"./WidgetDiv":5,"./global":7,"mithril":8}],2:[function(require,module,exports){
-'use strict';
-
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-
-var _mithril = require('mithril');
-
-var _mithril2 = _interopRequireDefault(_mithril);
-
-var _global = require('./global');
-
-var Global = _interopRequireWildcard(_global);
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var ControlPoint = (function () {
-	function ControlPoint(parent, prop) {
-		_classCallCheck(this, ControlPoint);
-
-		this.parent = parent;
-		this.Prop = Global._deepCopy({ style: { width: 10, height: 10 } }, prop || {});
+		exclude.forEach(function (v) {
+			delete obj[v];
+		});
+		if (!('value' in obj)) {
+			if (schema.type !== 'boolean') obj['value'] = dataPathValue(path);else obj['checked'] = dataPathValue(path);
+		}
+		return obj;
 	}
 
-	_createClass(ControlPoint, [{
-		key: 'controller',
-		value: function controller() {
-			// this will bind to controller()
-			this.onunload = function () {};
-		}
-	}, {
-		key: 'view',
-		value: function view(ctrl) {
-			var self = this;
-			// this will bind to Class this
-			this.Prop.config = function (el) {
-				Global.applyStyle(el, self.Prop.style);
-			};
-			return (0, _mithril2.default)('div.controlPoint', this.Prop);
-		}
-	}, {
-		key: 'getView',
-		value: function getView() {
-			return this.view(new this.controller());
-		}
-	}]);
+	function getClassName(schema) {
+		var className = '';
+		if (schema.template) className += 'isTemplate';
+		if (schema.format == 'color') className += ' isColor';
+		return className;
+	}
 
-	return ControlPoint;
-})();
-
-exports.default = ControlPoint;
-},{"./global":7,"mithril":8}],3:[function(require,module,exports){
-'use strict';
-
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-
-var _mithril = require('mithril');
-
-var _mithril2 = _interopRequireDefault(_mithril);
-
-var _global = require('./global');
-
-var Global = _interopRequireWildcard(_global);
-
-var _ControlPoint = require('./ControlPoint');
-
-var _ControlPoint2 = _interopRequireDefault(_ControlPoint);
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var LayerBaseClass = (function () {
-	function LayerBaseClass(parent, prop) {
+	this.parseSchema = function parseSchema(schema, key, path) {
 		var _this = this;
 
-		_classCallCheck(this, LayerBaseClass);
+		path = path || [key];
+		var level = path.length - 1;
+		var initAttrs = level == 0 ? Global._extend({ key: +new Date() }, PROPS) : {};
+		switch (schema.type) {
+			case 'array':
+				schemaPathValue(path, schema.default || []);
+				return (0, _mithril2.default)('div.array', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), style: { marginLeft: level * LEVEL_MARGIN + 'px' } }), [(0, _mithril2.default)('h2', schema.title), (0, _mithril2.default)('div.props', [schema.format == 'table' ? (function () {
+					var keys = Object.keys(schema.items.properties);
+					return dataPathValue(path).map(function (v, i) {
+						var keys = Object.keys(schema.items.properties);
+						return keys.map(function (key) {
+							return _this.parseSchema(schema.items.properties[key], key, path.concat(i, key));
+						});
+					});
+				})() : ''])]);
+				break;
+			case 'object':
+				schemaPathValue(path, schema.default || {});
+				var keys = Object.keys(schema.properties);
+				return (0, _mithril2.default)('div.object', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), style: { marginLeft: level * LEVEL_MARGIN + 'px' } }), [(0, _mithril2.default)('h2', schema.title), (0, _mithril2.default)('div.props', [keys.map(function (v) {
+					return _this.parseSchema(schema.properties[v], v, path.concat(v));
+				})])]);
 
-		this.parent = parent;
-		this.generateID = Global.NewID();
-		this.Prop = Global._deepCopy({ key: this.generateID, className: '', style: { left: 0, top: 0, width: 0, height: 0, 'backgroundColor': '#eee' } }, prop || {});
-		this.Prop.config = function (el) {
-			Global.applyStyle(el, _this.Prop.style);
-		};
-		this.Prop.onkeypress = function (e) {
-			console.log(e, this);
-		};
-		this.ControlPoints = [];
-		this.activeControlPoint = undefined;
-	}
+				break;
 
-	_createClass(LayerBaseClass, [{
-		key: 'getPageOffset',
-		value: function getPageOffset() {
-			var cur = this,
-			    parent,
-			    offset = { left: this.Prop.style.left, top: this.Prop.style.top, path: [this.Prop.key] };
-			while (parent = cur.parent) {
-				offset.left += parent.Prop.style.left;
-				offset.top += parent.Prop.style.top;
-				offset.path.push(parent.Prop.key);
-				cur = parent;
-			}
-			offset.path.reverse();
-			return offset;
+			case 'number':
+			case 'integer':
+				schemaPathValue(path, schema.default);
+				return (0, _mithril2.default)('div.row', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), style: { marginLeft: level * LEVEL_MARGIN + 'px' } }), [(0, _mithril2.default)('strong', schema.title || key), (0, _mithril2.default)('input', buildAttrs(path, schema, { type: 'number', oninput: function oninput() {
+						dataPathValue(path, schema.type == 'number' ? this.value : parseInt(this.value, 10));
+					} }))]);
+
+				break;
+
+			case 'boolean':
+				schemaPathValue(path, schema.default);
+				return (0, _mithril2.default)('div.row', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), style: { marginLeft: level * LEVEL_MARGIN + 'px' } }), [(0, _mithril2.default)('strong', schema.title || key), (0, _mithril2.default)('input', buildAttrs(path, schema, { type: 'checkbox', onchange: function onchange() {
+						dataPathValue(path, this.checked);
+					} }))]);
+
+				break;
+			case 'string':
+				schemaPathValue(path, schema.default);
+				return (0, _mithril2.default)('div.row', Global._deepCopy(initAttrs, { 'data-key': key, className: getClassName(schema), key: path.join('.'), style: { marginLeft: level * LEVEL_MARGIN + 'px' } }), [(0, _mithril2.default)('strong', schema.title || key), schema.enum ? (0, _mithril2.default)('select', buildAttrs(path, schema, {
+					oninput: function oninput() {
+						dataPathValue(path, this.value);
+					} }, ['enum', 'type']), schema.enum.map(function (v) {
+					return (0, _mithril2.default)('option', v);
+				})) : (0, _mithril2.default)(schema.format == 'textarea' ? 'textarea' : 'input', buildAttrs(path, schema, {
+					type: schema.format == 'color' ? 'color' : 'text',
+					oninput: function oninput() {
+						dataPathValue(path, this.value);
+					} }))]);
+
+				break;
 		}
-	}, {
-		key: 'getRoot',
-		value: function getRoot() {
-			var cur = this,
-			    parent;
-			while (parent = cur.parent) {
-				cur = parent;
-			}
-			return cur;
-		}
-	}, {
-		key: 'iterateParent',
-		value: function iterateParent(callback) {
-			var cur = this,
-			    parent;
-			while (parent = cur.parent) {
-				callback && callback(parent);
-				cur = parent;
-			}
-			return cur;
-		}
-	}, {
-		key: 'buildControlPoint',
-		value: function buildControlPoint() {
+	};
 
-			var ControlPosition = function ControlPosition(parent, child) {
-				this[0] = this.LT = [-child.width / 2, -child.height / 2]; //Left Top
-				this[1] = this.CT = [parent.width / 2 - child.width / 2, -child.height / 2]; //top center
-				this[2] = this.RT = [parent.width - child.width / 2, -child.height / 2]; //right top
-
-				this[6] = this.LB = [-child.width / 2, parent.height - child.height / 2]; //Left Top
-				this[5] = this.CB = [parent.width / 2 - child.width / 2, parent.height - child.height / 2]; //top center
-				this[4] = this.RB = [parent.width - child.width / 2, parent.height - child.height / 2]; //right top
-
-				this[7] = this.LM = [-child.width / 2, parent.height / 2 - child.height / 2]; //Left Top
-				this[3] = this.RM = [parent.width - child.width / 2, parent.height / 2 - child.height / 2]; //left center
-			};
-			this.ControlPoints = [];
-
-			var pointProp = { width: Global.POINT_WIDTH, height: Global.POINT_HEIGHT };
-			var pointPosition = new ControlPosition(this.Prop.style, pointProp);
-			// var positionShift = this.isSelected() ? -BORDER_WIDTH : 0;
-
-			for (var i = 0; i < 8; i++) {
-				var point = new _ControlPoint2.default(this, { style: pointProp, position: i });
-				point.Prop.style.left = pointPosition[i][0];
-				point.Prop.style.top = pointPosition[i][1];
-				this.ControlPoints.push(point);
-			}
-
-			// move control point to top
-			if (Global.isNumeric(this.activeControlPoint)) {
-				var point = this.ControlPoints[this.activeControlPoint];
-				point.Prop.className = 'activePoint';
-				this.ControlPoints.splice(this.activeControlPoint, 1);
-				this.ControlPoints.push(point);
-			}
-
-			return this.ControlPoints.map(function (v) {
-				return v.getView();
-			});
-		}
-	}, {
-		key: 'remove',
-		value: function remove() {
-			this.parent.selectedWidget.splice(this.parent.selectedWidget.indexOf(this), 1);
-			this.parent.children.splice(this.parent.children.indexOf(this), 1);
-		}
-	}, {
-		key: 'isSelected',
-		value: function isSelected() {
-			return this.Prop.className.indexOf(Global.SELECTED_CLASSNAME) >= 0;
-		}
-	}, {
-		key: 'onSelected',
-		value: function onSelected() {
-			this.Prop.className = Global.addClass(this.Prop.className, Global.SELECTED_CLASSNAME);
-		}
-	}, {
-		key: 'onUnSelected',
-		value: function onUnSelected() {
-			this.Prop.className = Global.removeClass(this.Prop.className, Global.SELECTED_CLASSNAME);
-			this.activeControlPoint = undefined;
-		}
-	}, {
-		key: 'getElementInside',
-		value: function getElementInside(rect) {
-			if (!this.isSelected()) return [];
-			rect = Global._deepCopy({}, rect);
-			rect.left -= this.Prop.style.left;
-			rect.top -= this.Prop.style.top;
-			return this.ControlPoints.filter(function (v) {
-				if (Global.rectsIntersect(rect, v.Prop.style)) {
-					return true;
-				}
-			});
-		}
-	}, {
-		key: 'controller',
-		value: function controller() {
-			return;
-		}
-	}, {
-		key: 'view',
-		value: function view() {
-			return;
-		}
-	}, {
-		key: 'getView',
-		value: function getView() {
-			return this.view(new this.controller());
-		}
-	}]);
-
-	return LayerBaseClass;
-})();
-
-exports.default = LayerBaseClass;
-},{"./ControlPoint":2,"./global":7,"mithril":8}],4:[function(require,module,exports){
-'use strict';
-
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-
-var _mithril = require('mithril');
-
-var _mithril2 = _interopRequireDefault(_mithril);
-
-var _global = require('./global');
-
-var Global = _interopRequireWildcard(_global);
-
-var _ContainerBaseClass2 = require('./ContainerBaseClass');
-
-var _ContainerBaseClass3 = _interopRequireDefault(_ContainerBaseClass2);
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var WidgetCanvas = (function (_ContainerBaseClass) {
-	_inherits(WidgetCanvas, _ContainerBaseClass);
-
-	function WidgetCanvas(parent, prop) {
-		_classCallCheck(this, WidgetCanvas);
-
-		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(WidgetCanvas).call(this, parent, prop));
-
-		_this.parent = parent;
-		return _this;
-	}
-
-	_createClass(WidgetCanvas, [{
-		key: 'controller',
-		value: function controller() {}
-	}, {
-		key: 'view',
-		value: function view(ctrl) {
-			var self = this;
-			return (0, _mithril2.default)('.canvas', Global._exclude(this.Prop, ['eventData', 'isNew']), [(0, _mithril2.default)('.content', [(function () {
-				return self.children.map(function (v) {
-					return v.getView();
-				});
-			})()]), this.buildControlPoint()]);
-		}
-	}]);
-
-	return WidgetCanvas;
-})(_ContainerBaseClass3.default);
-
-exports.default = WidgetCanvas;
-},{"./ContainerBaseClass":1,"./global":7,"mithril":8}],5:[function(require,module,exports){
-'use strict';
-
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-
-var _mithril = require('mithril');
-
-var _mithril2 = _interopRequireDefault(_mithril);
-
-var _global = require('./global');
-
-var Global = _interopRequireWildcard(_global);
-
-var _LayerBaseClass2 = require('./LayerBaseClass');
-
-var _LayerBaseClass3 = _interopRequireDefault(_LayerBaseClass2);
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var WidgetDiv = (function (_LayerBaseClass) {
-	_inherits(WidgetDiv, _LayerBaseClass);
-
-	function WidgetDiv(parent, prop) {
-		_classCallCheck(this, WidgetDiv);
-
-		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(WidgetDiv).call(this, parent, prop));
-
-		_this.parent = parent;
-		return _this;
-	}
-
-	_createClass(WidgetDiv, [{
-		key: 'controller',
-		value: function controller() {
-			this.onunload = function () {};
-		}
-	}, {
-		key: 'view',
-		value: function view(ctrl) {
-			var Prop = Global._exclude(this.Prop, ['eventData', 'isNew']);
-			return Prop.style.width && Prop.style.height ? (0, _mithril2.default)('div.layer', Prop, [(0, _mithril2.default)('.content'), (0, _mithril2.default)('.bbox'), this.buildControlPoint()]) : [];
-		}
-	}]);
-
-	return WidgetDiv;
-})(_LayerBaseClass3.default);
-
-exports.default = WidgetDiv;
-},{"./LayerBaseClass":3,"./global":7,"mithril":8}],6:[function(require,module,exports){
-'use strict';
-
-var _mithril = require('mithril');
-
-var _mithril2 = _interopRequireDefault(_mithril);
-
-var _global = require('./global');
-
-var Global = _interopRequireWildcard(_global);
-
-var _WidgetDiv = require('./WidgetDiv');
-
-var _WidgetDiv2 = _interopRequireDefault(_WidgetDiv);
-
-var _WidgetCanvas = require('./WidgetCanvas');
-
-var _WidgetCanvas2 = _interopRequireDefault(_WidgetCanvas);
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-/**
- * Main Code below
- */
-
-var container = document.querySelector('#container');
-var Canvas1 = new _WidgetCanvas2.default(null, { style: { left: 100, top: 100, width: 800, height: 500, backgroundColor: '#eee' } });
-_mithril2.default.mount(container, Canvas1);
-
-/**
- * DOM EVENT BELOW
- */
-// check mouse out of Main Canvas, to prevent mouse out problem
-container.onmouseover = function (e) {
-  if (e.target.id == 'container') Canvas1.mouseUpFunc(e);
+	this.getVal = function (args) {
+		return getOriginalKeyVal(DATA(), orgData);
+	};
+	this.controller = function (args) {};
+	this.view = function (ctrl) {
+		return this.parseSchema(SCHEMA(), 'root');
+	};
+	this.getView = function () {
+		return this.view(new this.controller());
+	};
 };
 
-// short key event
-window.addEventListener('keydown', handleShortKeyDown);
-window.addEventListener('keyup', handleShortKeyUp);
+exports.default = JsonEditor;
+},{"./global":4,"mithril":5}],2:[function(require,module,exports){
+'use strict';
 
-var SHIFT_KEY_DOWN = 0;
-var CTRL_KEY_DOWN = 0;
-var META_KEY_DOWN = 0;
+var _editor = require('./editor');
 
-function isInputElementActive() {
+var _editor2 = _interopRequireDefault(_editor);
 
-  var isInput = false;
-  // Some shortcuts should not get handled if a control/input element
-  // is selected.
-  var curElement = document.activeElement || document.querySelector(':focus');
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-  var curElementTagName = curElement && curElement.tagName.toUpperCase();
-  if (curElementTagName === 'INPUT' || curElementTagName === 'TEXTAREA' || curElementTagName === 'SELECT') {
+// new canvas()
+new _editor2.default(); // import canvas from './canvas'
+},{"./editor":3}],3:[function(require,module,exports){
+'use strict';
 
-    isInput = true;
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _JsonEditor = require('./JsonEditor');
+
+var _JsonEditor2 = _interopRequireDefault(_JsonEditor);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var testSchema = m.prop(sampleSchema);
+var testDATA = m.prop(sampleData);
+
+var Editor = function Editor() {
+  _classCallCheck(this, Editor);
+
+  function inputChange(obj) {
+    return function () {
+      this.className = '';
+      try {
+        var data = JSON.parse(this.value);
+      } catch (e) {
+        return this.className = 'error';
+      }
+      if (data) obj(data), m.redraw();
+    };
   }
-  return isInput;
-}
+  // render schema text area
+  m.mount(document.querySelector('.schema'), { view: function view() {
+      return [m('h4', "SCHEMA"), m('textarea', { key: 'text-schema', oninput: inputChange(testSchema) }, m.trust(JSON.stringify(testSchema(), null, 2)))];
+    } });
+  // render data text area
+  m.mount(document.querySelector('.data'), { view: function view() {
+      return [m('h4', "DATA"), m('textarea', { key: 'text-data', oninput: inputChange(testDATA) }, m.trust(JSON.stringify(testDATA(), null, 2)))];
+    } });
 
-function handleShortKeyUp(evt) {
-  var cmd = (evt.ctrlKey ? 1 : 0) | (evt.altKey ? 2 : 0) | (evt.shiftKey ? 4 : 0) | (evt.metaKey ? 8 : 0);
+  // render json editor window
+  m.mount(document.querySelector('.editor'), new _JsonEditor2.default(testSchema, testDATA, null, renderView));
 
-  if (/control/i.test(evt.keyIdentifier)) {
-    //ctrl key
-    CTRL_KEY_DOWN = 0;
-  }
-  if (/shift/i.test(evt.keyIdentifier)) {
-    //ctrl key
-    SHIFT_KEY_DOWN = 0;
-  }
-
-  if (/meta/i.test(evt.keyIdentifier)) {
-    //ctrl key
-    META_KEY_DOWN = 0;
-  }
-}
-
-function handleShortKeyDown(evt) {
-  var handled = false;
-  var isInput = isInputElementActive();
-
-  var cmd = (evt.ctrlKey ? 1 : 0) | (evt.altKey ? 2 : 0) | (evt.shiftKey ? 4 : 0) | (evt.metaKey ? 8 : 0);
-
-  if (cmd === 8) {
-    // meta
-    META_KEY_DOWN = 1;
-  }
-  if (cmd === 0) {
-    // no control key pressed at all.
-
-    // console.log(evt, evt.keyCode);
-    switch (evt.keyCode) {
-      case 8: //backspace key : Delete the shape
-      case 46:
-        //delete key : Delete the shape
-
-        if (isInput) break;
-        Canvas1.removeSelectedItem();
-        handled = true;
-        break;
-
-      case 37:
-        // left
-        Canvas1.moveSelectedBy(-GRID_SIZE, 0);
-        handled = true;
-        break;
-
-      case 38:
-        // up
-        Canvas1.moveSelectedBy(0, -GRID_SIZE);
-        handled = true;
-        break;
-
-      case 39:
-        // right
-        Canvas1.moveSelectedBy(GRID_SIZE, 0);
-        handled = true;
-        break;
-
-      case 40:
-        // down
-        Canvas1.moveSelectedBy(0, GRID_SIZE);
-        handled = true;
-        break;
-
-    }
+  // update preview area when editor value changed
+  function renderView(pathStr, data, templateObj, orgData) {
+    // template will be delay updated, so don't display path
+    if (!templateObj[pathStr]) document.querySelector('.debug').innerHTML = pathStr;
+    if (data.attrs) data.attrs.key = +new Date();
+    // console.log( orgData )
   }
 
-  if (cmd === 1 || cmd === 8) {
-    //ctrl key
-    CTRL_KEY_DOWN = 1;
-    switch (evt.keyCode) {
+  m.mount(document.querySelector('.preview'), { view: function view() {
+      return testDATA();
+    } });
+};
 
-      case 68:
-        //Ctrl+D
-        Canvas1.duplicateSelected();
-        handled = true;
-        break;
-
-      case 37:
-        // ctrl+left
-        Canvas1.moveSelectedBy(-1, 0);
-        handled = true;
-        break;
-
-      case 38:
-        // ctrl+up
-        Canvas1.moveSelectedBy(0, -1);
-        handled = true;
-        break;
-
-      case 39:
-        // ctrl+right
-        Canvas1.moveSelectedBy(1, 0);
-        handled = true;
-        break;
-
-      case 40:
-        // ctrl+down
-        Canvas1.moveSelectedBy(0, 1);
-        handled = true;
-        break;
-
-      case 90:
-        //Ctrl+Z
-        handled = true;
-        break;
-    }
-  }
-
-  if (cmd === 4) {
-    // shift
-    SHIFT_KEY_DOWN = 1;
-    switch (evt.keyCode) {
-
-      case 37:
-        // shift+left
-        Canvas1.resizeSelectedBy(-GRID_SIZE, 0);
-        handled = true;
-        break;
-
-      case 38:
-        // shift+up
-        Canvas1.resizeSelectedBy(0, -GRID_SIZE);
-        handled = true;
-        break;
-
-      case 39:
-        // shift+right
-        Canvas1.resizeSelectedBy(GRID_SIZE, 0);
-        handled = true;
-        break;
-
-      case 40:
-        // shift+down
-        Canvas1.resizeSelectedBy(0, GRID_SIZE);
-        handled = true;
-        break;
-
-    }
-  }
-
-  if (cmd === 5 || cmd === 12) {
-    // ctrl+shift
-    SHIFT_KEY_DOWN = 1;
-    CTRL_KEY_DOWN = 1;
-
-    switch (evt.keyCode) {
-
-      case 37:
-        // ctrl+shift+left
-        Canvas1.resizeSelectedBy(-1, 0);
-        handled = true;
-        break;
-
-      case 38:
-        // ctrl+shift+up
-        Canvas1.resizeSelectedBy(0, -1);
-        handled = true;
-        break;
-
-      case 39:
-        // ctrl+shift+right
-        Canvas1.resizeSelectedBy(1, 0);
-        handled = true;
-        break;
-
-      case 40:
-        // ctrl+shift+down
-        Canvas1.resizeSelectedBy(0, 1);
-        handled = true;
-        break;
-
-    }
-  }
-
-  if (handled) {
-    evt.preventDefault();
-    return;
-  }
-}
-},{"./WidgetCanvas":4,"./WidgetDiv":5,"./global":7,"mithril":8}],7:[function(require,module,exports){
+exports.default = Editor;
+},{"./JsonEditor":1}],4:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1215,6 +504,16 @@ function _addToSet() {
     return arr;
 }
 
+var addToObject = exports.addToObject = function addToObject(obj, key, value) {
+    if (Object.prototype.toString.call(obj) == "[object Array]") {
+        if (obj.indexOf(key) < 0) obj.push(key);
+    } else {
+        if (!(key in obj)) {
+            obj[key] = value;
+        }
+    }
+};
+
 function removeClass(classProp, class1, class2, etc) {
     var list = classProp.split(/\s+/);
     var args = Array.prototype.slice.call(arguments, 1);
@@ -1252,7 +551,7 @@ var rectsIntersect = exports.rectsIntersect = function rectsIntersect(r1, r2) {
 var debug = exports.debug = function debug(msg) {
     document.querySelector('#debug').innerHTML = msg;
 };
-},{}],8:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 var m = (function app(window, undefined) {
 	var OBJECT = "[object Object]", ARRAY = "[object Array]", STRING = "[object String]", FUNCTION = "function";
 	var type = {}.toString;
@@ -2413,4 +1712,4 @@ var m = (function app(window, undefined) {
 if (typeof module != "undefined" && module !== null && module.exports) module.exports = m;
 else if (typeof define === "function" && define.amd) define(function() {return m});
 
-},{}]},{},[6]);
+},{}]},{},[2]);

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8>
+<title>JSON Editor</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<script type="text/javascript" src="js/mithril.js"></script>
+
+<style type="text/css">
+html,body{
+	height: 100%;
+}
+*{margin:0; padding: 0}
+textarea{
+  width:100%;
+	height: 100%;
+}
+ul,li{
+    list-style: none
+}
+.data, .schema{
+  position: relative;
+  margin-left: 80px;
+}
+.debug{
+  height: 30px;
+  background:#DFEACD;
+}
+.error{
+  background: #e99;
+}
+h4{
+  position: absolute;
+  top:0;
+  left: -80px;
+}
+.left{
+  width:400px; height:300px;
+}
+.right{
+  float:right;margin-right:400px;
+}
+.right>div{
+  margin-bottom:10px;
+}
+h2:before{
+  content:"-";
+}
+.isTemplate{
+  /*display: none;*/
+}
+</style>
+</head>
+<body>
+
+<div class="right">
+  <div class="editor"></div>
+  <div class="debug"></div>
+  <div class="preview"></div>
+</div>
+<div class="left schema"></div>
+<div class="left data"></div>
+
+<script type="text/javascript" src="testdata.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
+

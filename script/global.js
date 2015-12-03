@@ -145,6 +145,16 @@ export function _addToSet(){
 	return arr
 }
 
+export var addToObject = function addToObject( obj, key, value ){
+    if(Object.prototype.toString.call(obj)=="[object Array]"){
+        if( obj.indexOf(key)<0 ) obj.push(key)
+    }else{
+        if( !(key in obj) ){
+            obj[key] = value;
+        }
+    }
+}
+
 export function removeClass(classProp, class1, class2, etc) {
 	var list =classProp.split(/\s+/)
 	var args = Array.prototype.slice.call(arguments, 1);
