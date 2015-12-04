@@ -81,7 +81,7 @@ ul,li{
 	top:0;
 	left:0;
 	height: 100%;
-	width: 10px;
+	width: 40px;
 	background: #efefef;
 }
 .editor{
@@ -132,13 +132,65 @@ ul,li{
 <script type="text/javascript" src="testdata.js"></script>
 <script type="text/javascript" src="app.js"></script>
 <script type="text/javascript">
-var old = 300;
-var eventData={}
+
+function DragFactory(options) {
+	var defaultOptions = {mithril:true}, options=options||{}
+	for(var i in defaultOptions){ if( !(i in options) ) options[i] = defaultOptions[i] }
+	var isTouch = ('ontouchstart' in window) || ('DocumentTouch' in window && document instanceof DocumentTouch);
+	var downE = isTouch? 'touchstart' :'mousedown';
+	var moveE = isTouch? 'touchmove' :'mousemove';
+	var upE = isTouch? 'touchend' :'mouseup';
+
+	var cbList = {}
+	var eventData={}
+	function getDownFunc(name){
+		return function downFunc(evt) {
+			var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
+			eventData.x = e.pageX
+			eventData.y = e.pageY
+			eventData.type = evt.type
+			eventData.name = name;
+		}
+	}
+	window.addEventListener(moveE, function(evt){
+		var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
+		if( !eventData.type )return;
+		evt.preventDefault()
+		eventData.dx = eventData.x - e.pageX
+		eventData.dy = eventData.y - e.pageY
+		for(var i in cbList){
+			cbList[i].move&&cbList[i].move(eventData)
+		}
+	})
+	window.addEventListener(upE, function(evt){
+		eventData.type = null
+		for(var i in cbList){
+			cbList[i].up&&cbList[i].up(eventData)
+		}
+		eventData.dx = eventData.dy = 0
+	})
+	return function(name, moveCB, upCB){
+		cbList[name] = {move:moveCB, up:upCB };
+		return getDownFunc(name)
+	}
+}
+
+var dragFunc = DragFactory();
+
 var con = document.querySelector('.editorContainer');
+var old = 300;
 con.style.width = old+'px'
 
 var editorContainer = (function(){
 	var obj = {}
+	var downFunc = dragFunc('resizeBar', function(data){
+			if(data.name!='resizeBar') return;
+			con.style.width = old + data.dx +'px'
+		}, function(data){
+			if(data.name!='resizeBar') return;
+			old+=data.dx
+		});
+
 	obj.view = function(){
 		return [m('.editorDragContainer', {
 			config: function (el){
@@ -149,11 +201,7 @@ var editorContainer = (function(){
 			]),
 
 			m('.resizeBar', {
-				onmousedown: function(e){
-					eventData.x = e.pageX
-					eventData.y = e.pageY
-					eventData.type = e.type
-				},
+				onmousedown: downFunc,
 			}),
 
 		]
@@ -161,18 +209,10 @@ var editorContainer = (function(){
 	return obj;
 })()
 
-document.onmousemove = function(e){
-	if( !/down/i.test(eventData.type) )return;
-	e.preventDefault()
-	var dx = eventData.dx = eventData.x - e.pageX
-	var dy = eventData.dy = eventData.y - e.pageY
-	con.style.width = old + dx +'px'
-}
-document.onmouseup = function(){
-	eventData.type = null
-	old+=eventData.dx
-}
+document.querySelector('.canvas').onmousedown = dragFunc('canvas', function(data){   })
 
 m.mount( con , editorContainer )
+
+
 
 </script>
