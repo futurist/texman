@@ -140,11 +140,14 @@ function DragFactory(options) {
 	var downE = isTouch? 'touchstart' :'mousedown';
 	var moveE = isTouch? 'touchmove' :'mousemove';
 	var upE = isTouch? 'touchend' :'mouseup';
-
 	var cbList = {}
 	var eventData={}
+	function getConstrain(){
+		var docWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+		var docHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+	}
 	function getDownFunc(name){
-		return function downFunc(evt) {
+		return function downHandle (evt) {
 			var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
 			eventData.x = e.pageX
 			eventData.y = e.pageY
@@ -152,7 +155,7 @@ function DragFactory(options) {
 			eventData.name = name;
 		}
 	}
-	window.addEventListener(moveE, function(evt){
+	function moveHandle (evt){
 		var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
 		if( !eventData.type )return;
 		evt.preventDefault()
@@ -161,14 +164,16 @@ function DragFactory(options) {
 		for(var i in cbList){
 			cbList[i].move&&cbList[i].move(eventData)
 		}
-	})
-	window.addEventListener(upE, function(evt){
+	}
+	function upHandle (evt){
 		eventData.type = null
 		for(var i in cbList){
 			cbList[i].up&&cbList[i].up(eventData)
 		}
 		eventData.dx = eventData.dy = 0
-	})
+	}
+	window.addEventListener(moveE, moveHandle)
+	window.addEventListener(upE, upHandle)
 	return function(name, moveCB, upCB){
 		cbList[name] = {move:moveCB, up:upCB };
 		return getDownFunc(name)
