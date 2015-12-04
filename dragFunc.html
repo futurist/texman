@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8>
+<title>canvas</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<script type="text/javascript" src="http://cdn.bootcss.com/mithril/0.2.0/mithril.js"></script>
+<style type="text/css">
+html {
+  box-sizing: border-box;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+html,body{
+	height: 100%;
+	overflow: hidden;
+}
+
+body{
+	margin:0;
+	padding: 0;
+}
+#container{
+	overflow: hidden;
+	width: 300px;
+	height: 100%;
+}
+ul,li{
+    list-style: none
+}
+.canvas{
+	overflow: visible;
+	position: absolute;
+	border:1px dashed transparent;
+}
+.layer{
+	position: absolute;
+	border:1px dashed transparent;
+}
+
+.canvas .content,
+.canvas .bbox
+{
+	position: absolute;
+	width:100%;
+	height:100%;
+	overflow: hidden;
+}
+
+
+.layer.selected,
+.canvas.selected
+{
+	border:1px dashed red;
+}
+
+.canvas.editing
+{
+	border:1px dashed blue;
+}
+
+.selected>.controlPoint{
+	display: block;
+}
+
+.controlPoint.activePoint{
+	background: #E8E8E8;
+}
+.controlPoint{
+	display: none;
+	position: absolute;
+	border:1px solid #666;
+}
+
+
+.resizeBar{
+	position: absolute;
+	z-index: 9999;
+	top:0;
+	left:0;
+	height: 100%;
+	width: 40px;
+	background: #efefef;
+}
+.editor{
+	margin-left: 20px;
+	margin-bottom: 50px;
+}
+.editorDragContainer{
+	overflow: auto;
+	height: 100%;
+	width: 100%;
+}
+.editorContainer{
+	position: fixed;
+	top:0;
+	width: 200px;
+	right:0;
+	height: 100%;
+}
+
+#debug{
+	position: absolute;
+	top:0;
+	left: 0;
+	height: 80px;
+	width: 200px;
+	z-index: 999999;
+	background: #666;
+	color:white;
+	display: none;
+}
+</style>
+</head>
+<body>
+
+<div id="container"></div>
+
+<div class="editorContainer">
+	<div class="editorDragContainer">
+		<div class="editor"></div>
+		<div class="resizeBar"></div>
+	</div>
+</div>
+
+<div id="debug"></div>
+</body>
+</html>
+
+<script type="text/javascript">
+
+function DragFactory(options) {
+	var defaultOptions = {mithril:true}, options=options||{}
+	for(var i in defaultOptions){ if( !(i in options) ) options[i] = defaultOptions[i] }
+	var isTouch = ('ontouchstart' in window) || ('DocumentTouch' in window && document instanceof DocumentTouch);
+	var downE = isTouch? 'touchstart' :'mousedown';
+	var moveE = isTouch? 'touchmove' :'mousemove';
+	var upE = isTouch? 'touchend' :'mouseup';
+	var dragData={}
+	function getDownFunc(name){
+		return function downHandle (evt) {
+			var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
+			var data = dragData[name];
+			data.ox = e.pageX
+			data.oy = e.pageY
+			data.type = evt.type
+		}
+	}
+	function moveHandle (evt){
+		var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
+		evt.preventDefault()
+		for(var name in dragData){
+			var data = dragData[name];
+			if( !data.type ) continue;
+			data.pageX = e.pageX
+			data.pageY = e.pageY
+			data.dx = data.ox - e.pageX
+			data.dy = data.oy - e.pageY
+			if( data.move && data.move(evt, data, dragData)===false ) return upHandle(evt) 
+		}
+	}
+	function upHandle (evt){
+		for(var name in dragData){
+			var data = dragData[name];
+			if( !data.type ) continue;
+			data.type = null
+			data.up&&data.up(evt, data, dragData)
+			data.dx = data.dy = 0
+		}
+	}
+	window.addEventListener(moveE, moveHandle)
+	window.addEventListener(upE, upHandle)
+	return function(name, data, moveCB, upCB){
+		if(typeof data=='function') moveCB = data, upCB = moveCB, data={};
+		dragData[name] = { name:name, data:data, move:moveCB, up:upCB };
+		return getDownFunc(name)
+	}
+}
+
+
+function checkWindowEdge(data){
+	var docWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+	var docHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+	return data.pageX<100 || data.pageY<100 || data.pageX>docWidth-100 || data.pageY>docHeight-100
+}
+var dragFunc = DragFactory();
+
+var con = document.querySelector('.editorContainer');
+var old = 300;
+con.style.width = old+'px'
+
+var editorContainer = (function(){
+	var obj = {}
+	var downFunc = dragFunc( 'resizeBar', {old:300}, function(evt, dragEvt, dragData){
+			if( checkWindowEdge(dragEvt) ) return false;
+			con.style.width = dragData['resizeBar'].data.old + dragEvt.dx +'px'
+		}, function(evt, dragEvt){
+			if(!dragEvt.dx) return;
+			dragData['resizeBar'].data.old += dragEvt.dx
+		});
+
+	obj.view = function(){
+		return [m('.editorDragContainer', {
+			config: function (el){
+				// window.initEditor()
+			}
+		}, [
+				m('.editor'),
+			]),
+
+			m('.resizeBar', {
+				onmousedown: downFunc,
+			}),
+
+		]
+	}
+	return obj;
+})()
+
+document.querySelector('#container').onmousedown = dragFunc('canvas', function(evt, dragEvt, dragData){
+	console.log(1234, dragEvt, dragData, dragData['canvas'].dx )
+	return dragData['resizeBar'].move(evt, dragEvt )
+   }, function  (evt, dragEvt,e) {
+   		e['resizeBar'].up(evt, dragEvt )
+   })
+
+m.mount( con , editorContainer )
+
+
+
+</script>
