@@ -139,11 +139,11 @@ function DragFactory(options) {
 	var downE = isTouch? 'touchstart' :'mousedown';
 	var moveE = isTouch? 'touchmove' :'mousemove';
 	var upE = isTouch? 'touchend' :'mouseup';
-	var dragData={}
+	var dragRoot={}
 	function getDownFunc(name){
 		return function downHandle (evt) {
 			var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
-			var data = dragData[name];
+			var data = dragRoot[name];
 			data.ox = e.pageX
 			data.oy = e.pageY
 			data.type = evt.type
@@ -152,30 +152,30 @@ function DragFactory(options) {
 	function moveHandle (evt){
 		var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
 		evt.preventDefault()
-		for(var name in dragData){
-			var data = dragData[name];
+		for(var name in dragRoot){
+			var data = dragRoot[name];
 			if( !data.type ) continue;
 			data.pageX = e.pageX
 			data.pageY = e.pageY
 			data.dx = data.ox - e.pageX
 			data.dy = data.oy - e.pageY
-			if( data.move && data.move(evt, data, dragData)===false ) return upHandle(evt) 
+			if( data.move && data.move(evt, data, dragRoot)===false ) return upHandle(evt) 
 		}
 	}
 	function upHandle (evt){
-		for(var name in dragData){
-			var data = dragData[name];
+		for(var name in dragRoot){
+			var data = dragRoot[name];
 			if( !data.type ) continue;
+			data.up&&data.up(evt, data, dragRoot)
 			data.type = null
-			data.up&&data.up(evt, data, dragData)
 			data.dx = data.dy = 0
 		}
 	}
 	window.addEventListener(moveE, moveHandle)
 	window.addEventListener(upE, upHandle)
 	return function(name, data, moveCB, upCB){
-		if(typeof data=='function') moveCB = data, upCB = moveCB, data={};
-		dragData[name] = { name:name, data:data, move:moveCB, up:upCB };
+		if(typeof data=='function') upCB = moveCB, moveCB = data, data={};
+		dragRoot[name] = { name:name, data:data, move:moveCB, up:upCB };
 		return getDownFunc(name)
 	}
 }
@@ -194,12 +194,12 @@ con.style.width = old+'px'
 
 var editorContainer = (function(){
 	var obj = {}
-	var downFunc = dragFunc( 'resizeBar', {old:300}, function(evt, dragEvt, dragData){
-			if( checkWindowEdge(dragEvt) ) return false;
-			con.style.width = dragData['resizeBar'].data.old + dragEvt.dx +'px'
-		}, function(evt, dragEvt){
-			if(!dragEvt.dx) return;
-			dragData['resizeBar'].data.old += dragEvt.dx
+	var downFunc = dragFunc( 'resizeBar', {old:300}, function(evt, dragData, dragRoot){
+			// if( checkWindowEdge(dragData) ) return false;
+			con.style.width = dragRoot['resizeBar'].data.old + dragData.dx +'px'
+		}, function(evt, dragData, dragRoot){
+			if(!dragData.dx) return;
+			dragRoot['resizeBar'].data.old += dragData.dx
 		});
 
 	obj.view = function(){
@@ -220,11 +220,10 @@ var editorContainer = (function(){
 	return obj;
 })()
 
-document.querySelector('#container').onmousedown = dragFunc('canvas', function(evt, dragEvt, dragData){
-	console.log(1234, dragEvt, dragData, dragData['canvas'].dx )
-	return dragData['resizeBar'].move(evt, dragEvt )
-   }, function  (evt, dragEvt,e) {
-   		e['resizeBar'].up(evt, dragEvt )
+document.querySelector('#container').onmousedown = dragFunc('canvas', function(evt, dragData, dragRoot){
+	return dragRoot['resizeBar'].move.apply(null, arguments )
+   }, function  (evt, dragData,dragRoot) {
+   		dragRoot['resizeBar'].up.apply(null, arguments )
    })
 
 m.mount( con , editorContainer )
