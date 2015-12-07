@@ -129,56 +129,10 @@ ul,li{
 </body>
 </html>
 
+<script type="text/javascript" src="js/mDrag.js"></script>
 <script type="text/javascript" src="testdata.js"></script>
 <script type="text/javascript" src="app.js"></script>
 <script type="text/javascript">
-
-function DragFactory(options) {
-	var defaultOptions = {mithril:true}, options=options||{}
-	for(var i in defaultOptions){ if( !(i in options) ) options[i] = defaultOptions[i] }
-	var isTouch = ('ontouchstart' in window) || ('DocumentTouch' in window && document instanceof DocumentTouch);
-	var downE = isTouch? 'touchstart' :'mousedown';
-	var moveE = isTouch? 'touchmove' :'mousemove';
-	var upE = isTouch? 'touchend' :'mouseup';
-	var cbList = {}
-	var eventData={}
-	function getConstrain(){
-		var docWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-		var docHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
-	}
-	function getDownFunc(name){
-		return function downHandle (evt) {
-			var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
-			eventData.x = e.pageX
-			eventData.y = e.pageY
-			eventData.type = evt.type
-			eventData.name = name;
-		}
-	}
-	function moveHandle (evt){
-		var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
-		if( !eventData.type )return;
-		evt.preventDefault()
-		eventData.dx = eventData.x - e.pageX
-		eventData.dy = eventData.y - e.pageY
-		for(var i in cbList){
-			cbList[i].move&&cbList[i].move(eventData)
-		}
-	}
-	function upHandle (evt){
-		eventData.type = null
-		for(var i in cbList){
-			cbList[i].up&&cbList[i].up(eventData)
-		}
-		eventData.dx = eventData.dy = 0
-	}
-	window.addEventListener(moveE, moveHandle)
-	window.addEventListener(upE, upHandle)
-	return function(name, moveCB, upCB){
-		cbList[name] = {move:moveCB, up:upCB };
-		return getDownFunc(name)
-	}
-}
 
 var dragFunc = DragFactory();
 
@@ -188,10 +142,10 @@ con.style.width = old+'px'
 
 var editorContainer = (function(){
 	var obj = {}
-	var downFunc = dragFunc('resizeBar', function(data){
+	var downFunc = dragFunc('resizeBar', function(e, data){
 			if(data.name!='resizeBar') return;
 			con.style.width = old + data.dx +'px'
-		}, function(data){
+		}, function(e, data){
 			if(data.name!='resizeBar') return;
 			old+=data.dx
 		});
@@ -214,7 +168,7 @@ var editorContainer = (function(){
 	return obj;
 })()
 
-document.querySelector('.canvas').onmousedown = dragFunc('canvas', function(data){   })
+document.querySelector('.canvas').onmousedown = dragFunc('canvas', function(e, data){   })
 
 m.mount( con , editorContainer )
 

@@ -1,0 +1,48 @@
+function DragFactory(options) {
+	var defaultOptions = {mithril:true}, options=options||{}
+	for(var i in defaultOptions){ if( !(i in options) ) options[i] = defaultOptions[i] }
+	var isTouch = ('ontouchstart' in window) || ('DocumentTouch' in window && document instanceof DocumentTouch);
+	var downE = isTouch? 'touchstart' :'mousedown';
+	var moveE = isTouch? 'touchmove' :'mousemove';
+	var upE = isTouch? 'touchend' :'mouseup';
+	var dragRoot={}
+	function getDownFunc(name){
+		return function downHandle (evt) {
+			var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
+			var data = dragRoot[name];
+			data.ox = e.pageX
+			data.oy = e.pageY
+			data.type = evt.type
+		}
+	}
+	function moveHandle (evt){
+		var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
+		evt.preventDefault()
+		for(var name in dragRoot){
+			var data = dragRoot[name];
+			if( !data.type ) continue;
+			data.pageX = e.pageX
+			data.pageY = e.pageY
+			data.dx = data.ox - e.pageX
+			data.dy = data.oy - e.pageY
+			if( data.move && data.move(evt, data, dragRoot)===false ) return upHandle(evt) 
+		}
+	}
+	function upHandle (evt){
+		for(var name in dragRoot){
+			var data = dragRoot[name];
+			if( !data.type ) continue;
+			data.up&&data.up(evt, data, dragRoot)
+			data.type = null
+			data.dx = data.dy = 0
+		}
+	}
+	window.addEventListener(moveE, moveHandle)
+	window.addEventListener(upE, upHandle)
+	return function(name, data, moveCB, upCB){
+		if(typeof data=='function') upCB = moveCB, moveCB = data, data={};
+		dragRoot[name] = { name:name, data:data, move:moveCB, up:upCB };
+		return getDownFunc(name)
+	}
+}
+
