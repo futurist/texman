@@ -1,3 +1,4 @@
+
 function DragFactory(options) {
 	var defaultOptions = {mithril:true}, options=options||{}
 	for(var i in defaultOptions){ if( !(i in options) ) options[i] = defaultOptions[i] }
@@ -5,7 +6,7 @@ function DragFactory(options) {
 	var downE = isTouch? 'touchstart' :'mousedown';
 	var moveE = isTouch? 'touchmove' :'mousemove';
 	var upE = isTouch? 'touchend' :'mouseup';
-	var dragRoot={}
+	var dragRoot={}, stack=[]
 	function getDownFunc(name){
 		return function downHandle (evt) {
 			var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
@@ -17,16 +18,25 @@ function DragFactory(options) {
 	}
 	function moveHandle (evt){
 		var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
-		evt.preventDefault()
+		var isDown = false;
 		for(var name in dragRoot){
 			var data = dragRoot[name];
 			if( !data.type ) continue;
+			isDown = true;
+			stack.push(data.pageX, data.pageY, data.dx, data.dy)
 			data.pageX = e.pageX
 			data.pageY = e.pageY
 			data.dx = data.ox - e.pageX
 			data.dy = data.oy - e.pageY
-			if( data.move && data.move(evt, data, dragRoot)===false ) return upHandle(evt) 
+			if( data.move && data.move(evt, data, dragRoot)===false ) {
+				data.dy = stack.pop()
+				data.dx = stack.pop()
+				data.pageY = stack.pop()
+				data.pageX = stack.pop()
+				return upHandle(evt)
+			}
 		}
+		if(isDown) evt.preventDefault()
 	}
 	function upHandle (evt){
 		for(var name in dragRoot){
@@ -45,4 +55,3 @@ function DragFactory(options) {
 		return getDownFunc(name)
 	}
 }
-

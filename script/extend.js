@@ -1,4 +1,6 @@
+import * as Global from './global'
 /**
+ * Below is from Flarum
  * Extend an object's method by running its output through a mutating callback
  * every time it is called.
  *
@@ -29,7 +31,7 @@ export function extend(object, method, callback) {
     return value;
   };
 
-  Object.assign(object[method], original);
+  Global._extend(object[method], original);
 }
 
 /**
@@ -61,5 +63,5 @@ export function override(object, method, newMethod) {
     return newMethod.apply(this, [original.bind(this)].concat(args));
   };
 
-  Object.assign(object[method], original);
+  Global._extend(object[method], original);
 }

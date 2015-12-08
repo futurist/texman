@@ -81,7 +81,7 @@ ul,li{
 	top:0;
 	left:0;
 	height: 100%;
-	width: 40px;
+	width: 10px;
 	background: #efefef;
 }
 .editor{
@@ -134,43 +134,6 @@ ul,li{
 <script type="text/javascript" src="app.js"></script>
 <script type="text/javascript">
 
-var dragFunc = DragFactory();
-
-var con = document.querySelector('.editorContainer');
-var old = 300;
-con.style.width = old+'px'
-
-var editorContainer = (function(){
-	var obj = {}
-	var downFunc = dragFunc('resizeBar', function(e, data){
-			if(data.name!='resizeBar') return;
-			con.style.width = old + data.dx +'px'
-		}, function(e, data){
-			if(data.name!='resizeBar') return;
-			old+=data.dx
-		});
-
-	obj.view = function(){
-		return [m('.editorDragContainer', {
-			config: function (el){
-				window.initEditor()
-			}
-		}, [
-				m('.editor'),
-			]),
-
-			m('.resizeBar', {
-				onmousedown: downFunc,
-			}),
-
-		]
-	}
-	return obj;
-})()
-
-document.querySelector('.canvas').onmousedown = dragFunc('canvas', function(e, data){   })
-
-m.mount( con , editorContainer )
 
 
 

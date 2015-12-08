@@ -65,7 +65,7 @@ export default class JsonEditor {
 				// only callback when it's not update the template
 				if(shouldCallback){
 				    if(temp.attrs) temp.attrs.key = +new Date();
-					if(CALLBACK) CALLBACK(path.join('.'), temp, templateFieldValue, getOriginalKeyVal( temp, orgData ) );
+					if(CALLBACK) CALLBACK(getOriginalKeyVal( temp, orgData ), path.join('.'), temp, templateFieldValue );
 				}
 				return value
 			}
@@ -160,8 +160,8 @@ export default class JsonEditor {
 
 		function getClassName(schema){
 			var className = ''
-			if(schema.template) className+='isTemplate';
-			if(schema.format == 'color') className+=' isColor';
+			if(schema.template) className+=' isTemplate ';
+			if(schema.format == 'color') className+=' isColor ';
 			return className;
 		}
 
@@ -172,7 +172,7 @@ export default class JsonEditor {
 		  switch(schema.type) {
 		    case 'array':
 		      schemaPathValue(path, schema.default||[]);
-		      return m('div.array', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), className:'level'+level }), [
+		      return m('div.array', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), className:schema.class||''+' level'+level }), [
 		          m('h2', schema.title),
 		          m('div.props', [
 		            schema.format == 'table' ?
@@ -191,7 +191,7 @@ export default class JsonEditor {
 		    case 'object':
 		      schemaPathValue(path, schema.default||{});
 		      var keys = Object.keys(schema.properties)
-		      return m('div.object', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), className:'level'+level }), [
+		      return m('div.object', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), className:schema.class||''+' level'+level }), [
 		          m('h2', schema.title),
 		          m('div.props', [
 		            keys.map( (v)=> { return this.parseSchema( schema.properties[v], v, path.concat(v) ) })
@@ -203,7 +203,7 @@ export default class JsonEditor {
 		    case 'number':
 		    case 'integer':
 		      schemaPathValue(path, schema.default)
-		      return m('div.row', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), className:'level'+level }), [
+		      return m('div.row', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), className:schema.class||''+' level'+level }), [
 		          m('strong', schema.title||key ),
 		          m('input', buildAttrs(path, schema, {type:'number', oninput:function(){
 		            dataPathValue( path , schema.type=='number'? this.value : parseInt(this.value,10) )
@@ -214,7 +214,7 @@ export default class JsonEditor {
 
 		    case 'boolean':
 		      schemaPathValue(path, schema.default)
-		      return m('div.row', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), className:'level'+level }), [
+		      return m('div.row', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), className:schema.class||''+' level'+level }), [
 		          m('strong', schema.title||key ),
 		          m('input', buildAttrs(path, schema, {type:'checkbox', onchange:function(){
 		            dataPathValue( path , this.checked )
@@ -224,7 +224,7 @@ export default class JsonEditor {
 		      break;
 		    case 'string':
 		      schemaPathValue(path, schema.default)
-		      return m('div.row', Global._deepCopy(initAttrs, {'data-key': key, className:getClassName(schema)+' level'+level, key:path.join('.') }), [
+		      return m('div.row', Global._deepCopy(initAttrs, {'data-key': key, className:schema.class||''+getClassName(schema)+' level'+level, key:path.join('.') }), [
 		          m('strong', schema.title||key ),
 		          schema.enum
 		          ? m('select',
@@ -267,3 +267,27 @@ export default class JsonEditor {
 	}
 
 }
+
+
+
+var editorComp = (function(){
+	var obj = {}
+	obj.view = function(args) {
+		obj.schema = m.prop(args.schema)
+		obj.json = m.prop(args.json)
+		obj.prop = m.prop(args.prop)
+		obj.changeCallback = m.prop(args.changeCallback)
+		return new JsonEditor( obj.schema , obj.json, obj.prop, obj.changeCallback )
+	},
+	obj.view2 = function(ctrl, args) {
+		console.log(args)
+		return ctrl
+	}
+	return obj;
+})()
+
+export var initEditor = function initEditor (root, schema, data) {
+	m.mount( root, m.component( editorComp, { schema:schema, json:data } ) )
+}
+
+

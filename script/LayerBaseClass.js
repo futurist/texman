@@ -1,16 +1,19 @@
 import m from 'mithril'
 import * as Global from './global'
 import ControlPoint from './ControlPoint'
+import addEditorToLayerBase from './addEditorToLayerBase'
+
 
 export default class LayerBaseClass {
 	constructor(parent, prop){
 		this.parent = parent;
 		this.generateID = Global.NewID();
-		this.Prop = Global._deepCopy( { key:this.generateID, className:'', style:{left:0, top:0, width:0, height:0, 'backgroundColor':'#eee' } }, prop||{} );
+		this.Prop = Global._deepCopy( { key:this.generateID, className:'', style:{left:0, top:0, width:0, height:0, backgroundColor:'#eee', border:'0px solid #fff' } }, prop||{} );
 		this.Prop.config = (el)=> { Global.applyStyle(el, this.Prop.style) }
 		this.Prop.onkeypress = function(e){ console.log(e,this)  }
 		this.ControlPoints = []
 		this.activeControlPoint = undefined;
+	    addEditorToLayerBase()
 	}
 
 	getPageOffset () {
@@ -29,6 +32,10 @@ export default class LayerBaseClass {
 		var cur=this, parent;
 		while(parent = cur.parent){ cur = parent; }
 		return cur;
+	}
+
+	isValidRect(){
+		return this.Prop.style.width && this.Prop.style.height
 	}
 
 	iterateParent (callback){
@@ -87,6 +94,9 @@ export default class LayerBaseClass {
 		return this.Prop.className.indexOf(Global.SELECTED_CLASSNAME)>=0;
 	}
 
+	onRectChange(){
+		
+	}
 	onSelected (){
 		this.Prop.className = Global.addClass( this.Prop.className, Global.SELECTED_CLASSNAME);
 	}
@@ -109,7 +119,7 @@ export default class LayerBaseClass {
 	controller(){
 		return;
 	}
-	
+
 	view(){
 		return;
 	}
