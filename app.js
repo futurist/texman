@@ -50,6 +50,10 @@
 
 	var _canvas2 = _interopRequireDefault(_canvas);
 
+	var _addEditorDom = __webpack_require__(15);
+
+	var _addEditorDom2 = _interopRequireDefault(_addEditorDom);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	new _canvas2.default();
@@ -57,19 +61,7 @@
 	// import editor from './editor'
 	// new editor()
 
-	// editor container & resize bar
-	var dragFunc = DragFactory();
-	var initEditorWidth = 300;
-	var downFunc = dragFunc('resizeBar', { width: initEditorWidth }, function (e, data) {
-		if (data.data.width + data.dx <= 40) return false;
-		con.style.width = data.data.width + data.dx + 'px';
-	}, function (e, data) {
-		data.data.width += data.dx;
-	});
-	document.querySelector('.resizeBar').onmousedown = downFunc;
-
-	var con = document.querySelector('.editorContainer');
-	con.style.width = initEditorWidth + 'px';
+	(0, _addEditorDom2.default)();
 
 /***/ },
 /* 1 */
@@ -1734,7 +1726,7 @@
 	function applyStyle(el, styleObj) {
 	    var pxArray = ['width', 'height', 'left', 'top'];
 	    for (var i in styleObj) {
-	        var attr = pxArray.indexOf(i) > -1 ? styleObj[i] + 'px' : styleObj[i];
+	        var attr = pxArray.indexOf(i) > -1 ? parseInt(styleObj[i]) + 'px' : styleObj[i];
 	        el.style[i] = attr;
 	    }
 	}
@@ -1794,7 +1786,7 @@
 	      "top": 0,
 	      "width": 100,
 	      "height": 100,
-	      "border": "1px solid #933",
+	      "borderLeftWidth": "1px solid #933",
 	      "backgroundColor": "#fff"
 	    }
 	  },
@@ -1908,6 +1900,8 @@
 	    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(WidgetDiv).call(this, parent, prop));
 
 	    _this.parent = parent;
+	    _this.ID = Global.NewID();
+	    _this.Prop.key = _this.ID;
 	    _this.jsonSchema = _mithril2.default.prop(jsonSchema);
 	    _this.jsonData = _mithril2.default.prop(jsonData);
 	    return _this;
@@ -1938,6 +1932,8 @@
 	    key: 'view',
 	    value: function view(ctrl) {
 	      var Prop = Global._exclude(this.Prop, ['eventData', 'isNew']);
+	      Prop.style = Global._deepCopy({}, this.Prop.style);
+	      Global.applyStyle(Prop, Prop.style);
 	      return Prop.style.width && Prop.style.height ? (0, _mithril2.default)('div.layer', Prop, [(0, _mithril2.default)('.content'), (0, _mithril2.default)('.bbox'), this.buildControlPoint()]) : [];
 	    }
 	  }]);
@@ -1989,7 +1985,7 @@
 
 			this.parent = parent;
 			this.generateID = Global.NewID();
-			this.Prop = Global._deepCopy({ key: this.generateID, className: '', style: { left: 0, top: 0, width: 0, height: 0, backgroundColor: '#eee', border: '0px solid #fff' } }, prop || {});
+			this.Prop = Global._deepCopy({ key: this.generateID, className: '', style: { left: 0, top: 0, width: 0, height: 0, backgroundColor: '#eee' } }, prop || {});
 			this.Prop.config = function (el) {
 				Global.applyStyle(el, _this.Prop.style);
 			};
@@ -2248,6 +2244,8 @@
 			var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(WidgetCanvas).call(this, parent, prop));
 
 			_this.parent = parent;
+			_this.ID = Global.NewID();
+			_this.Prop.key = _this.ID;
 			return _this;
 		}
 
@@ -2258,7 +2256,10 @@
 			key: 'view',
 			value: function view(ctrl) {
 				var self = this;
-				return (0, _mithril2.default)('.canvas', Global._exclude(this.Prop, ['eventData', 'isNew']), [(0, _mithril2.default)('.content', [(function () {
+				var Prop = Global._exclude(this.Prop, ['eventData', 'isNew']);
+				Prop.style = Global._deepCopy({}, this.Prop.style);
+				Global.applyStyle(Prop, Prop.style);
+				return (0, _mithril2.default)('.canvas', Prop, [(0, _mithril2.default)('.content', [(function () {
 					return self.children.map(function (v) {
 						return v.getView();
 					});
@@ -3410,7 +3411,7 @@
 
 	function renderJsonEditor() {
 		var self = this;
-		if (this.isValidRect()) {
+		if (this.isValidRect() && this.jsonData && this.jsonSchema) {
 			Global._extend(this.jsonData().attrs.style, this.Prop.style);
 			_mithril2.default.mount(document.querySelector('.editor'), new _JsonEditor2.default(this.jsonSchema, this.jsonData, null, function (val, path) {
 				Global._extend(self.Prop.style, val.attrs.style);
@@ -3430,6 +3431,32 @@
 			renderJsonEditor.apply(this);
 		});
 	}
+
+/***/ },
+/* 15 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+		value: true
+	});
+
+	exports.default = function () {
+		// editor container & resize bar
+		var dragFunc = DragFactory();
+		var initEditorWidth = 300;
+		var downFunc = dragFunc('resizeBar', { width: initEditorWidth }, function (e, data) {
+			if (data.data.width + data.dx <= 40) return false;
+			con.style.width = data.data.width + data.dx + 'px';
+		}, function (e, data) {
+			data.data.width += data.dx;
+		});
+		document.querySelector('.resizeBar').onmousedown = downFunc;
+
+		var con = document.querySelector('.editorContainer');
+		con.style.width = initEditorWidth + 'px';
+	};
 
 /***/ }
 /******/ ]);

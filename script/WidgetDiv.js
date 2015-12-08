@@ -11,7 +11,7 @@ var jsonData = {
       "top": 0,
       "width": 100,
       "height": 100,
-      "border": "1px solid #933",
+      "borderLeftWidth": "1px solid #933",
       "backgroundColor": "#fff"
     }
   },
@@ -136,6 +136,8 @@ export default class WidgetDiv extends LayerBaseClass {
 	constructor(parent, prop) {
 		super(parent, prop);
 		this.parent = parent;
+    this.ID = Global.NewID()
+    this.Prop.key = this.ID
     this.jsonSchema = m.prop(jsonSchema)
     this.jsonData = m.prop(jsonData)
 	}
@@ -156,7 +158,9 @@ export default class WidgetDiv extends LayerBaseClass {
 	}
 
 	view (ctrl) {
-		var Prop = Global._exclude( this.Prop, ['eventData','isNew'] );
+		var Prop = Global._exclude( this.Prop, ['eventData','isNew'] )
+    Prop.style = Global._deepCopy( {}, this.Prop.style )
+    Global.applyStyle( Prop, Prop.style )
 		return Prop.style.width&&Prop.style.height
 		? m('div.layer', Prop, [
 				m('.content'),

@@ -179,7 +179,7 @@ export function NewID(){
 export function applyStyle(el, styleObj){
 	var pxArray = ['width', 'height', 'left', 'top']
 	for(var i in styleObj){
-		var attr = pxArray.indexOf(i)>-1 ? styleObj[i]+ 'px': styleObj[i] ;
+		var attr = pxArray.indexOf(i)>-1 ? parseInt(styleObj[i])+ 'px': styleObj[i] ;
 		el.style[i] = attr;
 	}
 }
