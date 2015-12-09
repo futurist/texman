@@ -194,9 +194,10 @@ export default class ContainerBaseClass extends LayerBaseClass {
 				var offsetY = e.pageY - self.getPageOffset().top
 
 				var editingStyle = self.getRoot().editingContainer.Prop.style;
-
-				if(offsetX<editingStyle.left||offsetY<editingStyle.top||
-					offsetX>editingStyle.left+editingStyle.width||offsetY>editingStyle.top+editingStyle.height) {
+				var Left = Global.BORDER_BOX? editingStyle.left : editingStyle.left+(editingStyle.borderLeftWidth||0)
+				var Top = Global.BORDER_BOX? editingStyle.top : editingStyle.top+(editingStyle.borderTopWidth||0)
+				if(offsetX<Left||offsetY<Top||
+					offsetX>Left+editingStyle.width||offsetY>Top+editingStyle.height) {
 					console.log('move out')
 					return self.getRoot().editingContainer.mouseUpFunc(evt);
 				}
@@ -252,8 +253,8 @@ export default class ContainerBaseClass extends LayerBaseClass {
 					widget = !evt.shiftKey? new WidgetDiv( self ) : new WidgetCanvas( self );
 					Global._extend( widget.Prop.style, { backgroundColor:Global.RandomColor() } )
 					PropLayer = widget.Prop
-					PropLayer.style.left = offsetX
-					PropLayer.style.top = offsetY
+					PropLayer.style.left = offsetX-(Global.BORDER_BOX? 0 : PropLayer.style.borderLeftWidth||0)
+					PropLayer.style.top = offsetY-(Global.BORDER_BOX? 0 : PropLayer.style.borderTopWidth||0)
 					PropLayer.style.width = 0
 					PropLayer.style.height = 0
 					PropLayer.key = Global.NewID()

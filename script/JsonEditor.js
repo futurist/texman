@@ -192,7 +192,7 @@ export default class JsonEditor {
 		    case 'array':
 		      schemaPathValue(path, schema.default||[]);
 		      return m('div.array', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), className:getClassName() }), [
-		          m('h2', schema.title),
+		          m('h2.arrayTitle', schema.title),
 		          m('div.props', [
 		            schema.format == 'table' ?
 		            ( ()=>{
@@ -211,7 +211,7 @@ export default class JsonEditor {
 		      schemaPathValue(path, schema.default||{});
 		      var keys = Object.keys(schema.properties)
 		      return m('div.object', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), className:getClassName() }), [
-		          m('h2', schema.title),
+		          m('h2.objectTitle', schema.title),
 		          m('div.props', [
 		            keys.map( (v)=> { return this.parseSchema( schema.properties[v], v, path.concat(v) ) })
 		          ])
@@ -223,10 +223,12 @@ export default class JsonEditor {
 		    case 'integer':
 		      schemaPathValue(path, schema.default)
 		      return m('div.row', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), className:getClassName() }), [
-		          m('strong', schema.title||key ),
-		          m('input', buildAttrs(path, schema, {type:'number', oninput:function(){
-		            dataPathValue( path , schema.type=='number'? this.value : parseInt(this.value,10) )
-		          } }) ),
+		          m('strong.itemTitle', schema.title||key ),
+		          m('.itemValue', [
+			          m('input', buildAttrs(path, schema, {type:'number', oninput:function(){
+			            dataPathValue( path , schema.type=='number'? this.value : parseInt(this.value,10) )
+			          } }) ),
+			      ])
 		        ] )
 
 		      break;
@@ -234,36 +236,39 @@ export default class JsonEditor {
 		    case 'boolean':
 		      schemaPathValue(path, schema.default)
 		      return m('div.row', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), className:getClassName() }), [
-		          m('strong', schema.title||key ),
-		          m('input', buildAttrs(path, schema, {type:'checkbox', onchange:function(){
-		            dataPathValue( path , this.checked )
-		          } }) ),
+		          m('strong.itemTitle', schema.title||key ),
+		          m('.itemValue', [
+			          m('input', buildAttrs(path, schema, {type:'checkbox', onchange:function(){
+			            dataPathValue( path , this.checked )
+			          } }) ),
+		          ])
 		        ] )
 
 		      break;
 		    case 'string':
 		      schemaPathValue(path, schema.default)
 		      return m('div.row', Global._deepCopy(initAttrs, {'data-key': key, className:getClassName(), key:path.join('.') }), [
-		          m('strong', schema.title||key ),
-		          schema.enum
-		          ? m('select',
-			          	buildAttrs(path, schema, {
-			          		oninput:function(){
-			          			dataPathValue(path, this.value)
-					          } },
-					    	['enum', 'type']
-					    ),
-			          	schema.enum.map( (v)=>{ return m('option', v) } )
-		          	)
-		          : m(schema.format=='textarea'? 'textarea': 'input',
-		          		buildAttrs(path, schema, {
-		          			type: schema.format=='color'?'color':'text',
-		          			oninput:function(){
-		          				dataPathValue(path, this.value)
-		          			} }
-		          		)
-		          	),
-
+		          m('strong.itemTitle', schema.title||key ),
+		          m('.itemValue', [
+			          schema.enum
+			          ? m('select',
+				          	buildAttrs(path, schema, {
+				          		oninput:function(){
+				          			dataPathValue(path, this.value)
+						          } },
+						    	['enum', 'type']
+						    ),
+				          	schema.enum.map( (v)=>{ return m('option', v) } )
+			          	)
+			          : m(schema.format=='textarea'? 'textarea': 'input',
+			          		buildAttrs(path, schema, {
+			          			type: schema.format=='color'?'color':'text',
+			          			oninput:function(){
+			          				dataPathValue(path, this.value)
+			          			} }
+			          		)
+			          	)
+		          ])
 		        ] )
 
 		      break;

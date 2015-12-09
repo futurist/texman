@@ -12,12 +12,11 @@ if (!String.prototype.trim) {
 /**
  * Helper functions
  */
+export var BORDER_BOX = false;
 export var MIN_WIDTH = 2;
 export var GRID_SIZE = 5;
-
 export var POINT_WIDTH = 10;
 export var POINT_HEIGHT = 10;
-export var BORDER_WIDTH = 1;
 
 export var SELECTED_CLASSNAME = 'selected';
 export var EDITING_CLASSNAME = 'editing';
@@ -250,9 +249,7 @@ export var getOuterRect = function( style ){
     return {
         left: style.left ,
         top: style.top ,
-        width: style.width,
-        height: style.height,
-        // width: style.width + style.borderLeftWidth + style.borderRightWidth,
-        // height: style.height + style.borderTopWidth + style.borderBottomWidth,
+        width: BORDER_BOX? style.width: style.width + (style.borderLeftWidth||0) + (style.borderRightWidth||0),
+        height: BORDER_BOX? style.width: style.height + (style.borderTopWidth||0) + (style.borderBottomWidth||0),
     }
 }

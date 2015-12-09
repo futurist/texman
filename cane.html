@@ -7,10 +7,10 @@
 
 <style type="text/css">
 html {
-  box-sizing: border-box;
+  /*box-sizing: border-box;*/
 }
 *, *:before, *:after {
-  box-sizing: inherit;
+  /*box-sizing: inherit;*/
 }
 
 html,body{
@@ -100,6 +100,24 @@ ul,li{
 	height: 100%;
 }
 
+.editor .row{
+	display: table-row;
+}
+.editor .itemTitle{
+	text-align: right;
+	padding-right: 1em;
+}
+.editor .itemTitle,
+.editor .itemValue
+{
+	display: table-cell;
+}
+
+.editor input[type=text],
+.editor input[type=number]
+{
+	width:50px;
+}
 #debug{
 	position: absolute;
 	top:0;

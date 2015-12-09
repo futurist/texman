@@ -173,7 +173,6 @@ var jsonSchema ={
 export default class LayerBaseClass {
 	constructor(parent, prop){
 		this.parent = parent;
-
 		this.ID = Global.NewID()
 		this.Prop = {}
 	    this.Prop.key = this.ID
@@ -225,8 +224,8 @@ export default class LayerBaseClass {
 	buildControlPoint (){
 
 		var ControlPosition = function(parent, child){
-			var pWidth = parent.width+(0&&parent.borderLeftWidth||0)+(0&&parent.borderRightWidth||0);
-			var pHeight = parent.height+(0&&parent.borderTopWidth||0)+(0&&parent.borderBottomWidth||0);
+			var pWidth = parent.width+(Global.BORDER_BOX? 0 : parent.borderLeftWidth||0)+(Global.BORDER_BOX? 0 : parent.borderRightWidth||0);
+			var pHeight = parent.height+(Global.BORDER_BOX? 0 : parent.borderTopWidth||0)+(Global.BORDER_BOX? 0 : parent.borderBottomWidth||0);
 			this[0] = this.LT = [-child.width/2, -child.height/2] 	//Left Top
 			this[1] = this.CT = [pWidth/2 - child.width/2, -child.height/2] 	//top center
 			this[2] = this.RT = [ pWidth - child.width/2, -child.height/2] 	//right top

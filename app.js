@@ -1549,12 +1549,11 @@
 	/**
 	 * Helper functions
 	 */
+	var BORDER_BOX = exports.BORDER_BOX = false;
 	var MIN_WIDTH = exports.MIN_WIDTH = 2;
 	var GRID_SIZE = exports.GRID_SIZE = 5;
-
 	var POINT_WIDTH = exports.POINT_WIDTH = 10;
 	var POINT_HEIGHT = exports.POINT_HEIGHT = 10;
-	var BORDER_WIDTH = exports.BORDER_WIDTH = 1;
 
 	var SELECTED_CLASSNAME = exports.SELECTED_CLASSNAME = 'selected';
 	var EDITING_CLASSNAME = exports.EDITING_CLASSNAME = 'editing';
@@ -1793,8 +1792,8 @@
 	    return {
 	        left: style.left,
 	        top: style.top,
-	        width: style.width,
-	        height: style.height
+	        width: BORDER_BOX ? style.width : style.width + (style.borderLeftWidth || 0) + (style.borderRightWidth || 0),
+	        height: BORDER_BOX ? style.width : style.height + (style.borderTopWidth || 0) + (style.borderBottomWidth || 0)
 	    };
 	};
 
@@ -2088,7 +2087,6 @@
 	    _classCallCheck(this, LayerBaseClass);
 
 	    this.parent = parent;
-
 	    this.ID = Global.NewID();
 	    this.Prop = {};
 	    this.Prop.key = this.ID;
@@ -2156,8 +2154,8 @@
 	    value: function buildControlPoint() {
 
 	      var ControlPosition = function ControlPosition(parent, child) {
-	        var pWidth = parent.width + (0 && parent.borderLeftWidth || 0) + (0 && parent.borderRightWidth || 0);
-	        var pHeight = parent.height + (0 && parent.borderTopWidth || 0) + (0 && parent.borderBottomWidth || 0);
+	        var pWidth = parent.width + (Global.BORDER_BOX ? 0 : parent.borderLeftWidth || 0) + (Global.BORDER_BOX ? 0 : parent.borderRightWidth || 0);
+	        var pHeight = parent.height + (Global.BORDER_BOX ? 0 : parent.borderTopWidth || 0) + (Global.BORDER_BOX ? 0 : parent.borderBottomWidth || 0);
 	        this[0] = this.LT = [-child.width / 2, -child.height / 2]; //Left Top
 	        this[1] = this.CT = [pWidth / 2 - child.width / 2, -child.height / 2]; //top center
 	        this[2] = this.RT = [pWidth - child.width / 2, -child.height / 2]; //right top
@@ -2689,7 +2687,7 @@
 			switch (schema.type) {
 				case 'array':
 					schemaPathValue(path, schema.default || []);
-					return (0, _mithril2.default)('div.array', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), className: getClassName() }), [(0, _mithril2.default)('h2', schema.title), (0, _mithril2.default)('div.props', [schema.format == 'table' ? (function () {
+					return (0, _mithril2.default)('div.array', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), className: getClassName() }), [(0, _mithril2.default)('h2.arrayTitle', schema.title), (0, _mithril2.default)('div.props', [schema.format == 'table' ? (function () {
 						var keys = Object.keys(schema.items.properties);
 						return dataPathValue(path).map(function (v, i) {
 							var keys = Object.keys(schema.items.properties);
@@ -2702,7 +2700,7 @@
 				case 'object':
 					schemaPathValue(path, schema.default || {});
 					var keys = Object.keys(schema.properties);
-					return (0, _mithril2.default)('div.object', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), className: getClassName() }), [(0, _mithril2.default)('h2', schema.title), (0, _mithril2.default)('div.props', [keys.map(function (v) {
+					return (0, _mithril2.default)('div.object', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), className: getClassName() }), [(0, _mithril2.default)('h2.objectTitle', schema.title), (0, _mithril2.default)('div.props', [keys.map(function (v) {
 						return _this.parseSchema(schema.properties[v], v, path.concat(v));
 					})])]);
 
@@ -2711,22 +2709,22 @@
 				case 'number':
 				case 'integer':
 					schemaPathValue(path, schema.default);
-					return (0, _mithril2.default)('div.row', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), className: getClassName() }), [(0, _mithril2.default)('strong', schema.title || key), (0, _mithril2.default)('input', buildAttrs(path, schema, { type: 'number', oninput: function oninput() {
+					return (0, _mithril2.default)('div.row', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), className: getClassName() }), [(0, _mithril2.default)('strong.itemTitle', schema.title || key), (0, _mithril2.default)('.itemValue', [(0, _mithril2.default)('input', buildAttrs(path, schema, { type: 'number', oninput: function oninput() {
 							dataPathValue(path, schema.type == 'number' ? this.value : parseInt(this.value, 10));
-						} }))]);
+						} }))])]);
 
 					break;
 
 				case 'boolean':
 					schemaPathValue(path, schema.default);
-					return (0, _mithril2.default)('div.row', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), className: getClassName() }), [(0, _mithril2.default)('strong', schema.title || key), (0, _mithril2.default)('input', buildAttrs(path, schema, { type: 'checkbox', onchange: function onchange() {
+					return (0, _mithril2.default)('div.row', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), className: getClassName() }), [(0, _mithril2.default)('strong.itemTitle', schema.title || key), (0, _mithril2.default)('.itemValue', [(0, _mithril2.default)('input', buildAttrs(path, schema, { type: 'checkbox', onchange: function onchange() {
 							dataPathValue(path, this.checked);
-						} }))]);
+						} }))])]);
 
 					break;
 				case 'string':
 					schemaPathValue(path, schema.default);
-					return (0, _mithril2.default)('div.row', Global._deepCopy(initAttrs, { 'data-key': key, className: getClassName(), key: path.join('.') }), [(0, _mithril2.default)('strong', schema.title || key), schema.enum ? (0, _mithril2.default)('select', buildAttrs(path, schema, {
+					return (0, _mithril2.default)('div.row', Global._deepCopy(initAttrs, { 'data-key': key, className: getClassName(), key: path.join('.') }), [(0, _mithril2.default)('strong.itemTitle', schema.title || key), (0, _mithril2.default)('.itemValue', [schema.enum ? (0, _mithril2.default)('select', buildAttrs(path, schema, {
 						oninput: function oninput() {
 							dataPathValue(path, this.value);
 						} }, ['enum', 'type']), schema.enum.map(function (v) {
@@ -2735,7 +2733,7 @@
 						type: schema.format == 'color' ? 'color' : 'text',
 						oninput: function oninput() {
 							dataPathValue(path, this.value);
-						} }))]);
+						} }))])]);
 
 					break;
 			}
@@ -3106,8 +3104,9 @@
 					var offsetY = e.pageY - self.getPageOffset().top;
 
 					var editingStyle = self.getRoot().editingContainer.Prop.style;
-
-					if (offsetX < editingStyle.left || offsetY < editingStyle.top || offsetX > editingStyle.left + editingStyle.width || offsetY > editingStyle.top + editingStyle.height) {
+					var Left = Global.BORDER_BOX ? editingStyle.left : editingStyle.left + (editingStyle.borderLeftWidth || 0);
+					var Top = Global.BORDER_BOX ? editingStyle.top : editingStyle.top + (editingStyle.borderTopWidth || 0);
+					if (offsetX < Left || offsetY < Top || offsetX > Left + editingStyle.width || offsetY > Top + editingStyle.height) {
 						console.log('move out');
 						return self.getRoot().editingContainer.mouseUpFunc(evt);
 					}
@@ -3162,8 +3161,8 @@
 						widget = !evt.shiftKey ? new _WidgetDiv2.default(self) : new _WidgetCanvas2.default(self);
 						Global._extend(widget.Prop.style, { backgroundColor: Global.RandomColor() });
 						PropLayer = widget.Prop;
-						PropLayer.style.left = offsetX;
-						PropLayer.style.top = offsetY;
+						PropLayer.style.left = offsetX - (Global.BORDER_BOX ? 0 : PropLayer.style.borderLeftWidth || 0);
+						PropLayer.style.top = offsetY - (Global.BORDER_BOX ? 0 : PropLayer.style.borderTopWidth || 0);
 						PropLayer.style.width = 0;
 						PropLayer.style.height = 0;
 						PropLayer.key = Global.NewID();
