@@ -192,11 +192,10 @@ export default class LayerBaseClass {
 	}
 
 	getPageOffset () {
-		var cur=this, parent, offset={left:this.Prop.style.left, top:this.Prop.style.top, path:[ this.Prop.key ]};
+		var cur=this, parent, offset={left:this.Prop.style.left+(this.Prop.style.borderLeftWidth||0), top:this.Prop.style.top+(this.Prop.style.borderLeftWidth||0), path:[ this.Prop.key ]};
 		while(parent = cur.parent) {
-			console.log(parent.Prop.style)
-			offset.left+=parent.Prop.style.left+(parent.Prop.style.borderLeftWidth||0);
-			offset.top+=parent.Prop.style.top+(parent.Prop.style.borderTopWidth||0);
+			offset.left+=parent.Prop.style.left + (parent.Prop.style.borderLeftWidth||0);
+			offset.top+=parent.Prop.style.top + (parent.Prop.style.borderTopWidth||0);
 			offset.path.push(parent.Prop.key);
 			cur = parent;
 		}
