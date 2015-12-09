@@ -11,7 +11,27 @@ var jsonData = {
       "top": 0,
       "width": 100,
       "height": 100,
-      "borderLeftWidth": "1px solid #933",
+
+      "borderWidth": 1,
+      "borderStyle": "solid",
+      "borderColor": "#993333",
+
+      "borderTopWidth": 1,
+      "borderTopStyle": "solid",
+      "borderTopColor": "#993333",
+
+      "borderRightWidth": 1,
+      "borderRightStyle": "solid",
+      "borderRightColor": "#993333",
+
+      "borderBottomWidth": 1,
+      "borderBottomStyle": "solid",
+      "borderBottomColor": "#993333",
+
+      "borderLeftWidth": 1,
+      "borderLeftStyle": "solid",
+      "borderLeftColor": "#993333",
+
       "backgroundColor": "#fff"
     }
   },
@@ -57,37 +77,9 @@ var jsonSchema ={
               "default":100
             },
             "borderWidth": {
-              "type": "array",
-              "format": "table",
               "title": "border width",
-              "items": {
-                "type": "object",
-                "title": "width",
-                "properties": {
-                  "width": {
-                    "type": "integer",
-                    "minimum": 0
-                  },
-                  "unit": {
-                    "type": "string",
-                    "enum": [
-                      "px",
-                      "pt",
-                      "em",
-                      "ex",
-                      "vw",
-                      "vh"
-                    ],
-                    "default": "px"
-                  }
-                }
-              },
-              "default": [
-                {
-                  "width": "2",
-                  "unit": "px"
-                }
-              ]
+	            "type": "integer",
+	            "default":1
             },
             "borderStyle": {
               "title": "border style",
@@ -110,6 +102,43 @@ var jsonSchema ={
               "type": "string",
               "template": "{{borderWidth.0.width}}{{borderWidth.0.unit}} {{borderStyle}} {{borderColor}}"
             },
+            "borderLeftWidth":{
+            	"inherit":"borderWidth"
+            },
+            "borderLeftStyle":{
+            	"inherit":"borderStyle"
+            },
+            "borderLeftColor":{
+            	"inherit":"borderColor"
+            },
+            "borderTopWidth":{
+            	"inherit":"borderWidth"
+            },
+            "borderTopStyle":{
+            	"inherit":"borderStyle"
+            },
+            "borderTopColor":{
+            	"inherit":"borderColor"
+            },
+            "borderRightWidth":{
+            	"inherit":"borderWidth"
+            },
+            "borderRightStyle":{
+            	"inherit":"borderStyle"
+            },
+            "borderRightColor":{
+            	"inherit":"borderColor"
+            },
+            "borderBottomWidth":{
+            	"inherit":"borderWidth"
+            },
+            "borderBottomStyle":{
+            	"inherit":"borderStyle"
+            },
+            "borderBottomColor":{
+            	"inherit":"borderColor"
+            },
+
             "backgroundColor": {
               "title": "background color",
               "type": "string",
@@ -136,10 +165,10 @@ export default class WidgetDiv extends LayerBaseClass {
 	constructor(parent, prop) {
 		super(parent, prop);
 		this.parent = parent;
-    this.ID = Global.NewID()
-    this.Prop.key = this.ID
-    this.jsonSchema = m.prop(jsonSchema)
-    this.jsonData = m.prop(jsonData)
+	    this.ID = Global.NewID()
+	    this.Prop.key = this.ID
+	    this.jsonSchema = m.prop(jsonSchema)
+	    this.jsonData = m.prop(jsonData)
 	}
   onRectChange(){
     super.onRectChange()
@@ -158,15 +187,16 @@ export default class WidgetDiv extends LayerBaseClass {
 	}
 
 	view (ctrl) {
-		var Prop = Global._exclude( this.Prop, ['eventData','isNew'] )
-    Prop.style = Global._deepCopy( {}, this.Prop.style )
-    Global.applyStyle( Prop, Prop.style )
-		return Prop.style.width&&Prop.style.height
-		? m('div.layer', Prop, [
-				m('.content'),
-				m('.bbox'),
-				this.buildControlPoint()
-			] )
+    var self = this;
+
+    var dom = m('div.layer', Global.applyProp(this.Prop), [
+        m('.content', {config: function(el,isInit,context){context.retain=true} } ),
+        m('.bbox', {config: function(el,isInit,context){context.retain=true} } ),
+        this.buildControlPoint()
+      ] )
+
+		return this.isValidRect()
+		? dom
 		: []
 	}
 }

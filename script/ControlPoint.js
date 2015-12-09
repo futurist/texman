@@ -16,8 +16,11 @@ export default class ControlPoint {
 	view(ctrl){
 		var self = this;
 		// this will bind to Class this
-		this.Prop.config = function(el){ Global.applyStyle(el,self.Prop.style ) };
-		return m('div.controlPoint', this.Prop )
+		this.Prop.config = function(el, isInit, context){ Global.applyStyle(el,self.Prop.style ); context.retain=true; };
+
+		var dom = m('div.controlPoint', Global.applyProp(this.Prop) );
+
+		return dom;
 	}
 
 	getView(){

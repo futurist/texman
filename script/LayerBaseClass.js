@@ -9,7 +9,7 @@ export default class LayerBaseClass {
 		this.parent = parent;
 		this.generateID = Global.NewID();
 		this.Prop = Global._deepCopy( { key:this.generateID, className:'', style:{left:0, top:0, width:0, height:0, backgroundColor:'#eee' } }, prop||{} );
-		this.Prop.config = (el)=> { Global.applyStyle(el, this.Prop.style) }
+		this.Prop.config = (el, isInit, context)=> { Global.applyStyle(el, this.Prop.style); context.retain=true; }
 		this.Prop.onkeypress = function(e){ console.log(e,this)  }
 		this.ControlPoints = []
 		this.activeControlPoint = undefined;

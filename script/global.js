@@ -1,5 +1,15 @@
 
 /**
+ * Polyfill functions
+ */
+if (!String.prototype.trim) {
+  String.prototype.trim = function () {
+    return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+  };
+}
+
+
+/**
  * Helper functions
  */
 export var MIN_WIDTH = 2;
@@ -179,7 +189,7 @@ export function NewID(){
 export function applyStyle(el, styleObj){
 	var pxArray = ['width', 'height', 'left', 'top']
 	for(var i in styleObj){
-		var attr = pxArray.indexOf(i)>-1 ? parseInt(styleObj[i])+ 'px': styleObj[i] ;
+		var attr = pxArray.indexOf(i)>-1 ? styleObj[i] + 'px': styleObj[i] ;
 		el.style[i] = attr;
 	}
 }
@@ -191,6 +201,20 @@ export var rectsIntersect = function (r1, r2) {
 };
 
 export var debug = function( msg ){
-	document.querySelector('#debug').innerHTML = msg
+    document.querySelector('#debug').innerHTML = msg
+}
+
+/**
+ * applyProp from this.Prop, remove unused props, and apply style to int width/height etc.
+ * @param  {[type]} thisProp [description]
+ * @return {[type]}          [description]
+ */
+export var applyProp = function( thisProp ){
+	var Prop = _exclude( thisProp, ['eventData','isNew'] )
+    Prop.style = _deepCopy( {}, thisProp.style )
+    applyStyle( Prop, thisProp.style )
+    if(Prop.class) Prop.class = Prop.class.replace(/\s+/, ' ').trim()
+    if(Prop.className) Prop.className = Prop.className.replace(/\s+/, ' ').trim()
+    return Prop
 }
 

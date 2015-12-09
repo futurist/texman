@@ -16,18 +16,18 @@ export default class WidgetCanvas extends ContainerBaseClass {
 
 	view (ctrl) {
 		var self = this;
-		var Prop = Global._exclude( this.Prop, ['eventData','isNew'] )
-		Prop.style = Global._deepCopy( {}, this.Prop.style )
-		Global.applyStyle( Prop, Prop.style )
-		return m('.canvas', Prop , 
+
+		var dom = m('.canvas', Global.applyProp(this.Prop) , 
 			[
-					m('.content', [
+					m('.content', {config: function(el,isInit,context){context.retain=true} }, [
 						function(){
 				            return self.children.map((v)=>{ return v.getView() })
 						}()
 					]),
 					this.buildControlPoint(),
 			]
-		)
+		);
+
+		return this.isValidRect() ? dom : []
 	}
 }

@@ -85,15 +85,15 @@
 
 	var _WidgetDiv2 = _interopRequireDefault(_WidgetDiv);
 
-	var _WidgetCanvas = __webpack_require__(8);
+	var _WidgetCanvas = __webpack_require__(11);
 
 	var _WidgetCanvas2 = _interopRequireDefault(_WidgetCanvas);
 
-	var _JsonEditor = __webpack_require__(12);
+	var _JsonEditor = __webpack_require__(10);
 
 	var _JsonEditor2 = _interopRequireDefault(_JsonEditor);
 
-	var _Events = __webpack_require__(10);
+	var _Events = __webpack_require__(13);
 
 	var _Events2 = _interopRequireDefault(_Events);
 
@@ -481,7 +481,7 @@
 				for (var i = 0, len = data.length; i < len; i++) {
 					if (data[i] && data[i].attrs && data[i].attrs.key != null) {
 						for (var j = 0, len = data.length; j < len; j++) {
-							if (data[j] && data[j].attrs && data[j].attrs.key == null) data[j].attrs.key = "__mithril__" + guid++
+							if (data[j] && data[j].attrs && data[j].attrs.key == null) data[j].attrs.key = data[j].attrs['data-key'] = "__mithril__" + guid++
 						}
 						break
 					}
@@ -1538,6 +1538,15 @@
 	function _typeof(obj) { return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj; }
 
 	/**
+	 * Polyfill functions
+	 */
+	if (!String.prototype.trim) {
+	    String.prototype.trim = function () {
+	        return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+	    };
+	}
+
+	/**
 	 * Helper functions
 	 */
 	var MIN_WIDTH = exports.MIN_WIDTH = 2;
@@ -1726,7 +1735,7 @@
 	function applyStyle(el, styleObj) {
 	    var pxArray = ['width', 'height', 'left', 'top'];
 	    for (var i in styleObj) {
-	        var attr = pxArray.indexOf(i) > -1 ? parseInt(styleObj[i]) + 'px' : styleObj[i];
+	        var attr = pxArray.indexOf(i) > -1 ? styleObj[i] + 'px' : styleObj[i];
 	        el.style[i] = attr;
 	    }
 	}
@@ -1736,6 +1745,20 @@
 
 	var debug = exports.debug = function debug(msg) {
 	    document.querySelector('#debug').innerHTML = msg;
+	};
+
+	/**
+	 * applyProp from this.Prop, remove unused props, and apply style to int width/height etc.
+	 * @param  {[type]} thisProp [description]
+	 * @return {[type]}          [description]
+	 */
+	var applyProp = exports.applyProp = function applyProp(thisProp) {
+	    var Prop = _exclude(thisProp, ['eventData', 'isNew']);
+	    Prop.style = _deepCopy({}, thisProp.style);
+	    applyStyle(Prop, thisProp.style);
+	    if (Prop.class) Prop.class = Prop.class.replace(/\s+/, ' ').trim();
+	    if (Prop.className) Prop.className = Prop.className.replace(/\s+/, ' ').trim();
+	    return Prop;
 	};
 
 /***/ },
@@ -1764,7 +1787,7 @@
 
 	var _LayerBaseClass3 = _interopRequireDefault(_LayerBaseClass2);
 
-	var _JsonEditor = __webpack_require__(12);
+	var _JsonEditor = __webpack_require__(10);
 
 	var _JsonEditor2 = _interopRequireDefault(_JsonEditor);
 
@@ -1786,7 +1809,27 @@
 	      "top": 0,
 	      "width": 100,
 	      "height": 100,
-	      "borderLeftWidth": "1px solid #933",
+
+	      "borderWidth": 1,
+	      "borderStyle": "solid",
+	      "borderColor": "#993333",
+
+	      "borderTopWidth": 1,
+	      "borderTopStyle": "solid",
+	      "borderTopColor": "#993333",
+
+	      "borderRightWidth": 1,
+	      "borderRightStyle": "solid",
+	      "borderRightColor": "#993333",
+
+	      "borderBottomWidth": 1,
+	      "borderBottomStyle": "solid",
+	      "borderBottomColor": "#993333",
+
+	      "borderLeftWidth": 1,
+	      "borderLeftStyle": "solid",
+	      "borderLeftColor": "#993333",
+
 	      "backgroundColor": "#fff"
 	    }
 	  },
@@ -1832,28 +1875,9 @@
 	              "default": 100
 	            },
 	            "borderWidth": {
-	              "type": "array",
-	              "format": "table",
 	              "title": "border width",
-	              "items": {
-	                "type": "object",
-	                "title": "width",
-	                "properties": {
-	                  "width": {
-	                    "type": "integer",
-	                    "minimum": 0
-	                  },
-	                  "unit": {
-	                    "type": "string",
-	                    "enum": ["px", "pt", "em", "ex", "vw", "vh"],
-	                    "default": "px"
-	                  }
-	                }
-	              },
-	              "default": [{
-	                "width": "2",
-	                "unit": "px"
-	              }]
+	              "type": "integer",
+	              "default": 1
 	            },
 	            "borderStyle": {
 	              "title": "border style",
@@ -1872,6 +1896,43 @@
 	              "type": "string",
 	              "template": "{{borderWidth.0.width}}{{borderWidth.0.unit}} {{borderStyle}} {{borderColor}}"
 	            },
+	            "borderLeftWidth": {
+	              "inherit": "borderWidth"
+	            },
+	            "borderLeftStyle": {
+	              "inherit": "borderStyle"
+	            },
+	            "borderLeftColor": {
+	              "inherit": "borderColor"
+	            },
+	            "borderTopWidth": {
+	              "inherit": "borderWidth"
+	            },
+	            "borderTopStyle": {
+	              "inherit": "borderStyle"
+	            },
+	            "borderTopColor": {
+	              "inherit": "borderColor"
+	            },
+	            "borderRightWidth": {
+	              "inherit": "borderWidth"
+	            },
+	            "borderRightStyle": {
+	              "inherit": "borderStyle"
+	            },
+	            "borderRightColor": {
+	              "inherit": "borderColor"
+	            },
+	            "borderBottomWidth": {
+	              "inherit": "borderWidth"
+	            },
+	            "borderBottomStyle": {
+	              "inherit": "borderStyle"
+	            },
+	            "borderBottomColor": {
+	              "inherit": "borderColor"
+	            },
+
 	            "backgroundColor": {
 	              "title": "background color",
 	              "type": "string",
@@ -1931,10 +1992,15 @@
 	  }, {
 	    key: 'view',
 	    value: function view(ctrl) {
-	      var Prop = Global._exclude(this.Prop, ['eventData', 'isNew']);
-	      Prop.style = Global._deepCopy({}, this.Prop.style);
-	      Global.applyStyle(Prop, Prop.style);
-	      return Prop.style.width && Prop.style.height ? (0, _mithril2.default)('div.layer', Prop, [(0, _mithril2.default)('.content'), (0, _mithril2.default)('.bbox'), this.buildControlPoint()]) : [];
+	      var self = this;
+
+	      var dom = (0, _mithril2.default)('div.layer', Global.applyProp(this.Prop), [(0, _mithril2.default)('.content', { config: function config(el, isInit, context) {
+	          context.retain = true;
+	        } }), (0, _mithril2.default)('.bbox', { config: function config(el, isInit, context) {
+	          context.retain = true;
+	        } }), this.buildControlPoint()]);
+
+	      return this.isValidRect() ? dom : [];
 	    }
 	  }]);
 
@@ -1967,7 +2033,7 @@
 
 	var _ControlPoint2 = _interopRequireDefault(_ControlPoint);
 
-	var _addEditorToLayerBase = __webpack_require__(14);
+	var _addEditorToLayerBase = __webpack_require__(8);
 
 	var _addEditorToLayerBase2 = _interopRequireDefault(_addEditorToLayerBase);
 
@@ -1986,8 +2052,8 @@
 			this.parent = parent;
 			this.generateID = Global.NewID();
 			this.Prop = Global._deepCopy({ key: this.generateID, className: '', style: { left: 0, top: 0, width: 0, height: 0, backgroundColor: '#eee' } }, prop || {});
-			this.Prop.config = function (el) {
-				Global.applyStyle(el, _this.Prop.style);
+			this.Prop.config = function (el, isInit, context) {
+				Global.applyStyle(el, _this.Prop.style);context.retain = true;
 			};
 			this.Prop.onkeypress = function (e) {
 				console.log(e, this);
@@ -2184,10 +2250,13 @@
 			value: function view(ctrl) {
 				var self = this;
 				// this will bind to Class this
-				this.Prop.config = function (el) {
-					Global.applyStyle(el, self.Prop.style);
+				this.Prop.config = function (el, isInit, context) {
+					Global.applyStyle(el, self.Prop.style);context.retain = true;
 				};
-				return (0, _mithril2.default)('div.controlPoint', this.Prop);
+
+				var dom = (0, _mithril2.default)('div.controlPoint', Global.applyProp(this.Prop));
+
+				return dom;
 			}
 		}, {
 			key: 'getView',
@@ -2207,6 +2276,442 @@
 
 	'use strict';
 
+	Object.defineProperty(exports, "__esModule", {
+		value: true
+	});
+	exports.default = addEditorToLayerBase;
+
+	var _global = __webpack_require__(4);
+
+	var Global = _interopRequireWildcard(_global);
+
+	var _mithril = __webpack_require__(2);
+
+	var _mithril2 = _interopRequireDefault(_mithril);
+
+	var _extend = __webpack_require__(9);
+
+	var _LayerBaseClass = __webpack_require__(6);
+
+	var _LayerBaseClass2 = _interopRequireDefault(_LayerBaseClass);
+
+	var _JsonEditor = __webpack_require__(10);
+
+	var _JsonEditor2 = _interopRequireDefault(_JsonEditor);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+	function renderJsonEditor() {
+		var self = this;
+		if (this.isValidRect() && this.jsonData && this.jsonSchema) {
+			Global._extend(this.jsonData().attrs.style, this.Prop.style);
+			_mithril2.default.mount(document.querySelector('.editor'), new _JsonEditor2.default(this.jsonSchema, this.jsonData, null, function (val, path) {
+				Global._extend(self.Prop.style, val.attrs.style);
+				_mithril2.default.redraw();
+			}));
+		}
+	}
+
+	function addEditorToLayerBase() {
+		(0, _extend.override)(_LayerBaseClass2.default.prototype, 'onRectChange', function (original) {
+			original();
+			renderJsonEditor.apply(this);
+		});
+
+		(0, _extend.override)(_LayerBaseClass2.default.prototype, 'onSelected', function (original) {
+			original();
+			renderJsonEditor.apply(this);
+		});
+	}
+
+/***/ },
+/* 9 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.extend = extend;
+	exports.override = override;
+
+	var _global = __webpack_require__(4);
+
+	var Global = _interopRequireWildcard(_global);
+
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+	/**
+	 * Below is from Flarum
+	 * Extend an object's method by running its output through a mutating callback
+	 * every time it is called.
+	 *
+	 * The callback accepts the method's return value and should perform any
+	 * mutations directly on this value. For this reason, this function will not be
+	 * effective on methods which return scalar values (numbers, strings, booleans).
+	 *
+	 * Care should be taken to extend the correct object – in most cases, a class'
+	 * prototype will be the desired target of extension, not the class itself.
+	 *
+	 * @example
+	 * extend(Discussion.prototype, 'badges', function(badges) {
+	 *   // do something with `badges`
+	 * });
+	 *
+	 * @param {Object} object The object that owns the method
+	 * @param {String} method The name of the method to extend
+	 * @param {function} callback A callback which mutates the method's output
+	 */
+	function extend(object, method, callback) {
+	  var original = object[method];
+
+	  object[method] = function () {
+	    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+	      args[_key] = arguments[_key];
+	    }
+
+	    var value = original ? original.apply(this, args) : undefined;
+
+	    callback.apply(this, [value].concat(args));
+
+	    return value;
+	  };
+
+	  Global._extend(object[method], original);
+	}
+
+	/**
+	 * Override an object's method by replacing it with a new function, so that the
+	 * new function will be run every time the object's method is called.
+	 *
+	 * The replacement function accepts the original method as its first argument,
+	 * which is like a call to 'super'. Any arguments passed to the original method
+	 * are also passed to the replacement.
+	 *
+	 * Care should be taken to extend the correct object – in most cases, a class'
+	 * prototype will be the desired target of extension, not the class itself.
+	 *
+	 * @example
+	 * override(Discussion.prototype, 'badges', function(original) {
+	 *   const badges = original();
+	 *   // do something with badges
+	 *   return badges;
+	 * });
+	 *
+	 * @param {Object} object The object that owns the method
+	 * @param {String} method The name of the method to override
+	 * @param {function} newMethod The method to replace it with
+	 */
+	function override(object, method, newMethod) {
+	  var original = object[method];
+
+	  object[method] = function () {
+	    for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+	      args[_key2] = arguments[_key2];
+	    }
+
+	    return newMethod.apply(this, [original.bind(this)].concat(args));
+	  };
+
+	  Global._extend(object[method], original);
+	}
+
+/***/ },
+/* 10 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+		value: true
+	});
+	exports.initEditor = undefined;
+
+	var _global = __webpack_require__(4);
+
+	var Global = _interopRequireWildcard(_global);
+
+	var _mithril = __webpack_require__(2);
+
+	var _mithril2 = _interopRequireDefault(_mithril);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var JsonEditor = function JsonEditor(SCHEMA, DATA) {
+		var PROPS = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+		var CALLBACK = arguments.length <= 3 || arguments[3] === undefined ? function () {} : arguments[3];
+
+		_classCallCheck(this, JsonEditor);
+
+		var orgData = Global.clone(DATA());
+		var schemaDefaultValue = {};
+		var templateFieldValue = {};
+		var LEVEL_MARGIN = 10;
+
+		var getOriginalKeyVal = function getOriginalKeyVal(objectToBeCloned, originDATA) {
+			// Basis.
+			if (!(objectToBeCloned instanceof Object)) {
+				return objectToBeCloned;
+			}
+			var objectClone = new objectToBeCloned.constructor();
+			for (var prop in objectToBeCloned) {
+				if (originDATA && prop in originDATA) objectClone[prop] = getOriginalKeyVal(objectToBeCloned[prop], originDATA[prop]);
+			}
+			return objectClone;
+		};
+
+		/**
+	  * getter/setter Schema Object using dot path
+	  * @param  {array} path  do path array
+	  * @param  {any} value   value to set, if not present, it's a getter
+	  * @return {any}       the value for getter/setter
+	  */
+		function schemaPathValue(path, value) {
+			if (typeof path == 'string') path = path.split('.');
+			var val = _dotPathValue(schemaDefaultValue, path);
+			if (arguments.length < 2) return val;else return val === undefined ? _dotPathValue(schemaDefaultValue, path, value) : value;
+		}
+
+		/**
+	  * getter/setter DATA Object using dot path
+	  * @param  {array} path  do path array
+	  * @param  {any} value   value for setter; null for getter
+	  * @return {any}       the value for getter/setter
+	  */
+		function dataPathValue(path, value) {
+			if (typeof path == 'string') path = path.split('.');
+			if (arguments.length < 2) {
+				var val = _dotPathValue(DATA(), path);
+				return val === undefined ? schemaPathValue(path) || '' : val;
+			} else {
+				var temp = DATA();
+				_dotPathValue(temp, path, value);
+				DATA(temp);
+				// below line will update the key for force update view
+				var shouldCallback = true;
+				for (var i in templateFieldValue) {
+					if (i == path.join('.')) shouldCallback = false;
+					var updated = templateFieldValue[i].some(function (watchPath) {
+						if (watchPath == path.join('.')) {
+							var updateFunc = templateFieldValue[i][0];
+							updateFunc();
+							return true;
+						}
+					});
+				}
+				// only callback when it's not update the template
+				if (shouldCallback) {
+					if (temp.attrs) temp.attrs.key = +new Date();
+					if (CALLBACK) CALLBACK(getOriginalKeyVal(temp, orgData), path.join('.'), temp, templateFieldValue);
+				}
+				return value;
+			}
+		}
+
+		/**
+	  * dot path value helper function
+	  * @param  {object} obj   the object to check for dot path
+	  * @param  {array} path  dot path array
+	  * @param  {any} value  value for setter; null for getter
+	  * @return {any}       the value for getter/setter
+	  */
+		function _dotPathValue(obj, path, value) {
+			if (path.length < 2) {
+				return obj;
+			}
+			var data = obj;
+			for (var v, i = 1; v = path[i], i < path.length; i++) {
+				if (arguments.length >= 3) {
+					if (data === undefined) {
+						data = Global.clone(schemaPathValue(path.slice(0, i)));
+						_dotPathValue(obj, path.slice(0, i), data);
+					}
+					if (i == path.length - 1) {
+						if (value !== undefined) data[v] = value;
+						// else delete data[v]
+					}
+				}
+				data = data && data[v];
+			}
+			return data;
+		}
+
+		var JSON_SCHEMA_MAP = (function () {
+			var obj = {};
+			obj.template = function template(path, obj, key) {
+				function replacer(match, placeholder, offset, string) {
+					var watchPath = path.slice(0, -1).join('.') + '.' + placeholder;
+					if (!templateFieldValue[path.join('.')]) templateFieldValue[path.join('.')] = [updateValue];
+					Global.addToObject(templateFieldValue[path.join('.')], watchPath);
+					return dataPathValue(watchPath);
+				}
+				var attrs = ['value', '', 'disabled', true];
+				function updateValue() {
+					dataPathValue(path.join('.'), obj[key].replace(/\{\{([^}]+)\}\}/g, replacer));
+					attrs[1] = dataPathValue(path.join('.'));
+				}
+				updateValue();
+				return attrs;
+			};
+			obj.minLength = function (path, obj, key) {
+				return ['pattern', '.{' + obj[key] + ',}'];
+			};
+			obj.minimum = 'min';
+			obj.maximum = 'max';
+			obj.description = 'placeholder';
+			// obj.default = 'defaultValue'
+			return obj;
+		})();
+
+		/**
+	  * build m attrs from JSON schema property
+	  * see JSON_SCHEMA_MAP format
+	  * @param  {array} path     Object property in json dot path, {a:{b:{c:1}}} -> ['root', 'a','b','c'] == 1
+	  * @param  {object} schema   JSON schema object, undefined value will be ''
+	  * @param  {object} include  include value to overwrite specified attrs
+	  * @param  {array} exclude  array that exclude in returned attrs
+	  * @return {object}         m attrs object
+	  */
+		function buildAttrs(path, schema, include, exclude) {
+			var obj = {},
+			    include = include || {},
+			    exclude = exclude || [];
+			Object.keys(schema).forEach(function (v) {
+				var map = JSON_SCHEMA_MAP[v];
+				if (typeof map == 'function') {
+					for (var i = 0, val = map(path, schema, v); i < val.length; i += 2) {
+						obj[val[i]] = val[i + 1] || '';
+					}
+				} else {
+					obj[map || v] = schema[v] === undefined ? '' : schema[v];
+				}
+			});
+			for (var i in include) {
+				obj[i] = include[i];
+			}
+			exclude.forEach(function (v) {
+				delete obj[v];
+			});
+			if (!('value' in obj)) {
+				if (schema.type !== 'boolean') obj['value'] = dataPathValue(path);else obj['checked'] = dataPathValue(path);
+			}
+			return obj;
+		}
+
+		function getClassName(schema) {
+			var className = '';
+			if (schema.template) className += ' isTemplate ';
+			if (schema.format == 'color') className += ' isColor ';
+			return className;
+		}
+
+		this.parseSchema = function parseSchema(schema, key, path) {
+			var _this = this;
+
+			path = path || [key];
+			var level = path.length - 1;
+			var initAttrs = level == 0 ? Global._extend({ key: +new Date() }, PROPS) : {};
+			switch (schema.type) {
+				case 'array':
+					schemaPathValue(path, schema.default || []);
+					return (0, _mithril2.default)('div.array', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), className: schema.class || '' + ' level' + level }), [(0, _mithril2.default)('h2', schema.title), (0, _mithril2.default)('div.props', [schema.format == 'table' ? (function () {
+						var keys = Object.keys(schema.items.properties);
+						return dataPathValue(path).map(function (v, i) {
+							var keys = Object.keys(schema.items.properties);
+							return keys.map(function (key) {
+								return _this.parseSchema(schema.items.properties[key], key, path.concat(i, key));
+							});
+						});
+					})() : ''])]);
+					break;
+				case 'object':
+					schemaPathValue(path, schema.default || {});
+					var keys = Object.keys(schema.properties);
+					return (0, _mithril2.default)('div.object', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), className: schema.class || '' + ' level' + level }), [(0, _mithril2.default)('h2', schema.title), (0, _mithril2.default)('div.props', [keys.map(function (v) {
+						return _this.parseSchema(schema.properties[v], v, path.concat(v));
+					})])]);
+
+					break;
+
+				case 'number':
+				case 'integer':
+					schemaPathValue(path, schema.default);
+					return (0, _mithril2.default)('div.row', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), className: schema.class || '' + ' level' + level }), [(0, _mithril2.default)('strong', schema.title || key), (0, _mithril2.default)('input', buildAttrs(path, schema, { type: 'number', oninput: function oninput() {
+							dataPathValue(path, schema.type == 'number' ? this.value : parseInt(this.value, 10));
+						} }))]);
+
+					break;
+
+				case 'boolean':
+					schemaPathValue(path, schema.default);
+					return (0, _mithril2.default)('div.row', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), className: schema.class || '' + ' level' + level }), [(0, _mithril2.default)('strong', schema.title || key), (0, _mithril2.default)('input', buildAttrs(path, schema, { type: 'checkbox', onchange: function onchange() {
+							dataPathValue(path, this.checked);
+						} }))]);
+
+					break;
+				case 'string':
+					schemaPathValue(path, schema.default);
+					return (0, _mithril2.default)('div.row', Global._deepCopy(initAttrs, { 'data-key': key, className: schema.class || '' + getClassName(schema) + ' level' + level, key: path.join('.') }), [(0, _mithril2.default)('strong', schema.title || key), schema.enum ? (0, _mithril2.default)('select', buildAttrs(path, schema, {
+						oninput: function oninput() {
+							dataPathValue(path, this.value);
+						} }, ['enum', 'type']), schema.enum.map(function (v) {
+						return (0, _mithril2.default)('option', v);
+					})) : (0, _mithril2.default)(schema.format == 'textarea' ? 'textarea' : 'input', buildAttrs(path, schema, {
+						type: schema.format == 'color' ? 'color' : 'text',
+						oninput: function oninput() {
+							dataPathValue(path, this.value);
+						} }))]);
+
+					break;
+			}
+		};
+
+		this.getVal = function (args) {
+			return getOriginalKeyVal(DATA(), orgData);
+		};
+		this.controller = function (args) {};
+		this.view = function (ctrl) {
+			return this.parseSchema(SCHEMA(), 'root');
+		};
+		this.getView = function () {
+			return this.view(new this.controller());
+		};
+	};
+
+	exports.default = JsonEditor;
+
+	var editorComp = (function () {
+		var obj = {};
+		obj.view = function (args) {
+			obj.schema = _mithril2.default.prop(args.schema);
+			obj.json = _mithril2.default.prop(args.json);
+			obj.prop = _mithril2.default.prop(args.prop);
+			obj.changeCallback = _mithril2.default.prop(args.changeCallback);
+			return new JsonEditor(obj.schema, obj.json, obj.prop, obj.changeCallback);
+		}, obj.view2 = function (ctrl, args) {
+			console.log(args);
+			return ctrl;
+		};
+		return obj;
+	})();
+
+	var initEditor = exports.initEditor = function initEditor(root, schema, data) {
+		_mithril2.default.mount(root, _mithril2.default.component(editorComp, { schema: schema, json: data }));
+	};
+
+/***/ },
+/* 11 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
 	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 	Object.defineProperty(exports, "__esModule", {
@@ -2221,7 +2726,7 @@
 
 	var Global = _interopRequireWildcard(_global);
 
-	var _ContainerBaseClass2 = __webpack_require__(9);
+	var _ContainerBaseClass2 = __webpack_require__(12);
 
 	var _ContainerBaseClass3 = _interopRequireDefault(_ContainerBaseClass2);
 
@@ -2256,14 +2761,16 @@
 			key: 'view',
 			value: function view(ctrl) {
 				var self = this;
-				var Prop = Global._exclude(this.Prop, ['eventData', 'isNew']);
-				Prop.style = Global._deepCopy({}, this.Prop.style);
-				Global.applyStyle(Prop, Prop.style);
-				return (0, _mithril2.default)('.canvas', Prop, [(0, _mithril2.default)('.content', [(function () {
+
+				var dom = (0, _mithril2.default)('.canvas', Global.applyProp(this.Prop), [(0, _mithril2.default)('.content', { config: function config(el, isInit, context) {
+						context.retain = true;
+					} }, [(function () {
 					return self.children.map(function (v) {
 						return v.getView();
 					});
 				})()]), this.buildControlPoint()]);
+
+				return this.isValidRect() ? dom : [];
 			}
 		}]);
 
@@ -2273,7 +2780,7 @@
 	exports.default = WidgetCanvas;
 
 /***/ },
-/* 9 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2302,11 +2809,11 @@
 
 	var _WidgetDiv2 = _interopRequireDefault(_WidgetDiv);
 
-	var _WidgetCanvas = __webpack_require__(8);
+	var _WidgetCanvas = __webpack_require__(11);
 
 	var _WidgetCanvas2 = _interopRequireDefault(_WidgetCanvas);
 
-	var _Events = __webpack_require__(10);
+	var _Events = __webpack_require__(13);
 
 	var _Events2 = _interopRequireDefault(_Events);
 
@@ -2746,7 +3253,7 @@
 	exports.default = ContainerBaseClass;
 
 /***/ },
-/* 10 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2755,7 +3262,7 @@
 	  value: true
 	});
 
-	var _eventKeeper = __webpack_require__(11);
+	var _eventKeeper = __webpack_require__(14);
 
 	var _eventKeeper2 = _interopRequireDefault(_eventKeeper);
 
@@ -2764,7 +3271,7 @@
 	exports.default = new _eventKeeper2.default();
 
 /***/ },
-/* 11 */
+/* 14 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -2995,442 +3502,6 @@
 	})();
 
 	module.exports = EventEmitter;
-
-/***/ },
-/* 12 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-		value: true
-	});
-	exports.initEditor = undefined;
-
-	var _global = __webpack_require__(4);
-
-	var Global = _interopRequireWildcard(_global);
-
-	var _mithril = __webpack_require__(2);
-
-	var _mithril2 = _interopRequireDefault(_mithril);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	var JsonEditor = function JsonEditor(SCHEMA, DATA) {
-		var PROPS = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
-		var CALLBACK = arguments.length <= 3 || arguments[3] === undefined ? function () {} : arguments[3];
-
-		_classCallCheck(this, JsonEditor);
-
-		var orgData = Global.clone(DATA());
-		var schemaDefaultValue = {};
-		var templateFieldValue = {};
-		var LEVEL_MARGIN = 10;
-
-		var getOriginalKeyVal = function getOriginalKeyVal(objectToBeCloned, originDATA) {
-			// Basis.
-			if (!(objectToBeCloned instanceof Object)) {
-				return objectToBeCloned;
-			}
-			var objectClone = new objectToBeCloned.constructor();
-			for (var prop in objectToBeCloned) {
-				if (originDATA && prop in originDATA) objectClone[prop] = getOriginalKeyVal(objectToBeCloned[prop], originDATA[prop]);
-			}
-			return objectClone;
-		};
-
-		/**
-	  * getter/setter Schema Object using dot path
-	  * @param  {array} path  do path array
-	  * @param  {any} value   value to set, if not present, it's a getter
-	  * @return {any}       the value for getter/setter
-	  */
-		function schemaPathValue(path, value) {
-			if (typeof path == 'string') path = path.split('.');
-			var val = _dotPathValue(schemaDefaultValue, path);
-			if (arguments.length < 2) return val;else return val === undefined ? _dotPathValue(schemaDefaultValue, path, value) : value;
-		}
-
-		/**
-	  * getter/setter DATA Object using dot path
-	  * @param  {array} path  do path array
-	  * @param  {any} value   value for setter; null for getter
-	  * @return {any}       the value for getter/setter
-	  */
-		function dataPathValue(path, value) {
-			if (typeof path == 'string') path = path.split('.');
-			if (arguments.length < 2) {
-				var val = _dotPathValue(DATA(), path);
-				return val === undefined ? schemaPathValue(path) || '' : val;
-			} else {
-				var temp = DATA();
-				_dotPathValue(temp, path, value);
-				DATA(temp);
-				// below line will update the key for force update view
-				var shouldCallback = true;
-				for (var i in templateFieldValue) {
-					if (i == path.join('.')) shouldCallback = false;
-					var updated = templateFieldValue[i].some(function (watchPath) {
-						if (watchPath == path.join('.')) {
-							var updateFunc = templateFieldValue[i][0];
-							updateFunc();
-							return true;
-						}
-					});
-				}
-				// only callback when it's not update the template
-				if (shouldCallback) {
-					if (temp.attrs) temp.attrs.key = +new Date();
-					if (CALLBACK) CALLBACK(getOriginalKeyVal(temp, orgData), path.join('.'), temp, templateFieldValue);
-				}
-				return value;
-			}
-		}
-
-		/**
-	  * dot path value helper function
-	  * @param  {object} obj   the object to check for dot path
-	  * @param  {array} path  dot path array
-	  * @param  {any} value  value for setter; null for getter
-	  * @return {any}       the value for getter/setter
-	  */
-		function _dotPathValue(obj, path, value) {
-			if (path.length < 2) {
-				return obj;
-			}
-			var data = obj;
-			for (var v, i = 1; v = path[i], i < path.length; i++) {
-				if (arguments.length >= 3) {
-					if (data === undefined) {
-						data = Global.clone(schemaPathValue(path.slice(0, i)));
-						_dotPathValue(obj, path.slice(0, i), data);
-					}
-					if (i == path.length - 1) {
-						if (value !== undefined) data[v] = value;
-						// else delete data[v]
-					}
-				}
-				data = data && data[v];
-			}
-			return data;
-		}
-
-		var JSON_SCHEMA_MAP = (function () {
-			var obj = {};
-			obj.template = function template(path, obj, key) {
-				function replacer(match, placeholder, offset, string) {
-					var watchPath = path.slice(0, -1).join('.') + '.' + placeholder;
-					if (!templateFieldValue[path.join('.')]) templateFieldValue[path.join('.')] = [updateValue];
-					Global.addToObject(templateFieldValue[path.join('.')], watchPath);
-					return dataPathValue(watchPath);
-				}
-				var attrs = ['value', '', 'disabled', true];
-				function updateValue() {
-					dataPathValue(path.join('.'), obj[key].replace(/\{\{([^}]+)\}\}/g, replacer));
-					attrs[1] = dataPathValue(path.join('.'));
-				}
-				updateValue();
-				return attrs;
-			};
-			obj.minLength = function (path, obj, key) {
-				return ['pattern', '.{' + obj[key] + ',}'];
-			};
-			obj.minimum = 'min';
-			obj.maximum = 'max';
-			obj.description = 'placeholder';
-			// obj.default = 'defaultValue'
-			return obj;
-		})();
-
-		/**
-	  * build m attrs from JSON schema property
-	  * see JSON_SCHEMA_MAP format
-	  * @param  {array} path     Object property in json dot path, {a:{b:{c:1}}} -> ['root', 'a','b','c'] == 1
-	  * @param  {object} schema   JSON schema object, undefined value will be ''
-	  * @param  {object} include  include value to overwrite specified attrs
-	  * @param  {array} exclude  array that exclude in returned attrs
-	  * @return {object}         m attrs object
-	  */
-		function buildAttrs(path, schema, include, exclude) {
-			var obj = {},
-			    include = include || {},
-			    exclude = exclude || [];
-			Object.keys(schema).forEach(function (v) {
-				var map = JSON_SCHEMA_MAP[v];
-				if (typeof map == 'function') {
-					for (var i = 0, val = map(path, schema, v); i < val.length; i += 2) {
-						obj[val[i]] = val[i + 1] || '';
-					}
-				} else {
-					obj[map || v] = schema[v] === undefined ? '' : schema[v];
-				}
-			});
-			for (var i in include) {
-				obj[i] = include[i];
-			}
-			exclude.forEach(function (v) {
-				delete obj[v];
-			});
-			if (!('value' in obj)) {
-				if (schema.type !== 'boolean') obj['value'] = dataPathValue(path);else obj['checked'] = dataPathValue(path);
-			}
-			return obj;
-		}
-
-		function getClassName(schema) {
-			var className = '';
-			if (schema.template) className += ' isTemplate ';
-			if (schema.format == 'color') className += ' isColor ';
-			return className;
-		}
-
-		this.parseSchema = function parseSchema(schema, key, path) {
-			var _this = this;
-
-			path = path || [key];
-			var level = path.length - 1;
-			var initAttrs = level == 0 ? Global._extend({ key: +new Date() }, PROPS) : {};
-			switch (schema.type) {
-				case 'array':
-					schemaPathValue(path, schema.default || []);
-					return (0, _mithril2.default)('div.array', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), className: schema.class || '' + ' level' + level }), [(0, _mithril2.default)('h2', schema.title), (0, _mithril2.default)('div.props', [schema.format == 'table' ? (function () {
-						var keys = Object.keys(schema.items.properties);
-						return dataPathValue(path).map(function (v, i) {
-							var keys = Object.keys(schema.items.properties);
-							return keys.map(function (key) {
-								return _this.parseSchema(schema.items.properties[key], key, path.concat(i, key));
-							});
-						});
-					})() : ''])]);
-					break;
-				case 'object':
-					schemaPathValue(path, schema.default || {});
-					var keys = Object.keys(schema.properties);
-					return (0, _mithril2.default)('div.object', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), className: schema.class || '' + ' level' + level }), [(0, _mithril2.default)('h2', schema.title), (0, _mithril2.default)('div.props', [keys.map(function (v) {
-						return _this.parseSchema(schema.properties[v], v, path.concat(v));
-					})])]);
-
-					break;
-
-				case 'number':
-				case 'integer':
-					schemaPathValue(path, schema.default);
-					return (0, _mithril2.default)('div.row', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), className: schema.class || '' + ' level' + level }), [(0, _mithril2.default)('strong', schema.title || key), (0, _mithril2.default)('input', buildAttrs(path, schema, { type: 'number', oninput: function oninput() {
-							dataPathValue(path, schema.type == 'number' ? this.value : parseInt(this.value, 10));
-						} }))]);
-
-					break;
-
-				case 'boolean':
-					schemaPathValue(path, schema.default);
-					return (0, _mithril2.default)('div.row', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), className: schema.class || '' + ' level' + level }), [(0, _mithril2.default)('strong', schema.title || key), (0, _mithril2.default)('input', buildAttrs(path, schema, { type: 'checkbox', onchange: function onchange() {
-							dataPathValue(path, this.checked);
-						} }))]);
-
-					break;
-				case 'string':
-					schemaPathValue(path, schema.default);
-					return (0, _mithril2.default)('div.row', Global._deepCopy(initAttrs, { 'data-key': key, className: schema.class || '' + getClassName(schema) + ' level' + level, key: path.join('.') }), [(0, _mithril2.default)('strong', schema.title || key), schema.enum ? (0, _mithril2.default)('select', buildAttrs(path, schema, {
-						oninput: function oninput() {
-							dataPathValue(path, this.value);
-						} }, ['enum', 'type']), schema.enum.map(function (v) {
-						return (0, _mithril2.default)('option', v);
-					})) : (0, _mithril2.default)(schema.format == 'textarea' ? 'textarea' : 'input', buildAttrs(path, schema, {
-						type: schema.format == 'color' ? 'color' : 'text',
-						oninput: function oninput() {
-							dataPathValue(path, this.value);
-						} }))]);
-
-					break;
-			}
-		};
-
-		this.getVal = function (args) {
-			return getOriginalKeyVal(DATA(), orgData);
-		};
-		this.controller = function (args) {};
-		this.view = function (ctrl) {
-			return this.parseSchema(SCHEMA(), 'root');
-		};
-		this.getView = function () {
-			return this.view(new this.controller());
-		};
-	};
-
-	exports.default = JsonEditor;
-
-	var editorComp = (function () {
-		var obj = {};
-		obj.view = function (args) {
-			obj.schema = _mithril2.default.prop(args.schema);
-			obj.json = _mithril2.default.prop(args.json);
-			obj.prop = _mithril2.default.prop(args.prop);
-			obj.changeCallback = _mithril2.default.prop(args.changeCallback);
-			return new JsonEditor(obj.schema, obj.json, obj.prop, obj.changeCallback);
-		}, obj.view2 = function (ctrl, args) {
-			console.log(args);
-			return ctrl;
-		};
-		return obj;
-	})();
-
-	var initEditor = exports.initEditor = function initEditor(root, schema, data) {
-		_mithril2.default.mount(root, _mithril2.default.component(editorComp, { schema: schema, json: data }));
-	};
-
-/***/ },
-/* 13 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	exports.extend = extend;
-	exports.override = override;
-
-	var _global = __webpack_require__(4);
-
-	var Global = _interopRequireWildcard(_global);
-
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-	/**
-	 * Below is from Flarum
-	 * Extend an object's method by running its output through a mutating callback
-	 * every time it is called.
-	 *
-	 * The callback accepts the method's return value and should perform any
-	 * mutations directly on this value. For this reason, this function will not be
-	 * effective on methods which return scalar values (numbers, strings, booleans).
-	 *
-	 * Care should be taken to extend the correct object – in most cases, a class'
-	 * prototype will be the desired target of extension, not the class itself.
-	 *
-	 * @example
-	 * extend(Discussion.prototype, 'badges', function(badges) {
-	 *   // do something with `badges`
-	 * });
-	 *
-	 * @param {Object} object The object that owns the method
-	 * @param {String} method The name of the method to extend
-	 * @param {function} callback A callback which mutates the method's output
-	 */
-	function extend(object, method, callback) {
-	  var original = object[method];
-
-	  object[method] = function () {
-	    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-	      args[_key] = arguments[_key];
-	    }
-
-	    var value = original ? original.apply(this, args) : undefined;
-
-	    callback.apply(this, [value].concat(args));
-
-	    return value;
-	  };
-
-	  Global._extend(object[method], original);
-	}
-
-	/**
-	 * Override an object's method by replacing it with a new function, so that the
-	 * new function will be run every time the object's method is called.
-	 *
-	 * The replacement function accepts the original method as its first argument,
-	 * which is like a call to 'super'. Any arguments passed to the original method
-	 * are also passed to the replacement.
-	 *
-	 * Care should be taken to extend the correct object – in most cases, a class'
-	 * prototype will be the desired target of extension, not the class itself.
-	 *
-	 * @example
-	 * override(Discussion.prototype, 'badges', function(original) {
-	 *   const badges = original();
-	 *   // do something with badges
-	 *   return badges;
-	 * });
-	 *
-	 * @param {Object} object The object that owns the method
-	 * @param {String} method The name of the method to override
-	 * @param {function} newMethod The method to replace it with
-	 */
-	function override(object, method, newMethod) {
-	  var original = object[method];
-
-	  object[method] = function () {
-	    for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-	      args[_key2] = arguments[_key2];
-	    }
-
-	    return newMethod.apply(this, [original.bind(this)].concat(args));
-	  };
-
-	  Global._extend(object[method], original);
-	}
-
-/***/ },
-/* 14 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-		value: true
-	});
-	exports.default = addEditorToLayerBase;
-
-	var _global = __webpack_require__(4);
-
-	var Global = _interopRequireWildcard(_global);
-
-	var _mithril = __webpack_require__(2);
-
-	var _mithril2 = _interopRequireDefault(_mithril);
-
-	var _extend = __webpack_require__(13);
-
-	var _LayerBaseClass = __webpack_require__(6);
-
-	var _LayerBaseClass2 = _interopRequireDefault(_LayerBaseClass);
-
-	var _JsonEditor = __webpack_require__(12);
-
-	var _JsonEditor2 = _interopRequireDefault(_JsonEditor);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-	function renderJsonEditor() {
-		var self = this;
-		if (this.isValidRect() && this.jsonData && this.jsonSchema) {
-			Global._extend(this.jsonData().attrs.style, this.Prop.style);
-			_mithril2.default.mount(document.querySelector('.editor'), new _JsonEditor2.default(this.jsonSchema, this.jsonData, null, function (val, path) {
-				Global._extend(self.Prop.style, val.attrs.style);
-				_mithril2.default.redraw();
-			}));
-		}
-	}
-
-	function addEditorToLayerBase() {
-		(0, _extend.override)(_LayerBaseClass2.default.prototype, 'onRectChange', function (original) {
-			original();
-			renderJsonEditor.apply(this);
-		});
-
-		(0, _extend.override)(_LayerBaseClass2.default.prototype, 'onSelected', function (original) {
-			original();
-			renderJsonEditor.apply(this);
-		});
-	}
 
 /***/ },
 /* 15 */
