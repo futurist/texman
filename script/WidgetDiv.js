@@ -101,39 +101,51 @@ var jsonSchema ={
               "default": "#993333"
             },
             "borderLeftWidth":{
+              "title": "border left width",
             	"inherit":"borderWidth"
             },
             "borderLeftStyle":{
+              "title": "border left style",
             	"inherit":"borderStyle"
             },
             "borderLeftColor":{
+              "title": "border left color",
             	"inherit":"borderColor"
             },
             "borderTopWidth":{
+              "title": "border top width",
             	"inherit":"borderWidth"
             },
             "borderTopStyle":{
+              "title": "border top style",
             	"inherit":"borderStyle"
             },
             "borderTopColor":{
+              "title": "border top color",
             	"inherit":"borderColor"
             },
             "borderRightWidth":{
+              "title": "border right width",
             	"inherit":"borderWidth"
             },
             "borderRightStyle":{
+              "title": "border right style",
             	"inherit":"borderStyle"
             },
             "borderRightColor":{
+              "title": "border right color",
             	"inherit":"borderColor"
             },
             "borderBottomWidth":{
+              "title": "border bottom width",
             	"inherit":"borderWidth"
             },
             "borderBottomStyle":{
+              "title": "border bottom style",
             	"inherit":"borderStyle"
             },
             "borderBottomColor":{
+              "title": "border bottom color",
             	"inherit":"borderColor"
             },
 

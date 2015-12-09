@@ -1913,39 +1913,51 @@
 	              "default": "#993333"
 	            },
 	            "borderLeftWidth": {
+	              "title": "border left width",
 	              "inherit": "borderWidth"
 	            },
 	            "borderLeftStyle": {
+	              "title": "border left style",
 	              "inherit": "borderStyle"
 	            },
 	            "borderLeftColor": {
+	              "title": "border left color",
 	              "inherit": "borderColor"
 	            },
 	            "borderTopWidth": {
+	              "title": "border top width",
 	              "inherit": "borderWidth"
 	            },
 	            "borderTopStyle": {
+	              "title": "border top style",
 	              "inherit": "borderStyle"
 	            },
 	            "borderTopColor": {
+	              "title": "border top color",
 	              "inherit": "borderColor"
 	            },
 	            "borderRightWidth": {
+	              "title": "border right width",
 	              "inherit": "borderWidth"
 	            },
 	            "borderRightStyle": {
+	              "title": "border right style",
 	              "inherit": "borderStyle"
 	            },
 	            "borderRightColor": {
+	              "title": "border right color",
 	              "inherit": "borderColor"
 	            },
 	            "borderBottomWidth": {
+	              "title": "border bottom width",
 	              "inherit": "borderWidth"
 	            },
 	            "borderBottomStyle": {
+	              "title": "border bottom style",
 	              "inherit": "borderStyle"
 	            },
 	            "borderBottomColor": {
+	              "title": "border bottom color",
 	              "inherit": "borderColor"
 	            },
 
@@ -2629,30 +2641,36 @@
 			return obj;
 		}
 
-		function getClassName(schema) {
-			var className = '';
-			if (schema.template) className += ' isTemplate ';
-			if (schema.format == 'color') className += ' isColor ';
-			return className;
-		}
-
 		this.parseSchema = function parseSchema(schema, key, path) {
 			var _this = this;
 
+			var getClassName = function getClassName() {
+				var classObj = {};
+				classObj['level' + level] = true;
+				if (schema.class) classObj[schema.class] = true;
+				if (schema.template) classObj.isTemplate = true;
+				if (schema.format == 'color') classObj.isColor = true;
+				if (prevSchema.inherit) classObj['inherit-' + prevSchema.inherit] = true;
+				return Object.keys(classObj).filter(function (v) {
+					return classObj[v];
+				}).join(' ');
+			};
 			path = path || [key];
 			var level = path.length - 1;
 			var initAttrs = level == 0 ? Global._extend({ key: +new Date() }, PROPS) : {};
 			schemaObjects[path.join('.')] = schema;
+			var prevSchema = schema;
 			if (schema.inherit) {
 				var inheritPath = path.slice(0, -1).join('.') + '.' + schema.inherit;
 				if (!inheritFieldValue[inheritPath]) inheritFieldValue[inheritPath] = [];
 				Global.addToObject(inheritFieldValue[inheritPath], path.join('.'));
-				schema = schemaObjects[inheritPath];
+				schema = Global.clone(schemaObjects[inheritPath]);
+				schema = Global._extend(schema, prevSchema);
 			}
 			switch (schema.type) {
 				case 'array':
 					schemaPathValue(path, schema.default || []);
-					return (0, _mithril2.default)('div.array', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), className: schema.class || '' + ' level' + level }), [(0, _mithril2.default)('h2', schema.title), (0, _mithril2.default)('div.props', [schema.format == 'table' ? (function () {
+					return (0, _mithril2.default)('div.array', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), className: getClassName() }), [(0, _mithril2.default)('h2', schema.title), (0, _mithril2.default)('div.props', [schema.format == 'table' ? (function () {
 						var keys = Object.keys(schema.items.properties);
 						return dataPathValue(path).map(function (v, i) {
 							var keys = Object.keys(schema.items.properties);
@@ -2665,7 +2683,7 @@
 				case 'object':
 					schemaPathValue(path, schema.default || {});
 					var keys = Object.keys(schema.properties);
-					return (0, _mithril2.default)('div.object', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), className: schema.class || '' + ' level' + level }), [(0, _mithril2.default)('h2', schema.title), (0, _mithril2.default)('div.props', [keys.map(function (v) {
+					return (0, _mithril2.default)('div.object', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), className: getClassName() }), [(0, _mithril2.default)('h2', schema.title), (0, _mithril2.default)('div.props', [keys.map(function (v) {
 						return _this.parseSchema(schema.properties[v], v, path.concat(v));
 					})])]);
 
@@ -2674,7 +2692,7 @@
 				case 'number':
 				case 'integer':
 					schemaPathValue(path, schema.default);
-					return (0, _mithril2.default)('div.row', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), className: schema.class || '' + ' level' + level }), [(0, _mithril2.default)('strong', schema.title || key), (0, _mithril2.default)('input', buildAttrs(path, schema, { type: 'number', oninput: function oninput() {
+					return (0, _mithril2.default)('div.row', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), className: getClassName() }), [(0, _mithril2.default)('strong', schema.title || key), (0, _mithril2.default)('input', buildAttrs(path, schema, { type: 'number', oninput: function oninput() {
 							dataPathValue(path, schema.type == 'number' ? this.value : parseInt(this.value, 10));
 						} }))]);
 
@@ -2682,14 +2700,14 @@
 
 				case 'boolean':
 					schemaPathValue(path, schema.default);
-					return (0, _mithril2.default)('div.row', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), className: schema.class || '' + ' level' + level }), [(0, _mithril2.default)('strong', schema.title || key), (0, _mithril2.default)('input', buildAttrs(path, schema, { type: 'checkbox', onchange: function onchange() {
+					return (0, _mithril2.default)('div.row', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), className: getClassName() }), [(0, _mithril2.default)('strong', schema.title || key), (0, _mithril2.default)('input', buildAttrs(path, schema, { type: 'checkbox', onchange: function onchange() {
 							dataPathValue(path, this.checked);
 						} }))]);
 
 					break;
 				case 'string':
 					schemaPathValue(path, schema.default);
-					return (0, _mithril2.default)('div.row', Global._deepCopy(initAttrs, { 'data-key': key, className: schema.class || '' + getClassName(schema) + ' level' + level, key: path.join('.') }), [(0, _mithril2.default)('strong', schema.title || key), schema.enum ? (0, _mithril2.default)('select', buildAttrs(path, schema, {
+					return (0, _mithril2.default)('div.row', Global._deepCopy(initAttrs, { 'data-key': key, className: getClassName(), key: path.join('.') }), [(0, _mithril2.default)('strong', schema.title || key), schema.enum ? (0, _mithril2.default)('select', buildAttrs(path, schema, {
 						oninput: function oninput() {
 							dataPathValue(path, this.value);
 						} }, ['enum', 'type']), schema.enum.map(function (v) {

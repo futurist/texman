@@ -165,28 +165,33 @@ export default class JsonEditor {
 		  return obj;
 		}
 
-		function getClassName(schema){
-			var className = ''
-			if(schema.template) className+=' isTemplate ';
-			if(schema.format == 'color') className+=' isColor ';
-			return className;
-		}
 
 		this.parseSchema = function parseSchema (schema, key, path) {
+			var getClassName = function getClassName(){
+				var classObj = {}
+				classObj['level'+level] = true;
+				if(schema.class) classObj[schema.class]=true;
+				if(schema.template) classObj.isTemplate=true;
+				if(schema.format == 'color') classObj.isColor=true;
+				if(prevSchema.inherit) classObj['inherit-'+prevSchema.inherit] = true;
+				return Object.keys(classObj).filter(v=>{ return classObj[v] }).join(' ');
+			}
 		  path = path || [key]
 		  var level=path.length-1
 		  var initAttrs = level==0? Global._extend({ key:+new Date() }, PROPS) : {}
 		  schemaObjects[path.join('.')] = schema;
+		  var prevSchema  = schema;
 		  if(schema.inherit){
 		  	var inheritPath = path.slice(0,-1).join('.') +'.'+ schema.inherit;
 		  	if( !inheritFieldValue[inheritPath] ) inheritFieldValue[inheritPath] = []
 		    Global.addToObject( inheritFieldValue[inheritPath], path.join('.') );
-		  	schema = schemaObjects[ inheritPath ]
+		  	schema = Global.clone( schemaObjects[ inheritPath ] )
+		  	schema = Global._extend(schema, prevSchema)
 		  }
 		  switch(schema.type) {
 		    case 'array':
 		      schemaPathValue(path, schema.default||[]);
-		      return m('div.array', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), className:schema.class||''+' level'+level }), [
+		      return m('div.array', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), className:getClassName() }), [
 		          m('h2', schema.title),
 		          m('div.props', [
 		            schema.format == 'table' ?
@@ -205,7 +210,7 @@ export default class JsonEditor {
 		    case 'object':
 		      schemaPathValue(path, schema.default||{});
 		      var keys = Object.keys(schema.properties)
-		      return m('div.object', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), className:schema.class||''+' level'+level }), [
+		      return m('div.object', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), className:getClassName() }), [
 		          m('h2', schema.title),
 		          m('div.props', [
 		            keys.map( (v)=> { return this.parseSchema( schema.properties[v], v, path.concat(v) ) })
@@ -217,7 +222,7 @@ export default class JsonEditor {
 		    case 'number':
 		    case 'integer':
 		      schemaPathValue(path, schema.default)
-		      return m('div.row', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), className:schema.class||''+' level'+level }), [
+		      return m('div.row', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), className:getClassName() }), [
 		          m('strong', schema.title||key ),
 		          m('input', buildAttrs(path, schema, {type:'number', oninput:function(){
 		            dataPathValue( path , schema.type=='number'? this.value : parseInt(this.value,10) )
@@ -228,7 +233,7 @@ export default class JsonEditor {
 
 		    case 'boolean':
 		      schemaPathValue(path, schema.default)
-		      return m('div.row', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), className:schema.class||''+' level'+level }), [
+		      return m('div.row', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), className:getClassName() }), [
 		          m('strong', schema.title||key ),
 		          m('input', buildAttrs(path, schema, {type:'checkbox', onchange:function(){
 		            dataPathValue( path , this.checked )
@@ -238,7 +243,7 @@ export default class JsonEditor {
 		      break;
 		    case 'string':
 		      schemaPathValue(path, schema.default)
-		      return m('div.row', Global._deepCopy(initAttrs, {'data-key': key, className:schema.class||''+getClassName(schema)+' level'+level, key:path.join('.') }), [
+		      return m('div.row', Global._deepCopy(initAttrs, {'data-key': key, className:getClassName(), key:path.join('.') }), [
 		          m('strong', schema.title||key ),
 		          schema.enum
 		          ? m('select',
