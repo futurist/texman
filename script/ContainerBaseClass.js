@@ -107,9 +107,8 @@ export default class ContainerBaseClass extends LayerBaseClass {
 		var elArray = {}
 		var pointArray = {}
 		this.children.forEach((v,i)=>{
-
-			if( Global.rectsIntersect( rect, v.Prop.style) ){
-				elArray[i] = (v);
+			if( Global.rectsIntersect( rect, Global.getOuterRect( v.Prop.style ) ) ){
+				elArray[i] = (v)
 			}
 
 			var point = v.getElementInside( rect ).pop()

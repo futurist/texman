@@ -1733,9 +1733,9 @@
 	}
 
 	function applyStyle(el, styleObj) {
-	    var pxArray = ['width', 'height', 'left', 'top'];
+	    var pxReg = /width$|height$|radius$|left$|top$|right$|bottom$/i;
 	    for (var i in styleObj) {
-	        var attr = pxArray.indexOf(i) > -1 ? styleObj[i] + 'px' : styleObj[i];
+	        var attr = pxReg.test(i) ? styleObj[i] + 'px' : styleObj[i];
 	        el.style[i] = attr;
 	    }
 	}
@@ -1754,11 +1754,29 @@
 	 */
 	var applyProp = exports.applyProp = function applyProp(thisProp) {
 	    var Prop = _exclude(thisProp, ['eventData', 'isNew']);
-	    Prop.style = _deepCopy({}, thisProp.style);
+	    Prop.style = clone(thisProp.style);
+	    if (thisProp.style.borderWidth && thisProp.style.borderStyle && thisProp.style.borderColor) {
+	        Prop.style.border = thisProp.style.borderWidth + 'px ' + thisProp.style.borderStyle + ' ' + thisProp.style.borderColor;
+	    }
 	    applyStyle(Prop, thisProp.style);
+	    Prop.style = _exclude(Prop.style, ['borderWidth', 'borderStyle', 'borderColor']);
 	    if (Prop.class) Prop.class = Prop.class.replace(/\s+/, ' ').trim();
 	    if (Prop.className) Prop.className = Prop.className.replace(/\s+/, ' ').trim();
 	    return Prop;
+	};
+
+	/**
+	 * get outer rect of div/container that had a border style
+	 * @param  {[type]} style [description]
+	 * @return {[type]}       [description]
+	 */
+	var getOuterRect = exports.getOuterRect = function getOuterRect(style) {
+	    return {
+	        left: style.left,
+	        top: style.top,
+	        width: style.width + style.borderLeftWidth + style.borderRightWidth,
+	        height: style.height + style.borderTopWidth + style.borderBottomWidth
+	    };
 	};
 
 /***/ },
@@ -1867,16 +1885,19 @@
 	            "width": {
 	              "title": "width",
 	              "type": "integer",
+	              "minimum": 0,
 	              "default": 100
 	            },
 	            "height": {
 	              "title": "height",
 	              "type": "integer",
+	              "minimum": 0,
 	              "default": 100
 	            },
 	            "borderWidth": {
 	              "title": "border width",
 	              "type": "integer",
+	              "minimum": 0,
 	              "default": 1
 	            },
 	            "borderStyle": {
@@ -1890,11 +1911,6 @@
 	              "format": "color",
 	              "type": "string",
 	              "default": "#993333"
-	            },
-	            "border": {
-	              "title": "border",
-	              "type": "string",
-	              "template": "{{borderWidth.0.width}}{{borderWidth.0.unit}} {{borderStyle}} {{borderColor}}"
 	            },
 	            "borderLeftWidth": {
 	              "inherit": "borderWidth"
@@ -1963,6 +1979,7 @@
 	    _this.parent = parent;
 	    _this.ID = Global.NewID();
 	    _this.Prop.key = _this.ID;
+	    _this.Prop.style = Global.clone(jsonData.attrs.style);
 	    _this.jsonSchema = _mithril2.default.prop(jsonSchema);
 	    _this.jsonData = _mithril2.default.prop(jsonData);
 	    return _this;
@@ -1993,13 +2010,12 @@
 	    key: 'view',
 	    value: function view(ctrl) {
 	      var self = this;
-
-	      var dom = (0, _mithril2.default)('div.layer', Global.applyProp(this.Prop), [(0, _mithril2.default)('.content', { config: function config(el, isInit, context) {
+	      var Prop = Global.applyProp(this.Prop);
+	      var dom = (0, _mithril2.default)('div.layer', Prop, [(0, _mithril2.default)('.content', { config: function config(el, isInit, context) {
 	          context.retain = true;
 	        } }), (0, _mithril2.default)('.bbox', { config: function config(el, isInit, context) {
 	          context.retain = true;
 	        } }), this.buildControlPoint()]);
-
 	      return this.isValidRect() ? dom : [];
 	    }
 	  }]);
@@ -2109,27 +2125,28 @@
 			value: function buildControlPoint() {
 
 				var ControlPosition = function ControlPosition(parent, child) {
+					var pWidth = parent.width + parent.borderLeftWidth + parent.borderRightWidth;
+					var pHeight = parent.height + parent.borderTopWidth + parent.borderBottomWidth;
 					this[0] = this.LT = [-child.width / 2, -child.height / 2]; //Left Top
-					this[1] = this.CT = [parent.width / 2 - child.width / 2, -child.height / 2]; //top center
-					this[2] = this.RT = [parent.width - child.width / 2, -child.height / 2]; //right top
+					this[1] = this.CT = [pWidth / 2 - child.width / 2, -child.height / 2]; //top center
+					this[2] = this.RT = [pWidth - child.width / 2, -child.height / 2]; //right top
 
-					this[6] = this.LB = [-child.width / 2, parent.height - child.height / 2]; //Left Top
-					this[5] = this.CB = [parent.width / 2 - child.width / 2, parent.height - child.height / 2]; //top center
-					this[4] = this.RB = [parent.width - child.width / 2, parent.height - child.height / 2]; //right top
+					this[6] = this.LB = [-child.width / 2, pHeight - child.height / 2]; //Left Top
+					this[5] = this.CB = [pWidth / 2 - child.width / 2, pHeight - child.height / 2]; //top center
+					this[4] = this.RB = [pWidth - child.width / 2, pHeight - child.height / 2]; //right top
 
-					this[7] = this.LM = [-child.width / 2, parent.height / 2 - child.height / 2]; //Left Top
-					this[3] = this.RM = [parent.width - child.width / 2, parent.height / 2 - child.height / 2]; //left center
+					this[7] = this.LM = [-child.width / 2, pHeight / 2 - child.height / 2]; //Left Top
+					this[3] = this.RM = [pWidth - child.width / 2, pHeight / 2 - child.height / 2]; //left center
 				};
 				this.ControlPoints = [];
 
 				var pointProp = { width: Global.POINT_WIDTH, height: Global.POINT_HEIGHT };
 				var pointPosition = new ControlPosition(this.Prop.style, pointProp);
-				// var positionShift = this.isSelected() ? -BORDER_WIDTH : 0;
 
 				for (var i = 0; i < 8; i++) {
 					var point = new _ControlPoint2.default(this, { style: pointProp, position: i });
-					point.Prop.style.left = pointPosition[i][0];
-					point.Prop.style.top = pointPosition[i][1];
+					point.Prop.style.left = pointPosition[i][0] - this.Prop.style.borderLeftWidth || 0;
+					point.Prop.style.top = pointPosition[i][1] - this.Prop.style.borderTopWidth || 0;
 					this.ControlPoints.push(point);
 				}
 
@@ -2175,8 +2192,8 @@
 			value: function getElementInside(rect) {
 				if (!this.isSelected()) return [];
 				rect = Global._deepCopy({}, rect);
-				rect.left -= this.Prop.style.left;
-				rect.top -= this.Prop.style.top;
+				rect.left -= this.Prop.style.left + this.Prop.style.borderLeftWidth;
+				rect.top -= this.Prop.style.top + this.Prop.style.borderTopWidth;
 				return this.ControlPoints.filter(function (v) {
 					if (Global.rectsIntersect(rect, v.Prop.style)) {
 						return true;
@@ -2451,9 +2468,10 @@
 		_classCallCheck(this, JsonEditor);
 
 		var orgData = Global.clone(DATA());
+		var schemaObjects = {};
 		var schemaDefaultValue = {};
 		var templateFieldValue = {};
-		var LEVEL_MARGIN = 10;
+		var inheritFieldValue = {};
 
 		var getOriginalKeyVal = function getOriginalKeyVal(objectToBeCloned, originDATA) {
 			// Basis.
@@ -2504,6 +2522,12 @@
 							updateFunc();
 							return true;
 						}
+					});
+				}
+				for (var i in inheritFieldValue) {
+					if (i !== path.join('.')) continue;
+					inheritFieldValue[i].forEach(function (path) {
+						_dotPathValue(temp, path.split('.'), value);
 					});
 				}
 				// only callback when it's not update the template
@@ -2618,6 +2642,13 @@
 			path = path || [key];
 			var level = path.length - 1;
 			var initAttrs = level == 0 ? Global._extend({ key: +new Date() }, PROPS) : {};
+			schemaObjects[path.join('.')] = schema;
+			if (schema.inherit) {
+				var inheritPath = path.slice(0, -1).join('.') + '.' + schema.inherit;
+				if (!inheritFieldValue[inheritPath]) inheritFieldValue[inheritPath] = [];
+				Global.addToObject(inheritFieldValue[inheritPath], path.join('.'));
+				schema = schemaObjects[inheritPath];
+			}
 			switch (schema.type) {
 				case 'array':
 					schemaPathValue(path, schema.default || []);
@@ -2948,8 +2979,7 @@
 				var elArray = {};
 				var pointArray = {};
 				this.children.forEach(function (v, i) {
-
-					if (Global.rectsIntersect(rect, v.Prop.style)) {
+					if (Global.rectsIntersect(rect, Global.getOuterRect(v.Prop.style))) {
 						elArray[i] = v;
 					}
 

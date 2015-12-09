@@ -69,16 +69,19 @@ var jsonSchema ={
             "width": {
               "title": "width",
               "type": "integer",
+              "minimum": 0,
               "default":100
             },
             "height": {
               "title": "height",
               "type": "integer",
+              "minimum": 0,
               "default":100
             },
             "borderWidth": {
               "title": "border width",
 	            "type": "integer",
+              "minimum": 0,
 	            "default":1
             },
             "borderStyle": {
@@ -96,11 +99,6 @@ var jsonSchema ={
               "format": "color",
               "type": "string",
               "default": "#993333"
-            },
-            "border": {
-              "title": "border",
-              "type": "string",
-              "template": "{{borderWidth.0.width}}{{borderWidth.0.unit}} {{borderStyle}} {{borderColor}}"
             },
             "borderLeftWidth":{
             	"inherit":"borderWidth"
@@ -167,6 +165,7 @@ export default class WidgetDiv extends LayerBaseClass {
 		this.parent = parent;
 	    this.ID = Global.NewID()
 	    this.Prop.key = this.ID
+      this.Prop.style = Global.clone(jsonData.attrs.style);
 	    this.jsonSchema = m.prop(jsonSchema)
 	    this.jsonData = m.prop(jsonData)
 	}
@@ -188,13 +187,12 @@ export default class WidgetDiv extends LayerBaseClass {
 
 	view (ctrl) {
     var self = this;
-
-    var dom = m('div.layer', Global.applyProp(this.Prop), [
+    var Prop = Global.applyProp(this.Prop)
+    var dom = m('div.layer', Prop, [
         m('.content', {config: function(el,isInit,context){context.retain=true} } ),
         m('.bbox', {config: function(el,isInit,context){context.retain=true} } ),
         this.buildControlPoint()
       ] )
-
 		return this.isValidRect()
 		? dom
 		: []

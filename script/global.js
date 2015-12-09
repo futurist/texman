@@ -187,9 +187,9 @@ export function NewID(){
 }
 
 export function applyStyle(el, styleObj){
-	var pxArray = ['width', 'height', 'left', 'top']
+	var pxReg = /width$|height$|radius$|left$|top$|right$|bottom$/i
 	for(var i in styleObj){
-		var attr = pxArray.indexOf(i)>-1 ? styleObj[i] + 'px': styleObj[i] ;
+		var attr = pxReg.test(i) ? styleObj[i] + 'px': styleObj[i] ;
 		el.style[i] = attr;
 	}
 }
@@ -211,10 +211,27 @@ export var debug = function( msg ){
  */
 export var applyProp = function( thisProp ){
 	var Prop = _exclude( thisProp, ['eventData','isNew'] )
-    Prop.style = _deepCopy( {}, thisProp.style )
+    Prop.style = clone(thisProp.style)
+    if(thisProp.style.borderWidth && thisProp.style.borderStyle && thisProp.style.borderColor){
+        Prop.style.border = thisProp.style.borderWidth+'px '+thisProp.style.borderStyle+' '+thisProp.style.borderColor
+    }
     applyStyle( Prop, thisProp.style )
+    Prop.style = _exclude( Prop.style, ['borderWidth','borderStyle', 'borderColor'] )
     if(Prop.class) Prop.class = Prop.class.replace(/\s+/, ' ').trim()
     if(Prop.className) Prop.className = Prop.className.replace(/\s+/, ' ').trim()
     return Prop
 }
 
+/**
+ * get outer rect of div/container that had a border style
+ * @param  {[type]} style [description]
+ * @return {[type]}       [description]
+ */
+export var getOuterRect = function( style ){
+    return {
+        left: style.left ,
+        top: style.top ,
+        width: style.width + style.borderLeftWidth + style.borderRightWidth,
+        height: style.height + style.borderTopWidth + style.borderBottomWidth,
+    }
+}

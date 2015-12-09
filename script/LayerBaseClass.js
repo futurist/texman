@@ -50,27 +50,28 @@ export default class LayerBaseClass {
 	buildControlPoint (){
 
 		var ControlPosition = function(parent, child){
+			var pWidth = parent.width+parent.borderLeftWidth+parent.borderRightWidth;
+			var pHeight = parent.height+parent.borderTopWidth+parent.borderBottomWidth;
 			this[0] = this.LT = [-child.width/2, -child.height/2] 	//Left Top
-			this[1] = this.CT = [parent.width/2 - child.width/2, -child.height/2] 	//top center
-			this[2] = this.RT = [ parent.width - child.width/2, -child.height/2] 	//right top
+			this[1] = this.CT = [pWidth/2 - child.width/2, -child.height/2] 	//top center
+			this[2] = this.RT = [ pWidth - child.width/2, -child.height/2] 	//right top
 
-			this[6] = this.LB = [-child.width/2, parent.height-child.height/2] 	//Left Top
-			this[5] = this.CB = [parent.width/2 - child.width/2, parent.height-child.height/2] 	//top center
-			this[4] = this.RB = [ parent.width - child.width/2, parent.height-child.height/2] 	//right top
+			this[6] = this.LB = [-child.width/2, pHeight-child.height/2] 	//Left Top
+			this[5] = this.CB = [pWidth/2 - child.width/2, pHeight-child.height/2] 	//top center
+			this[4] = this.RB = [ pWidth - child.width/2, pHeight-child.height/2] 	//right top
 
-			this[7] = this.LM = [-child.width/2, parent.height/2-child.height/2] 	//Left Top
-			this[3] = this.RM = [parent.width - child.width/2, parent.height/2-child.height/2] 	//left center
+			this[7] = this.LM = [-child.width/2, pHeight/2-child.height/2] 	//Left Top
+			this[3] = this.RM = [pWidth - child.width/2, pHeight/2-child.height/2] 	//left center
 		}
 		this.ControlPoints = []
 
 		var pointProp = { width:Global.POINT_WIDTH, height:Global.POINT_HEIGHT };
 		var pointPosition = new ControlPosition( this.Prop.style, pointProp )
-		// var positionShift = this.isSelected() ? -BORDER_WIDTH : 0;
 
 		for(var i=0; i<8; i++){
 			var point = new ControlPoint( this, {style: pointProp, position:i } )
-			point.Prop.style.left = pointPosition[i][0]
-			point.Prop.style.top = pointPosition[i][1]
+			point.Prop.style.left = pointPosition[i][0] - this.Prop.style.borderLeftWidth||0
+			point.Prop.style.top = pointPosition[i][1] - this.Prop.style.borderTopWidth||0
 			this.ControlPoints.push(point)
 		}
 
@@ -107,8 +108,8 @@ export default class LayerBaseClass {
 	getElementInside ( rect ) {
 		if( !this.isSelected() ) return [];
 		rect = Global._deepCopy({}, rect)
-		rect.left -= this.Prop.style.left
-		rect.top -= this.Prop.style.top
+		rect.left -= this.Prop.style.left+this.Prop.style.borderLeftWidth
+		rect.top -= this.Prop.style.top+this.Prop.style.borderTopWidth
 		return this.ControlPoints.filter( v=> {
 			if( Global.rectsIntersect( rect, v.Prop.style) ){
 				return true

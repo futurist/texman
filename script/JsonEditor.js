@@ -6,9 +6,10 @@ export default class JsonEditor {
 	constructor(SCHEMA, DATA, PROPS={}, CALLBACK=()=>{} ) {
 
 		var orgData = Global.clone( DATA() )
+		var schemaObjects = {};
 		var schemaDefaultValue = {}
 		var templateFieldValue = {}
-		var LEVEL_MARGIN = 10;
+		var inheritFieldValue = {}
 
 		var getOriginalKeyVal = function getOriginalKeyVal(objectToBeCloned, originDATA) {
 		  // Basis.
@@ -61,6 +62,12 @@ export default class JsonEditor {
 							return true;
 						}
 					});
+				}
+				for(var i in inheritFieldValue){
+					if(i!==path.join('.')) continue;
+					inheritFieldValue[i].forEach( path=>{
+						_dotPathValue(temp, path.split('.'), value)
+					} )
 				}
 				// only callback when it's not update the template
 				if(shouldCallback){
@@ -169,6 +176,13 @@ export default class JsonEditor {
 		  path = path || [key]
 		  var level=path.length-1
 		  var initAttrs = level==0? Global._extend({ key:+new Date() }, PROPS) : {}
+		  schemaObjects[path.join('.')] = schema;
+		  if(schema.inherit){
+		  	var inheritPath = path.slice(0,-1).join('.') +'.'+ schema.inherit;
+		  	if( !inheritFieldValue[inheritPath] ) inheritFieldValue[inheritPath] = []
+		    Global.addToObject( inheritFieldValue[inheritPath], path.join('.') );
+		  	schema = schemaObjects[ inheritPath ]
+		  }
 		  switch(schema.type) {
 		    case 'array':
 		      schemaPathValue(path, schema.default||[]);

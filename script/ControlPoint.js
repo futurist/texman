@@ -17,7 +17,7 @@ export default class ControlPoint {
 		var self = this;
 		// this will bind to Class this
 		this.Prop.config = function(el, isInit, context){ Global.applyStyle(el,self.Prop.style ); context.retain=true; };
-
+		
 		var dom = m('div.controlPoint', Global.applyProp(this.Prop) );
 
 		return dom;
