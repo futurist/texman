@@ -4,11 +4,186 @@ import ControlPoint from './ControlPoint'
 import addEditorToLayerBase from './addEditorToLayerBase'
 
 
+var jsonData = {
+  "tag": "div",
+  "attrs": {
+    "style": {
+      "left": 0,
+      "top": 0,
+      "width": 100,
+      "height": 100,
+
+      "borderWidth": 10,
+      "borderStyle": "solid",
+      "borderColor": "#993333",
+
+      "borderTopWidth": 10,
+      "borderTopStyle": "solid",
+      "borderTopColor": "#993333",
+
+      "borderRightWidth": 10,
+      "borderRightStyle": "solid",
+      "borderRightColor": "#993333",
+
+      "borderBottomWidth": 10,
+      "borderBottomStyle": "solid",
+      "borderBottomColor": "#993333",
+
+      "borderLeftWidth": 10,
+      "borderLeftStyle": "solid",
+      "borderLeftColor": "#993333",
+
+      "backgroundColor": "#fff"
+    }
+  },
+  "children": "div content"
+}
+
+var jsonSchema ={
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "DIV",
+  "type": "object",
+  "properties": {
+    "tag": {
+      "title": "tag",
+      "type": "string",
+      "default": "div"
+    },
+    "attrs": {
+      "title": "attrs",
+      "type": "object",
+      "properties": {
+        "style": {
+          "title": "style",
+          "type": "object",
+          "properties": {
+            "left": {
+              "title": "left",
+              "type": "integer",
+              "default":100
+            },
+            "top": {
+              "title": "top",
+              "type": "integer",
+              "default":100
+            },
+            "width": {
+              "title": "width",
+              "type": "integer",
+              "minimum": 0,
+              "default":100
+            },
+            "height": {
+              "title": "height",
+              "type": "integer",
+              "minimum": 0,
+              "default":100
+            },
+            "borderWidth": {
+              "title": "border width",
+	            "type": "integer",
+              "minimum": 0,
+	            "default":1
+            },
+            "borderStyle": {
+              "title": "border style",
+              "type": "string",
+              "enum": [
+                "solid",
+                "dotted",
+                "dashed"
+              ],
+              "default": "solid"
+            },
+            "borderColor": {
+              "title": "border color",
+              "format": "color",
+              "type": "string",
+              "default": "#993333"
+            },
+            "borderLeftWidth":{
+              "title": "border left width",
+            	"inherit":"borderWidth"
+            },
+            "borderLeftStyle":{
+              "title": "border left style",
+            	"inherit":"borderStyle"
+            },
+            "borderLeftColor":{
+              "title": "border left color",
+            	"inherit":"borderColor"
+            },
+            "borderTopWidth":{
+              "title": "border top width",
+            	"inherit":"borderWidth"
+            },
+            "borderTopStyle":{
+              "title": "border top style",
+            	"inherit":"borderStyle"
+            },
+            "borderTopColor":{
+              "title": "border top color",
+            	"inherit":"borderColor"
+            },
+            "borderRightWidth":{
+              "title": "border right width",
+            	"inherit":"borderWidth"
+            },
+            "borderRightStyle":{
+              "title": "border right style",
+            	"inherit":"borderStyle"
+            },
+            "borderRightColor":{
+              "title": "border right color",
+            	"inherit":"borderColor"
+            },
+            "borderBottomWidth":{
+              "title": "border bottom width",
+            	"inherit":"borderWidth"
+            },
+            "borderBottomStyle":{
+              "title": "border bottom style",
+            	"inherit":"borderStyle"
+            },
+            "borderBottomColor":{
+              "title": "border bottom color",
+            	"inherit":"borderColor"
+            },
+
+            "backgroundColor": {
+              "title": "background color",
+              "type": "string",
+              "format": "color",
+              "default": "#ffffff"
+            },
+          }
+        }
+      }
+    },
+    "children": {
+      "title": "children",
+      "type": "string",
+      "format": "textarea",
+      "default": "div content"
+    }
+  }
+}
+
+
 export default class LayerBaseClass {
 	constructor(parent, prop){
 		this.parent = parent;
-		this.generateID = Global.NewID();
-		this.Prop = Global._deepCopy( { key:this.generateID, className:'', style:{left:0, top:0, width:0, height:0, backgroundColor:'#eee' } }, prop||{} );
+
+		this.ID = Global.NewID()
+		this.Prop = {}
+	    this.Prop.key = this.ID
+	    this.Prop.className = ''
+		this.Prop.style = Global.clone(jsonData.attrs.style);
+	    this.jsonSchema = m.prop(jsonSchema)
+	    this.jsonData = m.prop(jsonData)
+
+		this.Prop = Global._deepCopy( this.Prop, prop||{} );
+
 		this.Prop.config = (el, isInit, context)=> { Global.applyStyle(el, this.Prop.style); context.retain=true; }
 		this.Prop.onkeypress = function(e){ console.log(e,this)  }
 		this.ControlPoints = []
@@ -19,8 +194,9 @@ export default class LayerBaseClass {
 	getPageOffset () {
 		var cur=this, parent, offset={left:this.Prop.style.left, top:this.Prop.style.top, path:[ this.Prop.key ]};
 		while(parent = cur.parent) {
-			offset.left+=parent.Prop.style.left;
-			offset.top+=parent.Prop.style.top;
+			console.log(parent.Prop.style)
+			offset.left+=parent.Prop.style.left+(parent.Prop.style.borderLeftWidth||0);
+			offset.top+=parent.Prop.style.top+(parent.Prop.style.borderTopWidth||0);
 			offset.path.push(parent.Prop.key);
 			cur = parent;
 		}
@@ -50,8 +226,8 @@ export default class LayerBaseClass {
 	buildControlPoint (){
 
 		var ControlPosition = function(parent, child){
-			var pWidth = parent.width+parent.borderLeftWidth+parent.borderRightWidth;
-			var pHeight = parent.height+parent.borderTopWidth+parent.borderBottomWidth;
+			var pWidth = parent.width+(0&&parent.borderLeftWidth||0)+(0&&parent.borderRightWidth||0);
+			var pHeight = parent.height+(0&&parent.borderTopWidth||0)+(0&&parent.borderBottomWidth||0);
 			this[0] = this.LT = [-child.width/2, -child.height/2] 	//Left Top
 			this[1] = this.CT = [pWidth/2 - child.width/2, -child.height/2] 	//top center
 			this[2] = this.RT = [ pWidth - child.width/2, -child.height/2] 	//right top
@@ -70,8 +246,8 @@ export default class LayerBaseClass {
 
 		for(var i=0; i<8; i++){
 			var point = new ControlPoint( this, {style: pointProp, position:i } )
-			point.Prop.style.left = pointPosition[i][0] - this.Prop.style.borderLeftWidth||0
-			point.Prop.style.top = pointPosition[i][1] - this.Prop.style.borderTopWidth||0
+			point.Prop.style.left = pointPosition[i][0] - (this.Prop.style.borderLeftWidth||0)
+			point.Prop.style.top = pointPosition[i][1] - (this.Prop.style.borderTopWidth||0)
 			this.ControlPoints.push(point)
 		}
 
@@ -108,8 +284,8 @@ export default class LayerBaseClass {
 	getElementInside ( rect ) {
 		if( !this.isSelected() ) return [];
 		rect = Global._deepCopy({}, rect)
-		rect.left -= this.Prop.style.left+this.Prop.style.borderLeftWidth
-		rect.top -= this.Prop.style.top+this.Prop.style.borderTopWidth
+		rect.left -= this.Prop.style.left+(this.Prop.style.borderLeftWidth||0)
+		rect.top -= this.Prop.style.top+(this.Prop.style.borderTopWidth||0)
 		return this.ControlPoints.filter( v=> {
 			if( Global.rectsIntersect( rect, v.Prop.style) ){
 				return true

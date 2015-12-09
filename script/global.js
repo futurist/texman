@@ -103,12 +103,22 @@ export function _deepCopy(obj) {
         var props = arguments[i];
         for(var prop in props) {
             if( props.hasOwnProperty(prop) ) {
-                obj[prop] = clone(props[prop]);
+                var type = Object.prototype.toString.call( props[prop] );
+                if( type==='[object Object]' ){
+                    obj[prop]= obj[prop] || {}
+                    _deepCopy(obj[prop], props[prop]);
+                } else if( type==='[object Array]' ){
+                    obj[prop]= obj[prop] || []
+                    _deepCopy(obj[prop], props[prop]);
+                } else {
+                    obj[prop] = clone(props[prop]);
+                }
             }
         }
     }
     return obj;
 }
+
 export function _extend(obj) {
     obj = obj || {};
     if(arguments.length<2) return obj;
@@ -116,7 +126,16 @@ export function _extend(obj) {
         var props = arguments[i];
         for(var prop in props) {
             if( props.hasOwnProperty(prop) ) {
-                obj[prop] = (props[prop]);
+                var type = Object.prototype.toString.call( props[prop] );
+                if( type==='[object Object]' ){
+                    obj[prop]= obj[prop] || {}
+                    _extend(obj[prop], props[prop]);
+                } else if( type==='[object Array]' ){
+                    obj[prop]= obj[prop] || []
+                    _extend(obj[prop], props[prop]);
+                } else {
+                    obj[prop] = (props[prop]);
+                }
             }
         }
     }
@@ -231,7 +250,9 @@ export var getOuterRect = function( style ){
     return {
         left: style.left ,
         top: style.top ,
-        width: style.width + style.borderLeftWidth + style.borderRightWidth,
-        height: style.height + style.borderTopWidth + style.borderBottomWidth,
+        width: style.width,
+        height: style.height,
+        // width: style.width + style.borderLeftWidth + style.borderRightWidth,
+        // height: style.height + style.borderTopWidth + style.borderBottomWidth,
     }
 }

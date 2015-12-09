@@ -1643,12 +1643,22 @@
 	        var props = arguments[i];
 	        for (var prop in props) {
 	            if (props.hasOwnProperty(prop)) {
-	                obj[prop] = clone(props[prop]);
+	                var type = Object.prototype.toString.call(props[prop]);
+	                if (type === '[object Object]') {
+	                    obj[prop] = obj[prop] || {};
+	                    _deepCopy(obj[prop], props[prop]);
+	                } else if (type === '[object Array]') {
+	                    obj[prop] = obj[prop] || [];
+	                    _deepCopy(obj[prop], props[prop]);
+	                } else {
+	                    obj[prop] = clone(props[prop]);
+	                }
 	            }
 	        }
 	    }
 	    return obj;
 	}
+
 	function _extend(obj) {
 	    obj = obj || {};
 	    if (arguments.length < 2) return obj;
@@ -1656,7 +1666,16 @@
 	        var props = arguments[i];
 	        for (var prop in props) {
 	            if (props.hasOwnProperty(prop)) {
-	                obj[prop] = props[prop];
+	                var type = Object.prototype.toString.call(props[prop]);
+	                if (type === '[object Object]') {
+	                    obj[prop] = obj[prop] || {};
+	                    _extend(obj[prop], props[prop]);
+	                } else if (type === '[object Array]') {
+	                    obj[prop] = obj[prop] || [];
+	                    _extend(obj[prop], props[prop]);
+	                } else {
+	                    obj[prop] = props[prop];
+	                }
 	            }
 	        }
 	    }
@@ -1774,8 +1793,8 @@
 	    return {
 	        left: style.left,
 	        top: style.top,
-	        width: style.width + style.borderLeftWidth + style.borderRightWidth,
-	        height: style.height + style.borderTopWidth + style.borderBottomWidth
+	        width: style.width,
+	        height: style.height
 	    };
 	};
 
@@ -1805,10 +1824,6 @@
 
 	var _LayerBaseClass3 = _interopRequireDefault(_LayerBaseClass2);
 
-	var _JsonEditor = __webpack_require__(10);
-
-	var _JsonEditor2 = _interopRequireDefault(_JsonEditor);
-
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -1819,6 +1834,92 @@
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+	var WidgetDiv = (function (_LayerBaseClass) {
+	  _inherits(WidgetDiv, _LayerBaseClass);
+
+	  function WidgetDiv(parent, prop) {
+	    _classCallCheck(this, WidgetDiv);
+
+	    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(WidgetDiv).call(this, parent, prop));
+
+	    _this.parent = parent;
+	    return _this;
+	  }
+
+	  _createClass(WidgetDiv, [{
+	    key: 'onRectChange',
+	    value: function onRectChange() {
+	      _get(Object.getPrototypeOf(WidgetDiv.prototype), 'onRectChange', this).call(this);
+	    }
+	  }, {
+	    key: 'onSelected',
+	    value: function onSelected() {
+	      _get(Object.getPrototypeOf(WidgetDiv.prototype), 'onSelected', this).call(this);
+	    }
+	  }, {
+	    key: 'onUnSelected',
+	    value: function onUnSelected() {
+	      _mithril2.default.mount(document.querySelector('.editor'), null);
+	      _get(Object.getPrototypeOf(WidgetDiv.prototype), 'onUnSelected', this).call(this);
+	    }
+	  }, {
+	    key: 'controller',
+	    value: function controller() {
+	      this.onunload = function () {};
+	    }
+	  }, {
+	    key: 'view',
+	    value: function view(ctrl) {
+	      var self = this;
+	      var Prop = Global.applyProp(this.Prop);
+	      var dom = (0, _mithril2.default)('div.layer', Prop, [(0, _mithril2.default)('.content', { config: function config(el, isInit, context) {
+	          context.retain = true;
+	        } }), (0, _mithril2.default)('.bbox', { config: function config(el, isInit, context) {
+	          context.retain = true;
+	        } }), this.buildControlPoint()]);
+	      return this.isValidRect() ? dom : [];
+	    }
+	  }]);
+
+	  return WidgetDiv;
+	})(_LayerBaseClass3.default);
+
+	exports.default = WidgetDiv;
+
+/***/ },
+/* 6 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _mithril = __webpack_require__(2);
+
+	var _mithril2 = _interopRequireDefault(_mithril);
+
+	var _global = __webpack_require__(4);
+
+	var Global = _interopRequireWildcard(_global);
+
+	var _ControlPoint = __webpack_require__(7);
+
+	var _ControlPoint2 = _interopRequireDefault(_ControlPoint);
+
+	var _addEditorToLayerBase = __webpack_require__(8);
+
+	var _addEditorToLayerBase2 = _interopRequireDefault(_addEditorToLayerBase);
+
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
 	var jsonData = {
 	  "tag": "div",
 	  "attrs": {
@@ -1828,23 +1929,23 @@
 	      "width": 100,
 	      "height": 100,
 
-	      "borderWidth": 1,
+	      "borderWidth": 10,
 	      "borderStyle": "solid",
 	      "borderColor": "#993333",
 
-	      "borderTopWidth": 1,
+	      "borderTopWidth": 10,
 	      "borderTopStyle": "solid",
 	      "borderTopColor": "#993333",
 
-	      "borderRightWidth": 1,
+	      "borderRightWidth": 10,
 	      "borderRightStyle": "solid",
 	      "borderRightColor": "#993333",
 
-	      "borderBottomWidth": 1,
+	      "borderBottomWidth": 10,
 	      "borderBottomStyle": "solid",
 	      "borderBottomColor": "#993333",
 
-	      "borderLeftWidth": 1,
+	      "borderLeftWidth": 10,
 	      "borderLeftStyle": "solid",
 	      "borderLeftColor": "#993333",
 
@@ -1980,256 +2081,175 @@
 	  }
 	};
 
-	var WidgetDiv = (function (_LayerBaseClass) {
-	  _inherits(WidgetDiv, _LayerBaseClass);
+	var LayerBaseClass = (function () {
+	  function LayerBaseClass(parent, prop) {
+	    var _this = this;
 
-	  function WidgetDiv(parent, prop) {
-	    _classCallCheck(this, WidgetDiv);
+	    _classCallCheck(this, LayerBaseClass);
 
-	    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(WidgetDiv).call(this, parent, prop));
+	    this.parent = parent;
 
-	    _this.parent = parent;
-	    _this.ID = Global.NewID();
-	    _this.Prop.key = _this.ID;
-	    _this.Prop.style = Global.clone(jsonData.attrs.style);
-	    _this.jsonSchema = _mithril2.default.prop(jsonSchema);
-	    _this.jsonData = _mithril2.default.prop(jsonData);
-	    return _this;
+	    this.ID = Global.NewID();
+	    this.Prop = {};
+	    this.Prop.key = this.ID;
+	    this.Prop.className = '';
+	    this.Prop.style = Global.clone(jsonData.attrs.style);
+	    this.jsonSchema = _mithril2.default.prop(jsonSchema);
+	    this.jsonData = _mithril2.default.prop(jsonData);
+
+	    this.Prop = Global._deepCopy(this.Prop, prop || {});
+
+	    this.Prop.config = function (el, isInit, context) {
+	      Global.applyStyle(el, _this.Prop.style);context.retain = true;
+	    };
+	    this.Prop.onkeypress = function (e) {
+	      console.log(e, this);
+	    };
+	    this.ControlPoints = [];
+	    this.activeControlPoint = undefined;
+	    (0, _addEditorToLayerBase2.default)();
 	  }
 
-	  _createClass(WidgetDiv, [{
-	    key: 'onRectChange',
-	    value: function onRectChange() {
-	      _get(Object.getPrototypeOf(WidgetDiv.prototype), 'onRectChange', this).call(this);
+	  _createClass(LayerBaseClass, [{
+	    key: 'getPageOffset',
+	    value: function getPageOffset() {
+	      var cur = this,
+	          parent,
+	          offset = { left: this.Prop.style.left, top: this.Prop.style.top, path: [this.Prop.key] };
+	      while (parent = cur.parent) {
+	        console.log(parent.Prop.style);
+	        offset.left += parent.Prop.style.left + (parent.Prop.style.borderLeftWidth || 0);
+	        offset.top += parent.Prop.style.top + (parent.Prop.style.borderTopWidth || 0);
+	        offset.path.push(parent.Prop.key);
+	        cur = parent;
+	      }
+	      offset.path.reverse();
+	      return offset;
 	    }
+	  }, {
+	    key: 'getRoot',
+	    value: function getRoot() {
+	      var cur = this,
+	          parent;
+	      while (parent = cur.parent) {
+	        cur = parent;
+	      }
+	      return cur;
+	    }
+	  }, {
+	    key: 'isValidRect',
+	    value: function isValidRect() {
+	      return this.Prop.style.width && this.Prop.style.height;
+	    }
+	  }, {
+	    key: 'iterateParent',
+	    value: function iterateParent(callback) {
+	      var cur = this,
+	          parent;
+	      while (parent = cur.parent) {
+	        callback && callback(parent);
+	        cur = parent;
+	      }
+	      return cur;
+	    }
+	  }, {
+	    key: 'buildControlPoint',
+	    value: function buildControlPoint() {
+
+	      var ControlPosition = function ControlPosition(parent, child) {
+	        var pWidth = parent.width + (0 && parent.borderLeftWidth || 0) + (0 && parent.borderRightWidth || 0);
+	        var pHeight = parent.height + (0 && parent.borderTopWidth || 0) + (0 && parent.borderBottomWidth || 0);
+	        this[0] = this.LT = [-child.width / 2, -child.height / 2]; //Left Top
+	        this[1] = this.CT = [pWidth / 2 - child.width / 2, -child.height / 2]; //top center
+	        this[2] = this.RT = [pWidth - child.width / 2, -child.height / 2]; //right top
+
+	        this[6] = this.LB = [-child.width / 2, pHeight - child.height / 2]; //Left Top
+	        this[5] = this.CB = [pWidth / 2 - child.width / 2, pHeight - child.height / 2]; //top center
+	        this[4] = this.RB = [pWidth - child.width / 2, pHeight - child.height / 2]; //right top
+
+	        this[7] = this.LM = [-child.width / 2, pHeight / 2 - child.height / 2]; //Left Top
+	        this[3] = this.RM = [pWidth - child.width / 2, pHeight / 2 - child.height / 2]; //left center
+	      };
+	      this.ControlPoints = [];
+
+	      var pointProp = { width: Global.POINT_WIDTH, height: Global.POINT_HEIGHT };
+	      var pointPosition = new ControlPosition(this.Prop.style, pointProp);
+
+	      for (var i = 0; i < 8; i++) {
+	        var point = new _ControlPoint2.default(this, { style: pointProp, position: i });
+	        point.Prop.style.left = pointPosition[i][0] - (this.Prop.style.borderLeftWidth || 0);
+	        point.Prop.style.top = pointPosition[i][1] - (this.Prop.style.borderTopWidth || 0);
+	        this.ControlPoints.push(point);
+	      }
+
+	      // move control point to top
+	      if (Global.isNumeric(this.activeControlPoint)) {
+	        var point = this.ControlPoints[this.activeControlPoint];
+	        point.Prop.className = 'activePoint';
+	        this.ControlPoints.splice(this.activeControlPoint, 1);
+	        this.ControlPoints.push(point);
+	      }
+
+	      return this.ControlPoints.map(function (v) {
+	        return v.getView();
+	      });
+	    }
+	  }, {
+	    key: 'remove',
+	    value: function remove() {
+	      this.parent.selectedWidget.splice(this.parent.selectedWidget.indexOf(this), 1);
+	      this.parent.children.splice(this.parent.children.indexOf(this), 1);
+	    }
+	  }, {
+	    key: 'isSelected',
+	    value: function isSelected() {
+	      return this.Prop.className.indexOf(Global.SELECTED_CLASSNAME) >= 0;
+	    }
+	  }, {
+	    key: 'onRectChange',
+	    value: function onRectChange() {}
 	  }, {
 	    key: 'onSelected',
 	    value: function onSelected() {
-	      _get(Object.getPrototypeOf(WidgetDiv.prototype), 'onSelected', this).call(this);
+	      this.Prop.className = Global.addClass(this.Prop.className, Global.SELECTED_CLASSNAME);
 	    }
 	  }, {
 	    key: 'onUnSelected',
 	    value: function onUnSelected() {
-	      _mithril2.default.mount(document.querySelector('.editor'), null);
-	      _get(Object.getPrototypeOf(WidgetDiv.prototype), 'onUnSelected', this).call(this);
+	      this.Prop.className = Global.removeClass(this.Prop.className, Global.SELECTED_CLASSNAME);
+	      this.activeControlPoint = undefined;
+	    }
+	  }, {
+	    key: 'getElementInside',
+	    value: function getElementInside(rect) {
+	      if (!this.isSelected()) return [];
+	      rect = Global._deepCopy({}, rect);
+	      rect.left -= this.Prop.style.left + (this.Prop.style.borderLeftWidth || 0);
+	      rect.top -= this.Prop.style.top + (this.Prop.style.borderTopWidth || 0);
+	      return this.ControlPoints.filter(function (v) {
+	        if (Global.rectsIntersect(rect, v.Prop.style)) {
+	          return true;
+	        }
+	      });
 	    }
 	  }, {
 	    key: 'controller',
 	    value: function controller() {
-	      this.onunload = function () {};
+	      return;
 	    }
 	  }, {
 	    key: 'view',
-	    value: function view(ctrl) {
-	      var self = this;
-	      var Prop = Global.applyProp(this.Prop);
-	      var dom = (0, _mithril2.default)('div.layer', Prop, [(0, _mithril2.default)('.content', { config: function config(el, isInit, context) {
-	          context.retain = true;
-	        } }), (0, _mithril2.default)('.bbox', { config: function config(el, isInit, context) {
-	          context.retain = true;
-	        } }), this.buildControlPoint()]);
-	      return this.isValidRect() ? dom : [];
+	    value: function view() {
+	      return;
+	    }
+	  }, {
+	    key: 'getView',
+	    value: function getView() {
+	      return this.view(new this.controller());
 	    }
 	  }]);
 
-	  return WidgetDiv;
-	})(_LayerBaseClass3.default);
-
-	exports.default = WidgetDiv;
-
-/***/ },
-/* 6 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-	Object.defineProperty(exports, "__esModule", {
-		value: true
-	});
-
-	var _mithril = __webpack_require__(2);
-
-	var _mithril2 = _interopRequireDefault(_mithril);
-
-	var _global = __webpack_require__(4);
-
-	var Global = _interopRequireWildcard(_global);
-
-	var _ControlPoint = __webpack_require__(7);
-
-	var _ControlPoint2 = _interopRequireDefault(_ControlPoint);
-
-	var _addEditorToLayerBase = __webpack_require__(8);
-
-	var _addEditorToLayerBase2 = _interopRequireDefault(_addEditorToLayerBase);
-
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	var LayerBaseClass = (function () {
-		function LayerBaseClass(parent, prop) {
-			var _this = this;
-
-			_classCallCheck(this, LayerBaseClass);
-
-			this.parent = parent;
-			this.generateID = Global.NewID();
-			this.Prop = Global._deepCopy({ key: this.generateID, className: '', style: { left: 0, top: 0, width: 0, height: 0, backgroundColor: '#eee' } }, prop || {});
-			this.Prop.config = function (el, isInit, context) {
-				Global.applyStyle(el, _this.Prop.style);context.retain = true;
-			};
-			this.Prop.onkeypress = function (e) {
-				console.log(e, this);
-			};
-			this.ControlPoints = [];
-			this.activeControlPoint = undefined;
-			(0, _addEditorToLayerBase2.default)();
-		}
-
-		_createClass(LayerBaseClass, [{
-			key: 'getPageOffset',
-			value: function getPageOffset() {
-				var cur = this,
-				    parent,
-				    offset = { left: this.Prop.style.left, top: this.Prop.style.top, path: [this.Prop.key] };
-				while (parent = cur.parent) {
-					offset.left += parent.Prop.style.left;
-					offset.top += parent.Prop.style.top;
-					offset.path.push(parent.Prop.key);
-					cur = parent;
-				}
-				offset.path.reverse();
-				return offset;
-			}
-		}, {
-			key: 'getRoot',
-			value: function getRoot() {
-				var cur = this,
-				    parent;
-				while (parent = cur.parent) {
-					cur = parent;
-				}
-				return cur;
-			}
-		}, {
-			key: 'isValidRect',
-			value: function isValidRect() {
-				return this.Prop.style.width && this.Prop.style.height;
-			}
-		}, {
-			key: 'iterateParent',
-			value: function iterateParent(callback) {
-				var cur = this,
-				    parent;
-				while (parent = cur.parent) {
-					callback && callback(parent);
-					cur = parent;
-				}
-				return cur;
-			}
-		}, {
-			key: 'buildControlPoint',
-			value: function buildControlPoint() {
-
-				var ControlPosition = function ControlPosition(parent, child) {
-					var pWidth = parent.width + parent.borderLeftWidth + parent.borderRightWidth;
-					var pHeight = parent.height + parent.borderTopWidth + parent.borderBottomWidth;
-					this[0] = this.LT = [-child.width / 2, -child.height / 2]; //Left Top
-					this[1] = this.CT = [pWidth / 2 - child.width / 2, -child.height / 2]; //top center
-					this[2] = this.RT = [pWidth - child.width / 2, -child.height / 2]; //right top
-
-					this[6] = this.LB = [-child.width / 2, pHeight - child.height / 2]; //Left Top
-					this[5] = this.CB = [pWidth / 2 - child.width / 2, pHeight - child.height / 2]; //top center
-					this[4] = this.RB = [pWidth - child.width / 2, pHeight - child.height / 2]; //right top
-
-					this[7] = this.LM = [-child.width / 2, pHeight / 2 - child.height / 2]; //Left Top
-					this[3] = this.RM = [pWidth - child.width / 2, pHeight / 2 - child.height / 2]; //left center
-				};
-				this.ControlPoints = [];
-
-				var pointProp = { width: Global.POINT_WIDTH, height: Global.POINT_HEIGHT };
-				var pointPosition = new ControlPosition(this.Prop.style, pointProp);
-
-				for (var i = 0; i < 8; i++) {
-					var point = new _ControlPoint2.default(this, { style: pointProp, position: i });
-					point.Prop.style.left = pointPosition[i][0] - this.Prop.style.borderLeftWidth || 0;
-					point.Prop.style.top = pointPosition[i][1] - this.Prop.style.borderTopWidth || 0;
-					this.ControlPoints.push(point);
-				}
-
-				// move control point to top
-				if (Global.isNumeric(this.activeControlPoint)) {
-					var point = this.ControlPoints[this.activeControlPoint];
-					point.Prop.className = 'activePoint';
-					this.ControlPoints.splice(this.activeControlPoint, 1);
-					this.ControlPoints.push(point);
-				}
-
-				return this.ControlPoints.map(function (v) {
-					return v.getView();
-				});
-			}
-		}, {
-			key: 'remove',
-			value: function remove() {
-				this.parent.selectedWidget.splice(this.parent.selectedWidget.indexOf(this), 1);
-				this.parent.children.splice(this.parent.children.indexOf(this), 1);
-			}
-		}, {
-			key: 'isSelected',
-			value: function isSelected() {
-				return this.Prop.className.indexOf(Global.SELECTED_CLASSNAME) >= 0;
-			}
-		}, {
-			key: 'onRectChange',
-			value: function onRectChange() {}
-		}, {
-			key: 'onSelected',
-			value: function onSelected() {
-				this.Prop.className = Global.addClass(this.Prop.className, Global.SELECTED_CLASSNAME);
-			}
-		}, {
-			key: 'onUnSelected',
-			value: function onUnSelected() {
-				this.Prop.className = Global.removeClass(this.Prop.className, Global.SELECTED_CLASSNAME);
-				this.activeControlPoint = undefined;
-			}
-		}, {
-			key: 'getElementInside',
-			value: function getElementInside(rect) {
-				if (!this.isSelected()) return [];
-				rect = Global._deepCopy({}, rect);
-				rect.left -= this.Prop.style.left + this.Prop.style.borderLeftWidth;
-				rect.top -= this.Prop.style.top + this.Prop.style.borderTopWidth;
-				return this.ControlPoints.filter(function (v) {
-					if (Global.rectsIntersect(rect, v.Prop.style)) {
-						return true;
-					}
-				});
-			}
-		}, {
-			key: 'controller',
-			value: function controller() {
-				return;
-			}
-		}, {
-			key: 'view',
-			value: function view() {
-				return;
-			}
-		}, {
-			key: 'getView',
-			value: function getView() {
-				return this.view(new this.controller());
-			}
-		}]);
-
-		return LayerBaseClass;
+	  return LayerBaseClass;
 	})();
 
 	exports.default = LayerBaseClass;
