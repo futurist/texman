@@ -11,7 +11,8 @@
   "dependencies": {
     "babel-plugin-transform-runtime": "^6.3.13",
     "babel-runtime": "^6.3.13",
-    "pinyin": "^2.6.2"
+    "pinyin": "^2.6.2",
+    "sprint-js": "^0.1.0"
   },
   "devDependencies": {
     "babel-core": "^6.2.1",

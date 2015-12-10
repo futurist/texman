@@ -1937,23 +1937,21 @@
 	      "height": 100,
 
 	      "borderWidth": 1,
-	      "borderStyle": "solid",
-	      "borderColor": "#993333",
-
 	      "borderTopWidth": 1,
-	      "borderTopStyle": "solid",
-	      "borderTopColor": "#993333",
-
 	      "borderRightWidth": 1,
-	      "borderRightStyle": "solid",
-	      "borderRightColor": "#993333",
-
 	      "borderBottomWidth": 1,
-	      "borderBottomStyle": "solid",
-	      "borderBottomColor": "#993333",
-
 	      "borderLeftWidth": 1,
+
+	      "borderStyle": "solid",
+	      "borderTopStyle": "solid",
+	      "borderRightStyle": "solid",
+	      "borderBottomStyle": "solid",
 	      "borderLeftStyle": "solid",
+
+	      "borderColor": "#993333",
+	      "borderTopColor": "#993333",
+	      "borderRightColor": "#993333",
+	      "borderBottomColor": "#993333",
 	      "borderLeftColor": "#993333",
 
 	      "backgroundColor": "#fff"
@@ -2011,14 +2009,15 @@
 	            "borderStyle": {
 	              "title": "border style",
 	              "type": "string",
-	              "enum": ["solid", "dotted", "dashed"],
+	              "enum": ["", "none", "solid", "dotted", "dashed"],
 	              "default": "solid"
 	            },
 	            "borderColor": {
 	              "title": "border color",
 	              "format": "color",
 	              "type": "string",
-	              "default": "#993333"
+	              "default": "#993333",
+	              "empty": "#ffffff"
 	            },
 	            "borderLeftWidth": {
 	              "title": "border left width",
@@ -2331,7 +2330,7 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-		value: true
+	  value: true
 	});
 	exports.default = addEditorToLayerBase;
 
@@ -2358,26 +2357,47 @@
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 	function renderJsonEditor() {
-		var self = this;
-		if (this.isValidRect() && this.jsonData && this.jsonSchema) {
-			Global._extend(this.jsonData().attrs.style, this.Prop.style);
-			_mithril2.default.mount(document.querySelector('.editor'), new _JsonEditor2.default(this.jsonSchema, this.jsonData, null, function (val, path) {
-				Global._extend(self.Prop.style, val.attrs.style);
-				_mithril2.default.redraw();
-			}));
-		}
+	  var self = this;
+	  if (this.isValidRect() && this.jsonData && this.jsonSchema) {
+	    Global._extend(this.jsonData().attrs.style, this.Prop.style);
+	    _mithril2.default.mount(document.querySelector('.editor'), new _JsonEditor2.default(this.jsonSchema, this.jsonData, { config: function config(el) {
+	        $(el).find('.inherit').each(function () {
+	          var inheritClass = $(this).attr('class').split(/\s+/).filter(function (v) {
+	            return v.indexOf('inherit-') >= 0;
+	          }).pop();
+	          if (inheritClass) {
+	            var parentClass = inheritClass.split('-').pop();
+	            var pEl = $('[data-key="' + parentClass + '"]');
+	            var con = pEl.next('.inheritCon');
+	            if (!con.length) {
+	              con = $('<div class="inheritCon"></div>');
+	              pEl.after(con);
+	              $('.' + inheritClass).appendTo(con);
+	            }
+	            // $(`.${inheritClass}`).after(pEl)
+	            pEl.addClass('plus').off().on('click', '.itemTitle', function (e) {
+	              pEl.toggleClass('minus');
+	              con.toggleClass('visible');
+	            });
+	          }
+	        });
+	      } }, function (path, value, getData, data) {
+	      Global._extend(self.Prop.style, getData.attrs.style);
+	      _mithril2.default.redraw();
+	    }));
+	  }
 	}
 
 	function addEditorToLayerBase() {
-		(0, _extend.override)(_LayerBaseClass2.default.prototype, 'onRectChange', function (original) {
-			original();
-			renderJsonEditor.apply(this);
-		});
+	  (0, _extend.override)(_LayerBaseClass2.default.prototype, 'onRectChange', function (original) {
+	    original();
+	    renderJsonEditor.apply(this);
+	  });
 
-		(0, _extend.override)(_LayerBaseClass2.default.prototype, 'onSelected', function (original) {
-			original();
-			renderJsonEditor.apply(this);
-		});
+	  (0, _extend.override)(_LayerBaseClass2.default.prototype, 'onSelected', function (original) {
+	    original();
+	    renderJsonEditor.apply(this);
+	  });
 	}
 
 /***/ },
@@ -2547,7 +2567,7 @@
 				return val === undefined ? schemaPathValue(path) || '' : val;
 			} else {
 				var temp = DATA();
-				_dotPathValue(temp, path, value);
+				_dotPathValue(temp, path, value === null ? schemaObjects[path.join('.')].empty || '' : value);
 				DATA(temp);
 				// below line will update the key for force update view
 				var shouldCallback = true;
@@ -2562,7 +2582,7 @@
 					});
 				}
 				for (var i in inheritFieldValue) {
-					if (i !== path.join('.')) continue;
+					if (i !== path.join('.') || value === null) continue;
 					inheritFieldValue[i].forEach(function (path) {
 						_dotPathValue(temp, path.split('.'), value);
 					});
@@ -2570,7 +2590,7 @@
 				// only callback when it's not update the template
 				if (shouldCallback) {
 					if (temp.attrs) temp.attrs.key = +new Date();
-					if (CALLBACK) CALLBACK(getOriginalKeyVal(temp, orgData), path.join('.'), temp, templateFieldValue);
+					if (CALLBACK) CALLBACK(path.join('.'), value, getOriginalKeyVal(temp, orgData), temp, templateFieldValue, inheritFieldValue, schemaObjects);
 				}
 				return value;
 			}
@@ -2669,33 +2689,38 @@
 		this.parseSchema = function parseSchema(schema, key, path) {
 			var _this = this;
 
-			var getClassName = function getClassName() {
+			var getAttrs = function getAttrs() {
+				var attrs = {};
 				var classObj = {};
 				classObj['level' + level] = true;
 				if (schema.class) classObj[schema.class] = true;
 				if (schema.template) classObj.isTemplate = true;
 				if (schema.format == 'color') classObj.isColor = true;
-				if (prevSchema.inherit) classObj['inherit-' + prevSchema.inherit] = true;
-				return Object.keys(classObj).filter(function (v) {
+				if (orgSchema.inherit) classObj['inherit inherit-' + orgSchema.inherit] = true;
+				attrs['className'] = Object.keys(classObj).filter(function (v) {
 					return classObj[v];
 				}).join(' ');
+				attrs['data-key'] = key;
+				attrs['key'] = path.join('.');
+				return attrs;
 			};
 			path = path || [key];
 			var level = path.length - 1;
 			var initAttrs = level == 0 ? Global._extend({ key: +new Date() }, PROPS) : {};
 			schemaObjects[path.join('.')] = schema;
-			var prevSchema = schema;
+			var orgSchema = schema;
+			var inheritPath;
 			if (schema.inherit) {
-				var inheritPath = path.slice(0, -1).join('.') + '.' + schema.inherit;
+				inheritPath = path.slice(0, -1).join('.') + '.' + schema.inherit;
 				if (!inheritFieldValue[inheritPath]) inheritFieldValue[inheritPath] = [];
 				Global.addToObject(inheritFieldValue[inheritPath], path.join('.'));
 				schema = Global.clone(schemaObjects[inheritPath]);
-				schema = Global._extend(schema, prevSchema);
+				schema = Global._extend(schema, orgSchema);
 			}
 			switch (schema.type) {
 				case 'array':
 					schemaPathValue(path, schema.default || []);
-					return (0, _mithril2.default)('div.array', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), className: getClassName() }), [(0, _mithril2.default)('h2.arrayTitle', schema.title), (0, _mithril2.default)('div.props', [schema.format == 'table' ? (function () {
+					return (0, _mithril2.default)('div.array', Global._extend(initAttrs, getAttrs()), [(0, _mithril2.default)('h2.arrayTitle', schema.title), (0, _mithril2.default)('div.props', [schema.format == 'table' ? (function () {
 						var keys = Object.keys(schema.items.properties);
 						return dataPathValue(path).map(function (v, i) {
 							var keys = Object.keys(schema.items.properties);
@@ -2708,7 +2733,7 @@
 				case 'object':
 					schemaPathValue(path, schema.default || {});
 					var keys = Object.keys(schema.properties);
-					return (0, _mithril2.default)('div.object', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), className: getClassName() }), [(0, _mithril2.default)('h2.objectTitle', schema.title), (0, _mithril2.default)('div.props', [keys.map(function (v) {
+					return (0, _mithril2.default)('div.object', Global._extend(initAttrs, getAttrs()), [(0, _mithril2.default)('h2.objectTitle', schema.title), (0, _mithril2.default)('div.props', [keys.map(function (v) {
 						return _this.parseSchema(schema.properties[v], v, path.concat(v));
 					})])]);
 
@@ -2717,30 +2742,34 @@
 				case 'number':
 				case 'integer':
 					schemaPathValue(path, schema.default);
-					return (0, _mithril2.default)('div.row', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), className: getClassName() }), [(0, _mithril2.default)('strong.itemTitle', schema.title || key), (0, _mithril2.default)('.itemValue', [(0, _mithril2.default)('input', buildAttrs(path, schema, { type: 'number', oninput: function oninput() {
+					return (0, _mithril2.default)('div.row', Global._extend(initAttrs, getAttrs()), [(0, _mithril2.default)('strong.itemTitle', schema.title || key), (0, _mithril2.default)('.itemValue', [(0, _mithril2.default)('input', buildAttrs(path, schema, { type: 'number', oninput: function oninput() {
 							dataPathValue(path, schema.type == 'number' ? this.value : parseInt(this.value, 10));
+							if (inheritPath) dataPathValue(inheritPath, null);
 						} }))])]);
 
 					break;
 
 				case 'boolean':
 					schemaPathValue(path, schema.default);
-					return (0, _mithril2.default)('div.row', Global._deepCopy(initAttrs, { 'data-key': key, key: path.join('.'), className: getClassName() }), [(0, _mithril2.default)('strong.itemTitle', schema.title || key), (0, _mithril2.default)('.itemValue', [(0, _mithril2.default)('input', buildAttrs(path, schema, { type: 'checkbox', onchange: function onchange() {
+					return (0, _mithril2.default)('div.row', Global._extend(initAttrs, getAttrs()), [(0, _mithril2.default)('strong.itemTitle', schema.title || key), (0, _mithril2.default)('.itemValue', [(0, _mithril2.default)('input', buildAttrs(path, schema, { type: 'checkbox', onchange: function onchange() {
 							dataPathValue(path, this.checked);
+							if (inheritPath) dataPathValue(inheritPath, null);
 						} }))])]);
 
 					break;
 				case 'string':
 					schemaPathValue(path, schema.default);
-					return (0, _mithril2.default)('div.row', Global._deepCopy(initAttrs, { 'data-key': key, className: getClassName(), key: path.join('.') }), [(0, _mithril2.default)('strong.itemTitle', schema.title || key), (0, _mithril2.default)('.itemValue', [schema.enum ? (0, _mithril2.default)('select', buildAttrs(path, schema, {
+					return (0, _mithril2.default)('div.row', Global._extend(initAttrs, getAttrs()), [(0, _mithril2.default)('strong.itemTitle', schema.title || key), (0, _mithril2.default)('.itemValue', [schema.enum ? (0, _mithril2.default)('select', buildAttrs(path, schema, {
 						oninput: function oninput() {
 							dataPathValue(path, this.value);
+							if (inheritPath) dataPathValue(inheritPath, null);
 						} }, ['enum', 'type']), schema.enum.map(function (v) {
 						return (0, _mithril2.default)('option', v);
 					})) : (0, _mithril2.default)(schema.format == 'textarea' ? 'textarea' : 'input', buildAttrs(path, schema, {
 						type: schema.format == 'color' ? 'color' : 'text',
 						oninput: function oninput() {
 							dataPathValue(path, this.value);
+							if (inheritPath) dataPathValue(inheritPath, null);
 						} }))])]);
 
 					break;

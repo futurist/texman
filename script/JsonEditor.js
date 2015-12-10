@@ -49,7 +49,7 @@ export default class JsonEditor {
 				return val===undefined? (schemaPathValue(path)||'' ) : val;
 			} else {
 				var temp = DATA()
-				_dotPathValue(temp, path, value)
+				_dotPathValue(temp, path, value===null? schemaObjects[path.join('.')].empty||'' :value)
 				DATA(temp)
 				// below line will update the key for force update view
 				var shouldCallback = true;
@@ -64,7 +64,7 @@ export default class JsonEditor {
 					});
 				}
 				for(var i in inheritFieldValue){
-					if(i!==path.join('.')) continue;
+					if(i!==path.join('.') || value===null) continue;
 					inheritFieldValue[i].forEach( path=>{
 						_dotPathValue(temp, path.split('.'), value)
 					} )
@@ -72,7 +72,7 @@ export default class JsonEditor {
 				// only callback when it's not update the template
 				if(shouldCallback){
 				    if(temp.attrs) temp.attrs.key = +new Date();
-					if(CALLBACK) CALLBACK(getOriginalKeyVal( temp, orgData ), path.join('.'), temp, templateFieldValue );
+					if(CALLBACK) CALLBACK(path.join('.'), value, getOriginalKeyVal( temp, orgData ), temp, templateFieldValue, inheritFieldValue, schemaObjects );
 				}
 				return value
 			}
@@ -167,31 +167,36 @@ export default class JsonEditor {
 
 
 		this.parseSchema = function parseSchema (schema, key, path) {
-			var getClassName = function getClassName(){
+			var getAttrs = function getAttrs(){
+				var attrs = {}
 				var classObj = {}
 				classObj['level'+level] = true;
 				if(schema.class) classObj[schema.class]=true;
 				if(schema.template) classObj.isTemplate=true;
 				if(schema.format == 'color') classObj.isColor=true;
-				if(prevSchema.inherit) classObj['inherit-'+prevSchema.inherit] = true;
-				return Object.keys(classObj).filter(v=>{ return classObj[v] }).join(' ');
+				if(orgSchema.inherit) classObj['inherit inherit-'+orgSchema.inherit] = true;
+				attrs['className'] = Object.keys(classObj).filter(v=>{ return classObj[v] }).join(' ');
+				attrs['data-key'] = key
+				attrs['key'] = path.join('.')
+				return attrs;
 			}
 		  path = path || [key]
 		  var level=path.length-1
 		  var initAttrs = level==0? Global._extend({ key:+new Date() }, PROPS) : {}
 		  schemaObjects[path.join('.')] = schema;
-		  var prevSchema  = schema;
+		  var orgSchema  = schema;
+		  var inheritPath;
 		  if(schema.inherit){
-		  	var inheritPath = path.slice(0,-1).join('.') +'.'+ schema.inherit;
+		  	inheritPath = path.slice(0,-1).join('.') +'.'+ schema.inherit;
 		  	if( !inheritFieldValue[inheritPath] ) inheritFieldValue[inheritPath] = []
 		    Global.addToObject( inheritFieldValue[inheritPath], path.join('.') );
 		  	schema = Global.clone( schemaObjects[ inheritPath ] )
-		  	schema = Global._extend(schema, prevSchema)
+		  	schema = Global._extend(schema, orgSchema)
 		  }
 		  switch(schema.type) {
 		    case 'array':
 		      schemaPathValue(path, schema.default||[]);
-		      return m('div.array', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), className:getClassName() }), [
+		      return m('div.array', Global._extend(initAttrs, getAttrs() ), [
 		          m('h2.arrayTitle', schema.title),
 		          m('div.props', [
 		            schema.format == 'table' ?
@@ -210,7 +215,7 @@ export default class JsonEditor {
 		    case 'object':
 		      schemaPathValue(path, schema.default||{});
 		      var keys = Object.keys(schema.properties)
-		      return m('div.object', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), className:getClassName() }), [
+		      return m('div.object', Global._extend(initAttrs, getAttrs() ), [
 		          m('h2.objectTitle', schema.title),
 		          m('div.props', [
 		            keys.map( (v)=> { return this.parseSchema( schema.properties[v], v, path.concat(v) ) })
@@ -222,11 +227,12 @@ export default class JsonEditor {
 		    case 'number':
 		    case 'integer':
 		      schemaPathValue(path, schema.default)
-		      return m('div.row', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), className:getClassName() }), [
+		      return m('div.row', Global._extend(initAttrs, getAttrs() ), [
 		          m('strong.itemTitle', schema.title||key ),
 		          m('.itemValue', [
 			          m('input', buildAttrs(path, schema, {type:'number', oninput:function(){
 			            dataPathValue( path , schema.type=='number'? this.value : parseInt(this.value,10) )
+			          	if(inheritPath) dataPathValue( inheritPath, null );
 			          } }) ),
 			      ])
 		        ] )
@@ -235,11 +241,12 @@ export default class JsonEditor {
 
 		    case 'boolean':
 		      schemaPathValue(path, schema.default)
-		      return m('div.row', Global._deepCopy(initAttrs, {'data-key': key, key:path.join('.'), className:getClassName() }), [
+		      return m('div.row', Global._extend(initAttrs, getAttrs() ), [
 		          m('strong.itemTitle', schema.title||key ),
 		          m('.itemValue', [
 			          m('input', buildAttrs(path, schema, {type:'checkbox', onchange:function(){
 			            dataPathValue( path , this.checked )
+			            if(inheritPath) dataPathValue( inheritPath, null );
 			          } }) ),
 		          ])
 		        ] )
@@ -247,7 +254,7 @@ export default class JsonEditor {
 		      break;
 		    case 'string':
 		      schemaPathValue(path, schema.default)
-		      return m('div.row', Global._deepCopy(initAttrs, {'data-key': key, className:getClassName(), key:path.join('.') }), [
+		      return m('div.row', Global._extend(initAttrs, getAttrs() ), [
 		          m('strong.itemTitle', schema.title||key ),
 		          m('.itemValue', [
 			          schema.enum
@@ -255,6 +262,7 @@ export default class JsonEditor {
 				          	buildAttrs(path, schema, {
 				          		oninput:function(){
 				          			dataPathValue(path, this.value)
+				          			if(inheritPath) dataPathValue( inheritPath, null );
 						          } },
 						    	['enum', 'type']
 						    ),
@@ -265,6 +273,7 @@ export default class JsonEditor {
 			          			type: schema.format=='color'?'color':'text',
 			          			oninput:function(){
 			          				dataPathValue(path, this.value)
+			          				if(inheritPath) dataPathValue( inheritPath, null );
 			          			} }
 			          		)
 			          	)

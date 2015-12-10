@@ -14,23 +14,21 @@ var jsonData = {
       "height": 100,
 
       "borderWidth": 1,
-      "borderStyle": "solid",
-      "borderColor": "#993333",
-
       "borderTopWidth": 1,
-      "borderTopStyle": "solid",
-      "borderTopColor": "#993333",
-
       "borderRightWidth": 1,
-      "borderRightStyle": "solid",
-      "borderRightColor": "#993333",
-
       "borderBottomWidth": 1,
-      "borderBottomStyle": "solid",
-      "borderBottomColor": "#993333",
-
       "borderLeftWidth": 1,
+
+      "borderStyle": "solid",
+      "borderTopStyle": "solid",
+      "borderRightStyle": "solid",
+      "borderBottomStyle": "solid",
       "borderLeftStyle": "solid",
+
+      "borderColor": "#993333",
+      "borderTopColor": "#993333",
+      "borderRightColor": "#993333",
+      "borderBottomColor": "#993333",
       "borderLeftColor": "#993333",
 
       "backgroundColor": "#fff"
@@ -89,6 +87,8 @@ var jsonSchema ={
               "title": "border style",
               "type": "string",
               "enum": [
+                "",
+                "none",
                 "solid",
                 "dotted",
                 "dashed"
@@ -99,7 +99,8 @@ var jsonSchema ={
               "title": "border color",
               "format": "color",
               "type": "string",
-              "default": "#993333"
+              "default": "#993333",
+              "empty":"#ffffff"
             },
             "borderLeftWidth":{
               "title": "border left width",

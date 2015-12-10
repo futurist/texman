@@ -99,7 +99,15 @@ ul,li{
 	right:0;
 	height: 100%;
 }
-
+.editor .row.plus .itemTitle{
+	cursor: pointer;
+}
+.editor .row.plus .itemTitle:before{
+	content:"+";
+}
+.editor .row.plus.minus .itemTitle:before{
+	content:"-";
+}
 .editor .row{
 	display: table-row;
 }
@@ -113,6 +121,16 @@ ul,li{
 	display: table-cell;
 }
 
+.editor .inheritCon.visible{
+	display: table;
+}
+.editor .inheritCon{
+	display: none;
+}
+.editor .inheritCon .itemTitle{
+	border-left: 2px dashed #ccc;
+	padding-left: 10px;
+}
 .editor input[type=text],
 .editor input[type=number]
 {
@@ -146,6 +164,7 @@ ul,li{
 </body>
 </html>
 
+<script type="text/javascript" src="js/sprint.min.js"></script>
 <script type="text/javascript" src="js/mDrag.js"></script>
 <script type="text/javascript" src="app.js"></script>
 <script type="text/javascript">
