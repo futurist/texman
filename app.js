@@ -1801,7 +1801,7 @@
 	        left: style.left,
 	        top: style.top,
 	        width: BORDER_BOX ? style.width : style.width + (style.borderLeftWidth || 0) + (style.borderRightWidth || 0),
-	        height: BORDER_BOX ? style.width : style.height + (style.borderTopWidth || 0) + (style.borderBottomWidth || 0)
+	        height: BORDER_BOX ? style.height : style.height + (style.borderTopWidth || 0) + (style.borderBottomWidth || 0)
 	    };
 	};
 
@@ -1928,34 +1928,33 @@
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var jsonData = {
-	  "tag": "div",
-	  "attrs": {
-	    "style": {
-	      "left": 0,
-	      "top": 0,
-	      "width": 100,
-	      "height": 100,
+	  "type": "text",
+	  "attrs": { title: 'radio', name: 'Client4', required: false },
+	  "style": {
+	    "left": 0,
+	    "top": 0,
+	    "width": 100,
+	    "height": 100,
 
-	      "borderWidth": 1,
-	      "borderTopWidth": 1,
-	      "borderRightWidth": 1,
-	      "borderBottomWidth": 1,
-	      "borderLeftWidth": 1,
+	    "borderWidth": 1,
+	    "borderTopWidth": 1,
+	    "borderRightWidth": 1,
+	    "borderBottomWidth": 1,
+	    "borderLeftWidth": 1,
 
-	      "borderStyle": "solid",
-	      "borderTopStyle": "solid",
-	      "borderRightStyle": "solid",
-	      "borderBottomStyle": "solid",
-	      "borderLeftStyle": "solid",
+	    "borderStyle": "solid",
+	    "borderTopStyle": "solid",
+	    "borderRightStyle": "solid",
+	    "borderBottomStyle": "solid",
+	    "borderLeftStyle": "solid",
 
-	      "borderColor": "#993333",
-	      "borderTopColor": "#993333",
-	      "borderRightColor": "#993333",
-	      "borderBottomColor": "#993333",
-	      "borderLeftColor": "#993333",
+	    "borderColor": "#993333",
+	    "borderTopColor": "#993333",
+	    "borderRightColor": "#993333",
+	    "borderBottomColor": "#993333",
+	    "borderLeftColor": "#993333",
 
-	      "backgroundColor": "#fff"
-	    }
+	    "backgroundColor": "#fff"
 	  },
 	  "children": "div content"
 	};
@@ -1965,116 +1964,134 @@
 	  "title": "DIV",
 	  "type": "object",
 	  "properties": {
-	    "tag": {
-	      "title": "tag",
+	    "type": {
+	      "title": "Type",
 	      "type": "string",
-	      "default": "div"
+	      "enum": ["text", "password", "number", "color", "textarea", "checkbox", "radio", "select"],
+	      "default": "text"
 	    },
 	    "attrs": {
 	      "title": "attrs",
 	      "type": "object",
 	      "properties": {
-	        "style": {
-	          "title": "style",
-	          "type": "object",
-	          "properties": {
-	            "left": {
-	              "title": "left",
-	              "type": "integer",
-	              "default": 100
-	            },
-	            "top": {
-	              "title": "top",
-	              "type": "integer",
-	              "default": 100
-	            },
-	            "width": {
-	              "title": "width",
-	              "type": "integer",
-	              "minimum": 0,
-	              "default": 100
-	            },
-	            "height": {
-	              "title": "height",
-	              "type": "integer",
-	              "minimum": 0,
-	              "default": 100
-	            },
-	            "borderWidth": {
-	              "title": "border width",
-	              "type": "integer",
-	              "minimum": 0,
-	              "default": 1
-	            },
-	            "borderStyle": {
-	              "title": "border style",
-	              "type": "string",
-	              "enum": ["", "none", "solid", "dotted", "dashed"],
-	              "default": "solid"
-	            },
-	            "borderColor": {
-	              "title": "border color",
-	              "format": "color",
-	              "type": "string",
-	              "default": "#993333",
-	              "empty": "#ffffff"
-	            },
-	            "borderLeftWidth": {
-	              "title": "border left width",
-	              "inherit": "borderWidth"
-	            },
-	            "borderLeftStyle": {
-	              "title": "border left style",
-	              "inherit": "borderStyle"
-	            },
-	            "borderLeftColor": {
-	              "title": "border left color",
-	              "inherit": "borderColor"
-	            },
-	            "borderTopWidth": {
-	              "title": "border top width",
-	              "inherit": "borderWidth"
-	            },
-	            "borderTopStyle": {
-	              "title": "border top style",
-	              "inherit": "borderStyle"
-	            },
-	            "borderTopColor": {
-	              "title": "border top color",
-	              "inherit": "borderColor"
-	            },
-	            "borderRightWidth": {
-	              "title": "border right width",
-	              "inherit": "borderWidth"
-	            },
-	            "borderRightStyle": {
-	              "title": "border right style",
-	              "inherit": "borderStyle"
-	            },
-	            "borderRightColor": {
-	              "title": "border right color",
-	              "inherit": "borderColor"
-	            },
-	            "borderBottomWidth": {
-	              "title": "border bottom width",
-	              "inherit": "borderWidth"
-	            },
-	            "borderBottomStyle": {
-	              "title": "border bottom style",
-	              "inherit": "borderStyle"
-	            },
-	            "borderBottomColor": {
-	              "title": "border bottom color",
-	              "inherit": "borderColor"
-	            },
 
-	            "backgroundColor": {
-	              "title": "background color",
-	              "type": "string",
-	              "format": "color",
-	              "default": "#ffffff"
-	            }
-	          }
+	        "title": {
+	          "title": "title",
+	          "type": "string",
+	          "default": ""
+	        },
+	        "name": {
+	          "title": "name",
+	          "type": "string",
+	          "default": ""
+	        },
+	        "required": {
+	          "title": "required",
+	          "type": "boolean",
+	          "default": false
+	        }
+
+	      }
+	    },
+	    "style": {
+	      "title": "style",
+	      "type": "object",
+	      "properties": {
+	        "left": {
+	          "title": "left",
+	          "type": "integer",
+	          "default": 100
+	        },
+	        "top": {
+	          "title": "top",
+	          "type": "integer",
+	          "default": 100
+	        },
+	        "width": {
+	          "title": "width",
+	          "type": "integer",
+	          "minimum": 0,
+	          "default": 100
+	        },
+	        "height": {
+	          "title": "height",
+	          "type": "integer",
+	          "minimum": 0,
+	          "default": 100
+	        },
+	        "borderWidth": {
+	          "title": "border width",
+	          "type": "integer",
+	          "minimum": 0,
+	          "default": 1
+	        },
+	        "borderStyle": {
+	          "title": "border style",
+	          "type": "string",
+	          "enum": ["", "none", "solid", "dotted", "dashed"],
+	          "default": "solid"
+	        },
+	        "borderColor": {
+	          "title": "border color",
+	          "format": "color",
+	          "type": "string",
+	          "default": "#993333",
+	          "empty": "#000000"
+	        },
+	        "borderLeftWidth": {
+	          "title": "border left width",
+	          "inherit": "borderWidth"
+	        },
+	        "borderLeftStyle": {
+	          "title": "border left style",
+	          "inherit": "borderStyle"
+	        },
+	        "borderLeftColor": {
+	          "title": "border left color",
+	          "inherit": "borderColor"
+	        },
+	        "borderTopWidth": {
+	          "title": "border top width",
+	          "inherit": "borderWidth"
+	        },
+	        "borderTopStyle": {
+	          "title": "border top style",
+	          "inherit": "borderStyle"
+	        },
+	        "borderTopColor": {
+	          "title": "border top color",
+	          "inherit": "borderColor"
+	        },
+	        "borderRightWidth": {
+	          "title": "border right width",
+	          "inherit": "borderWidth"
+	        },
+	        "borderRightStyle": {
+	          "title": "border right style",
+	          "inherit": "borderStyle"
+	        },
+	        "borderRightColor": {
+	          "title": "border right color",
+	          "inherit": "borderColor"
+	        },
+	        "borderBottomWidth": {
+	          "title": "border bottom width",
+	          "inherit": "borderWidth"
+	        },
+	        "borderBottomStyle": {
+	          "title": "border bottom style",
+	          "inherit": "borderStyle"
+	        },
+	        "borderBottomColor": {
+	          "title": "border bottom color",
+	          "inherit": "borderColor"
+	        },
+
+	        "backgroundColor": {
+	          "title": "background color",
+	          "type": "string",
+	          "format": "color",
+	          "default": "#ffffff"
 	        }
 	      }
 	    },
@@ -2098,7 +2115,7 @@
 	    this.Prop = {};
 	    this.Prop.key = this.ID;
 	    this.Prop.className = '';
-	    this.Prop.style = Global.clone(jsonData.attrs.style);
+	    this.Prop.style = Global.clone(jsonData.style);
 	    this.jsonSchema = _mithril2.default.prop(jsonSchema);
 	    this.jsonData = _mithril2.default.prop(jsonData);
 
@@ -2359,7 +2376,7 @@
 	function renderJsonEditor() {
 	  var self = this;
 	  if (this.isValidRect() && this.jsonData && this.jsonSchema) {
-	    Global._extend(this.jsonData().attrs.style, this.Prop.style);
+	    Global._extend(this.jsonData().style, this.Prop.style);
 	    _mithril2.default.mount(document.querySelector('.editor'), new _JsonEditor2.default(this.jsonSchema, this.jsonData, { config: function config(el) {
 	        $(el).find('.inherit').each(function () {
 	          var inheritClass = $(this).attr('class').split(/\s+/).filter(function (v) {
@@ -2382,7 +2399,7 @@
 	          }
 	        });
 	      } }, function (path, value, getData, data) {
-	      Global._extend(self.Prop.style, getData.attrs.style);
+	      Global._extend(self.Prop.style, getData.style);
 	      _mithril2.default.redraw();
 	    }));
 	  }

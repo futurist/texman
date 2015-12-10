@@ -259,6 +259,6 @@ export var getOuterRect = function( style ){
         left: style.left ,
         top: style.top ,
         width: BORDER_BOX? style.width: style.width + (style.borderLeftWidth||0) + (style.borderRightWidth||0),
-        height: BORDER_BOX? style.width: style.height + (style.borderTopWidth||0) + (style.borderBottomWidth||0),
+        height: BORDER_BOX? style.height: style.height + (style.borderTopWidth||0) + (style.borderBottomWidth||0),
     }
 }

@@ -7,7 +7,7 @@ import JsonEditor from './JsonEditor'
 function renderJsonEditor(){
 	var self = this;
     if( this.isValidRect() && this.jsonData && this.jsonSchema ){
-      Global._extend(this.jsonData().attrs.style, this.Prop.style)
+      Global._extend(this.jsonData().style, this.Prop.style)
       m.mount( document.querySelector('.editor'), new JsonEditor( this.jsonSchema, this.jsonData, { config:function(el){
       	$(el).find('.inherit').each(function(){
       		var inheritClass = $(this).attr('class').split(/\s+/).filter(v=>{return v.indexOf('inherit-')>=0 }).pop()
@@ -28,7 +28,7 @@ function renderJsonEditor(){
       		}
       	})
       } }, function(path,value, getData, data ){
-        Global._extend(self.Prop.style, getData.attrs.style)
+        Global._extend(self.Prop.style, getData.style)
 		m.redraw()
       }) )
     }
