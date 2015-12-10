@@ -1549,7 +1549,15 @@
 	/**
 	 * Helper functions
 	 */
-	var BORDER_BOX = exports.BORDER_BOX = false;
+
+	// html {
+	//   box-sizing: border-box;
+	// }
+	// *, *:before, *:after {
+	//   box-sizing: inherit;
+	// }
+	// add above css code in HTML page to enable BORDER_BOX mode
+	var BORDER_BOX = exports.BORDER_BOX = window.getComputedStyle(document.body).boxSizing === "border-box";
 	var MIN_WIDTH = exports.MIN_WIDTH = 2;
 	var GRID_SIZE = exports.GRID_SIZE = 5;
 	var POINT_WIDTH = exports.POINT_WIDTH = 10;
@@ -1928,23 +1936,23 @@
 	      "width": 100,
 	      "height": 100,
 
-	      "borderWidth": 10,
+	      "borderWidth": 1,
 	      "borderStyle": "solid",
 	      "borderColor": "#993333",
 
-	      "borderTopWidth": 10,
+	      "borderTopWidth": 1,
 	      "borderTopStyle": "solid",
 	      "borderTopColor": "#993333",
 
-	      "borderRightWidth": 10,
+	      "borderRightWidth": 1,
 	      "borderRightStyle": "solid",
 	      "borderRightColor": "#993333",
 
-	      "borderBottomWidth": 10,
+	      "borderBottomWidth": 1,
 	      "borderBottomStyle": "solid",
 	      "borderBottomColor": "#993333",
 
-	      "borderLeftWidth": 10,
+	      "borderLeftWidth": 1,
 	      "borderLeftStyle": "solid",
 	      "borderLeftColor": "#993333",
 

@@ -13,23 +13,23 @@ var jsonData = {
       "width": 100,
       "height": 100,
 
-      "borderWidth": 10,
+      "borderWidth": 1,
       "borderStyle": "solid",
       "borderColor": "#993333",
 
-      "borderTopWidth": 10,
+      "borderTopWidth": 1,
       "borderTopStyle": "solid",
       "borderTopColor": "#993333",
 
-      "borderRightWidth": 10,
+      "borderRightWidth": 1,
       "borderRightStyle": "solid",
       "borderRightColor": "#993333",
 
-      "borderBottomWidth": 10,
+      "borderBottomWidth": 1,
       "borderBottomStyle": "solid",
       "borderBottomColor": "#993333",
 
-      "borderLeftWidth": 10,
+      "borderLeftWidth": 1,
       "borderLeftStyle": "solid",
       "borderLeftColor": "#993333",
 

@@ -12,7 +12,16 @@ if (!String.prototype.trim) {
 /**
  * Helper functions
  */
-export var BORDER_BOX = false;
+
+
+// html {
+//   box-sizing: border-box;
+// }
+// *, *:before, *:after {
+//   box-sizing: inherit;
+// }
+// add above css code in HTML page to enable BORDER_BOX mode
+export var BORDER_BOX = window.getComputedStyle(document.body).boxSizing==="border-box";
 export var MIN_WIDTH = 2;
 export var GRID_SIZE = 5;
 export var POINT_WIDTH = 10;
