@@ -51,6 +51,9 @@ export default class JsonEditor {
 				var temp = DATA()
 				_dotPathValue(temp, path, value===null? schemaObjects[path.join('.')].empty||'' :value)
 				DATA(temp)
+				var callback = function(p, v){ 
+					CALLBACK(p||path.join('.'), v||value, getOriginalKeyVal( temp, orgData ), temp, templateFieldValue, inheritFieldValue, schemaObjects ); 
+				}
 				// below line will update the key for force update view
 				var shouldCallback = true;
 				for(var i in templateFieldValue){
@@ -67,12 +70,13 @@ export default class JsonEditor {
 					if(i!==path.join('.') || value===null) continue;
 					inheritFieldValue[i].forEach( path=>{
 						_dotPathValue(temp, path.split('.'), value)
+						callback( path )
 					} )
 				}
 				// only callback when it's not update the template
 				if(shouldCallback){
 				    if(temp.attrs) temp.attrs.key = +new Date();
-					if(CALLBACK) CALLBACK(path.join('.'), value, getOriginalKeyVal( temp, orgData ), temp, templateFieldValue, inheritFieldValue, schemaObjects );
+					callback()
 				}
 				return value
 			}

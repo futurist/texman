@@ -1529,6 +1529,7 @@
 	exports._pluck = _pluck;
 	exports._exclude = _exclude;
 	exports._addToSet = _addToSet;
+	exports.objectPath = objectPath;
 	exports.removeClass = removeClass;
 	exports.addClass = addClass;
 	exports.RandomColor = RandomColor;
@@ -1723,6 +1724,10 @@
 	        }
 	    }
 	    return arr;
+	}
+
+	function objectPath(obj, is, value) {
+	    if (typeof is == 'string') return objectPath(obj, is.split('.'), value);else if (is.length == 1 && value !== undefined) return obj[is[0]] = value;else if (is.length == 0) return obj;else return objectPath(obj[is[0]], is.slice(1), value);
 	}
 
 	var addToObject = exports.addToObject = function addToObject(obj, key, value) {
@@ -2399,6 +2404,11 @@
 	          }
 	        });
 	      } }, function (path, value, getData, data) {
+	      path = path.replace(/^root\./, '');
+	      // if borderStyle is none/'', set width to 0
+	      if (/(border\w+)Style$/i.test(path) && (value == 'none' || !value) || /(border\w+)Width$/i.test(path) && /^$|none/.test(Global.objectPath(data, path.replace(/Width$/, 'Style')))) {
+	        Global.objectPath(data, path.replace(/Style$/, 'Width'), 0);
+	      }
 	      Global._extend(self.Prop.style, getData.style);
 	      _mithril2.default.redraw();
 	    }));
@@ -2586,6 +2596,9 @@
 				var temp = DATA();
 				_dotPathValue(temp, path, value === null ? schemaObjects[path.join('.')].empty || '' : value);
 				DATA(temp);
+				var callback = function callback(p, v) {
+					CALLBACK(p || path.join('.'), v || value, getOriginalKeyVal(temp, orgData), temp, templateFieldValue, inheritFieldValue, schemaObjects);
+				};
 				// below line will update the key for force update view
 				var shouldCallback = true;
 				for (var i in templateFieldValue) {
@@ -2602,12 +2615,13 @@
 					if (i !== path.join('.') || value === null) continue;
 					inheritFieldValue[i].forEach(function (path) {
 						_dotPathValue(temp, path.split('.'), value);
+						callback(path);
 					});
 				}
 				// only callback when it's not update the template
 				if (shouldCallback) {
 					if (temp.attrs) temp.attrs.key = +new Date();
-					if (CALLBACK) CALLBACK(path.join('.'), value, getOriginalKeyVal(temp, orgData), temp, templateFieldValue, inheritFieldValue, schemaObjects);
+					callback();
 				}
 				return value;
 			}

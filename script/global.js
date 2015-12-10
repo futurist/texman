@@ -182,6 +182,17 @@ export function _addToSet(){
 	return arr
 }
 
+export function objectPath(obj, is, value) {
+    if (typeof is == 'string')
+        return objectPath(obj,is.split('.'), value);
+    else if (is.length==1 && value!==undefined)
+        return obj[is[0]] = value;
+    else if (is.length==0)
+        return obj;
+    else
+        return objectPath(obj[is[0]],is.slice(1), value);
+}
+
 export var addToObject = function addToObject( obj, key, value ){
     if(Object.prototype.toString.call(obj)=="[object Array]"){
         if( obj.indexOf(key)<0 ) obj.push(key)

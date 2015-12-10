@@ -28,6 +28,13 @@ function renderJsonEditor(){
       		}
       	})
       } }, function(path,value, getData, data ){
+      	path = path.replace(/^root\./,'')
+      	// if borderStyle is none/'', set width to 0 
+      	if( /(border\w+)Style$/i.test(path) && (value=='none'|| !value) 
+      		|| /(border\w+)Width$/i.test(path) && /^$|none/.test( Global.objectPath( data, path.replace(/Width$/, 'Style') ) )
+      	) {
+      		Global.objectPath( data, path.replace(/Style$/, 'Width'), 0 );
+      	}
         Global._extend(self.Prop.style, getData.style)
 		m.redraw()
       }) )
