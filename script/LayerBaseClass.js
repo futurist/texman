@@ -2,211 +2,23 @@ import m from 'mithril'
 import * as Global from './global'
 import ControlPoint from './ControlPoint'
 import addEditorToLayerBase from './addEditorToLayerBase'
-
-
-var jsonData = {
-  "type": "text",
-  "attrs": {title:'radio', name:'Client4',required:false,  },
-  "style": {
-    "left": 0,
-    "top": 0,
-    "width": 100,
-    "height": 100,
-
-    "borderWidth": 1,
-    "borderTopWidth": 1,
-    "borderRightWidth": 1,
-    "borderBottomWidth": 1,
-    "borderLeftWidth": 1,
-
-    "borderStyle": "solid",
-    "borderTopStyle": "solid",
-    "borderRightStyle": "solid",
-    "borderBottomStyle": "solid",
-    "borderLeftStyle": "solid",
-
-    "borderColor": "#993333",
-    "borderTopColor": "#993333",
-    "borderRightColor": "#993333",
-    "borderBottomColor": "#993333",
-    "borderLeftColor": "#993333",
-
-    "backgroundColor": "#fff"
-  },
-  "children": "div content"
-}
-
-var jsonSchema = {
-  "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "DIV",
-  "type": "object",
-  "properties": {
-    "type": {
-      "title": "Type",
-      "type": "string",
-      "enum": [
-        "text",
-        "password",
-        "number",
-        "color",
-        "textarea",
-        "checkbox",
-        "radio",
-        "select"
-      ],
-      "default": "text"
-    },
-    "attrs": {
-      "title": "attrs",
-      "type": "object",
-      "properties": {
-
-        "title": {
-          "title": "title",
-          "type": "string",
-          "default":""
-        },
-        "name": {
-          "title": "name",
-          "type": "string",
-          "default":""
-        },
-        "required": {
-          "title": "required",
-          "type": "boolean",
-          "default":false
-        },
-
-      }
-    },
-    "style": {
-      "title": "style",
-      "type": "object",
-      "properties": {
-        "left": {
-          "title": "left",
-          "type": "integer",
-          "default":100
-        },
-        "top": {
-          "title": "top",
-          "type": "integer",
-          "default":100
-        },
-        "width": {
-          "title": "width",
-          "type": "integer",
-          "minimum": 0,
-          "default":100
-        },
-        "height": {
-          "title": "height",
-          "type": "integer",
-          "minimum": 0,
-          "default":100
-        },
-        "borderWidth": {
-          "title": "border width",
-          "type": "integer",
-          "minimum": 0,
-          "default":1
-        },
-        "borderStyle": {
-          "title": "border style",
-          "type": "string",
-          "enum": [
-            "",
-            "none",
-            "solid",
-            "dotted",
-            "dashed"
-          ],
-          "default": "solid"
-        },
-        "borderColor": {
-          "title": "border color",
-          "format": "color",
-          "type": "string",
-          "default": "#993333",
-          "empty":"#000000"
-        },
-        "borderLeftWidth":{
-          "title": "border left width",
-          "inherit":"borderWidth"
-        },
-        "borderLeftStyle":{
-          "title": "border left style",
-          "inherit":"borderStyle"
-        },
-        "borderLeftColor":{
-          "title": "border left color",
-          "inherit":"borderColor"
-        },
-        "borderTopWidth":{
-          "title": "border top width",
-          "inherit":"borderWidth"
-        },
-        "borderTopStyle":{
-          "title": "border top style",
-          "inherit":"borderStyle"
-        },
-        "borderTopColor":{
-          "title": "border top color",
-          "inherit":"borderColor"
-        },
-        "borderRightWidth":{
-          "title": "border right width",
-          "inherit":"borderWidth"
-        },
-        "borderRightStyle":{
-          "title": "border right style",
-          "inherit":"borderStyle"
-        },
-        "borderRightColor":{
-          "title": "border right color",
-          "inherit":"borderColor"
-        },
-        "borderBottomWidth":{
-          "title": "border bottom width",
-          "inherit":"borderWidth"
-        },
-        "borderBottomStyle":{
-          "title": "border bottom style",
-          "inherit":"borderStyle"
-        },
-        "borderBottomColor":{
-          "title": "border bottom color",
-          "inherit":"borderColor"
-        },
-
-        "backgroundColor": {
-          "title": "background color",
-          "type": "string",
-          "format": "color",
-          "default": "#ffffff"
-        },
-      }
-    },
-    "children": {
-      "title": "children",
-      "type": "string",
-      "format": "textarea",
-      "default": "div content"
-    }
-  }
-}
-
+import * as DataTemplate from './DataTemplate'
 
 export default class LayerBaseClass {
 	constructor(parent, prop){
 		this.parent = parent;
 		this.ID = Global.NewID()
 		this.Prop = {}
-	    this.Prop.key = this.ID
-	    this.Prop.className = ''
-		this.Prop.style = Global.clone(jsonData.style);
-	    this.jsonSchema = m.prop(jsonSchema)
-	    this.jsonData = m.prop(jsonData)
+    this.Prop.key = this.ID
+    this.Prop.className = ''
+
+    var curTool = parent&&parent.children.length%2 ? 'plain' : 'inputText'
+    var newJsonData = Global._deepCopy( {}, DataTemplate.jsonData, DataTemplate.jsonType[curTool] )
+    var newJsonSchema = Global._deepCopy( {}, DataTemplate.jsonSchema, DataTemplate.jsonTypeSchema[curTool] )
+    this.Prop = Global._deepCopy( this.Prop, newJsonData.attrs )
+    this.Prop.style = Global.clone(  newJsonData.style )
+    this.jsonSchema = m.prop(newJsonSchema)
+    this.jsonData = m.prop(newJsonData)
 
 		this.Prop = Global._deepCopy( this.Prop, prop||{} );
 
@@ -214,7 +26,7 @@ export default class LayerBaseClass {
 		this.Prop.onkeypress = function(e){ console.log(e,this)  }
 		this.ControlPoints = []
 		this.activeControlPoint = undefined;
-	    addEditorToLayerBase()
+	   addEditorToLayerBase()
 	}
 
 	getPageOffset () {

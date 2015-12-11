@@ -1886,7 +1886,7 @@
 	      var Prop = Global.applyProp(this.Prop);
 	      var dom = (0, _mithril2.default)('div.layer', Prop, [(0, _mithril2.default)('.content', { config: function config(el, isInit, context) {
 	          context.retain = true;
-	        } }), (0, _mithril2.default)('.bbox', { config: function config(el, isInit, context) {
+	        } }, this.jsonData().children), (0, _mithril2.default)('.bbox', { config: function config(el, isInit, context) {
 	          context.retain = true;
 	        } }), this.buildControlPoint()]);
 	      return this.isValidRect() ? dom : [];
@@ -1907,7 +1907,7 @@
 	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 	Object.defineProperty(exports, "__esModule", {
-	  value: true
+		value: true
 	});
 
 	var _mithril = __webpack_require__(2);
@@ -1926,356 +1926,188 @@
 
 	var _addEditorToLayerBase2 = _interopRequireDefault(_addEditorToLayerBase);
 
+	var _DataTemplate = __webpack_require__(16);
+
+	var DataTemplate = _interopRequireWildcard(_DataTemplate);
+
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var jsonData = {
-	  "type": "text",
-	  "attrs": { title: 'radio', name: 'Client4', required: false },
-	  "style": {
-	    "left": 0,
-	    "top": 0,
-	    "width": 100,
-	    "height": 100,
-
-	    "borderWidth": 1,
-	    "borderTopWidth": 1,
-	    "borderRightWidth": 1,
-	    "borderBottomWidth": 1,
-	    "borderLeftWidth": 1,
-
-	    "borderStyle": "solid",
-	    "borderTopStyle": "solid",
-	    "borderRightStyle": "solid",
-	    "borderBottomStyle": "solid",
-	    "borderLeftStyle": "solid",
-
-	    "borderColor": "#993333",
-	    "borderTopColor": "#993333",
-	    "borderRightColor": "#993333",
-	    "borderBottomColor": "#993333",
-	    "borderLeftColor": "#993333",
-
-	    "backgroundColor": "#fff"
-	  },
-	  "children": "div content"
-	};
-
-	var jsonSchema = {
-	  "$schema": "http://json-schema.org/draft-04/schema#",
-	  "title": "DIV",
-	  "type": "object",
-	  "properties": {
-	    "type": {
-	      "title": "Type",
-	      "type": "string",
-	      "enum": ["text", "password", "number", "color", "textarea", "checkbox", "radio", "select"],
-	      "default": "text"
-	    },
-	    "attrs": {
-	      "title": "attrs",
-	      "type": "object",
-	      "properties": {
-
-	        "title": {
-	          "title": "title",
-	          "type": "string",
-	          "default": ""
-	        },
-	        "name": {
-	          "title": "name",
-	          "type": "string",
-	          "default": ""
-	        },
-	        "required": {
-	          "title": "required",
-	          "type": "boolean",
-	          "default": false
-	        }
-
-	      }
-	    },
-	    "style": {
-	      "title": "style",
-	      "type": "object",
-	      "properties": {
-	        "left": {
-	          "title": "left",
-	          "type": "integer",
-	          "default": 100
-	        },
-	        "top": {
-	          "title": "top",
-	          "type": "integer",
-	          "default": 100
-	        },
-	        "width": {
-	          "title": "width",
-	          "type": "integer",
-	          "minimum": 0,
-	          "default": 100
-	        },
-	        "height": {
-	          "title": "height",
-	          "type": "integer",
-	          "minimum": 0,
-	          "default": 100
-	        },
-	        "borderWidth": {
-	          "title": "border width",
-	          "type": "integer",
-	          "minimum": 0,
-	          "default": 1
-	        },
-	        "borderStyle": {
-	          "title": "border style",
-	          "type": "string",
-	          "enum": ["", "none", "solid", "dotted", "dashed"],
-	          "default": "solid"
-	        },
-	        "borderColor": {
-	          "title": "border color",
-	          "format": "color",
-	          "type": "string",
-	          "default": "#993333",
-	          "empty": "#000000"
-	        },
-	        "borderLeftWidth": {
-	          "title": "border left width",
-	          "inherit": "borderWidth"
-	        },
-	        "borderLeftStyle": {
-	          "title": "border left style",
-	          "inherit": "borderStyle"
-	        },
-	        "borderLeftColor": {
-	          "title": "border left color",
-	          "inherit": "borderColor"
-	        },
-	        "borderTopWidth": {
-	          "title": "border top width",
-	          "inherit": "borderWidth"
-	        },
-	        "borderTopStyle": {
-	          "title": "border top style",
-	          "inherit": "borderStyle"
-	        },
-	        "borderTopColor": {
-	          "title": "border top color",
-	          "inherit": "borderColor"
-	        },
-	        "borderRightWidth": {
-	          "title": "border right width",
-	          "inherit": "borderWidth"
-	        },
-	        "borderRightStyle": {
-	          "title": "border right style",
-	          "inherit": "borderStyle"
-	        },
-	        "borderRightColor": {
-	          "title": "border right color",
-	          "inherit": "borderColor"
-	        },
-	        "borderBottomWidth": {
-	          "title": "border bottom width",
-	          "inherit": "borderWidth"
-	        },
-	        "borderBottomStyle": {
-	          "title": "border bottom style",
-	          "inherit": "borderStyle"
-	        },
-	        "borderBottomColor": {
-	          "title": "border bottom color",
-	          "inherit": "borderColor"
-	        },
-
-	        "backgroundColor": {
-	          "title": "background color",
-	          "type": "string",
-	          "format": "color",
-	          "default": "#ffffff"
-	        }
-	      }
-	    },
-	    "children": {
-	      "title": "children",
-	      "type": "string",
-	      "format": "textarea",
-	      "default": "div content"
-	    }
-	  }
-	};
-
 	var LayerBaseClass = (function () {
-	  function LayerBaseClass(parent, prop) {
-	    var _this = this;
+		function LayerBaseClass(parent, prop) {
+			var _this = this;
 
-	    _classCallCheck(this, LayerBaseClass);
+			_classCallCheck(this, LayerBaseClass);
 
-	    this.parent = parent;
-	    this.ID = Global.NewID();
-	    this.Prop = {};
-	    this.Prop.key = this.ID;
-	    this.Prop.className = '';
-	    this.Prop.style = Global.clone(jsonData.style);
-	    this.jsonSchema = _mithril2.default.prop(jsonSchema);
-	    this.jsonData = _mithril2.default.prop(jsonData);
+			this.parent = parent;
+			this.ID = Global.NewID();
+			this.Prop = {};
+			this.Prop.key = this.ID;
+			this.Prop.className = '';
 
-	    this.Prop = Global._deepCopy(this.Prop, prop || {});
+			var curTool = parent && parent.children.length % 2 ? 'plain' : 'inputText';
+			var newJsonData = Global._deepCopy({}, DataTemplate.jsonData, DataTemplate.jsonType[curTool]);
+			var newJsonSchema = Global._deepCopy({}, DataTemplate.jsonSchema, DataTemplate.jsonTypeSchema[curTool]);
+			this.Prop = Global._deepCopy(this.Prop, newJsonData.attrs);
+			this.Prop.style = Global.clone(newJsonData.style);
+			this.jsonSchema = _mithril2.default.prop(newJsonSchema);
+			this.jsonData = _mithril2.default.prop(newJsonData);
 
-	    this.Prop.config = function (el, isInit, context) {
-	      Global.applyStyle(el, _this.Prop.style);context.retain = true;
-	    };
-	    this.Prop.onkeypress = function (e) {
-	      console.log(e, this);
-	    };
-	    this.ControlPoints = [];
-	    this.activeControlPoint = undefined;
-	    (0, _addEditorToLayerBase2.default)();
-	  }
+			this.Prop = Global._deepCopy(this.Prop, prop || {});
 
-	  _createClass(LayerBaseClass, [{
-	    key: 'getPageOffset',
-	    value: function getPageOffset() {
-	      var cur = this,
-	          parent,
-	          offset = { left: this.Prop.style.left + (this.Prop.style.borderLeftWidth || 0), top: this.Prop.style.top + (this.Prop.style.borderLeftWidth || 0), path: [this.Prop.key] };
-	      while (parent = cur.parent) {
-	        offset.left += parent.Prop.style.left + (parent.Prop.style.borderLeftWidth || 0);
-	        offset.top += parent.Prop.style.top + (parent.Prop.style.borderTopWidth || 0);
-	        offset.path.push(parent.Prop.key);
-	        cur = parent;
-	      }
-	      offset.path.reverse();
-	      return offset;
-	    }
-	  }, {
-	    key: 'getRoot',
-	    value: function getRoot() {
-	      var cur = this,
-	          parent;
-	      while (parent = cur.parent) {
-	        cur = parent;
-	      }
-	      return cur;
-	    }
-	  }, {
-	    key: 'isValidRect',
-	    value: function isValidRect() {
-	      return this.Prop.style.width && this.Prop.style.height;
-	    }
-	  }, {
-	    key: 'iterateParent',
-	    value: function iterateParent(callback) {
-	      var cur = this,
-	          parent;
-	      while (parent = cur.parent) {
-	        callback && callback(parent);
-	        cur = parent;
-	      }
-	      return cur;
-	    }
-	  }, {
-	    key: 'buildControlPoint',
-	    value: function buildControlPoint() {
+			this.Prop.config = function (el, isInit, context) {
+				Global.applyStyle(el, _this.Prop.style);context.retain = true;
+			};
+			this.Prop.onkeypress = function (e) {
+				console.log(e, this);
+			};
+			this.ControlPoints = [];
+			this.activeControlPoint = undefined;
+			(0, _addEditorToLayerBase2.default)();
+		}
 
-	      var ControlPosition = function ControlPosition(parent, child) {
-	        var pWidth = parent.width + (Global.BORDER_BOX ? 0 : parent.borderLeftWidth || 0) + (Global.BORDER_BOX ? 0 : parent.borderRightWidth || 0);
-	        var pHeight = parent.height + (Global.BORDER_BOX ? 0 : parent.borderTopWidth || 0) + (Global.BORDER_BOX ? 0 : parent.borderBottomWidth || 0);
-	        this[0] = this.LT = [-child.width / 2, -child.height / 2]; //Left Top
-	        this[1] = this.CT = [pWidth / 2 - child.width / 2, -child.height / 2]; //top center
-	        this[2] = this.RT = [pWidth - child.width / 2, -child.height / 2]; //right top
+		_createClass(LayerBaseClass, [{
+			key: 'getPageOffset',
+			value: function getPageOffset() {
+				var cur = this,
+				    parent,
+				    offset = { left: this.Prop.style.left + (this.Prop.style.borderLeftWidth || 0), top: this.Prop.style.top + (this.Prop.style.borderLeftWidth || 0), path: [this.Prop.key] };
+				while (parent = cur.parent) {
+					offset.left += parent.Prop.style.left + (parent.Prop.style.borderLeftWidth || 0);
+					offset.top += parent.Prop.style.top + (parent.Prop.style.borderTopWidth || 0);
+					offset.path.push(parent.Prop.key);
+					cur = parent;
+				}
+				offset.path.reverse();
+				return offset;
+			}
+		}, {
+			key: 'getRoot',
+			value: function getRoot() {
+				var cur = this,
+				    parent;
+				while (parent = cur.parent) {
+					cur = parent;
+				}
+				return cur;
+			}
+		}, {
+			key: 'isValidRect',
+			value: function isValidRect() {
+				return this.Prop.style.width && this.Prop.style.height;
+			}
+		}, {
+			key: 'iterateParent',
+			value: function iterateParent(callback) {
+				var cur = this,
+				    parent;
+				while (parent = cur.parent) {
+					callback && callback(parent);
+					cur = parent;
+				}
+				return cur;
+			}
+		}, {
+			key: 'buildControlPoint',
+			value: function buildControlPoint() {
 
-	        this[6] = this.LB = [-child.width / 2, pHeight - child.height / 2]; //Left Top
-	        this[5] = this.CB = [pWidth / 2 - child.width / 2, pHeight - child.height / 2]; //top center
-	        this[4] = this.RB = [pWidth - child.width / 2, pHeight - child.height / 2]; //right top
+				var ControlPosition = function ControlPosition(parent, child) {
+					var pWidth = parent.width + (Global.BORDER_BOX ? 0 : parent.borderLeftWidth || 0) + (Global.BORDER_BOX ? 0 : parent.borderRightWidth || 0);
+					var pHeight = parent.height + (Global.BORDER_BOX ? 0 : parent.borderTopWidth || 0) + (Global.BORDER_BOX ? 0 : parent.borderBottomWidth || 0);
+					this[0] = this.LT = [-child.width / 2, -child.height / 2]; //Left Top
+					this[1] = this.CT = [pWidth / 2 - child.width / 2, -child.height / 2]; //top center
+					this[2] = this.RT = [pWidth - child.width / 2, -child.height / 2]; //right top
 
-	        this[7] = this.LM = [-child.width / 2, pHeight / 2 - child.height / 2]; //Left Top
-	        this[3] = this.RM = [pWidth - child.width / 2, pHeight / 2 - child.height / 2]; //left center
-	      };
-	      this.ControlPoints = [];
+					this[6] = this.LB = [-child.width / 2, pHeight - child.height / 2]; //Left Top
+					this[5] = this.CB = [pWidth / 2 - child.width / 2, pHeight - child.height / 2]; //top center
+					this[4] = this.RB = [pWidth - child.width / 2, pHeight - child.height / 2]; //right top
 
-	      var pointProp = { width: Global.POINT_WIDTH, height: Global.POINT_HEIGHT };
-	      var pointPosition = new ControlPosition(this.Prop.style, pointProp);
+					this[7] = this.LM = [-child.width / 2, pHeight / 2 - child.height / 2]; //Left Top
+					this[3] = this.RM = [pWidth - child.width / 2, pHeight / 2 - child.height / 2]; //left center
+				};
+				this.ControlPoints = [];
 
-	      for (var i = 0; i < 8; i++) {
-	        var point = new _ControlPoint2.default(this, { style: pointProp, position: i });
-	        point.Prop.style.left = pointPosition[i][0] - (this.Prop.style.borderLeftWidth || 0);
-	        point.Prop.style.top = pointPosition[i][1] - (this.Prop.style.borderTopWidth || 0);
-	        this.ControlPoints.push(point);
-	      }
+				var pointProp = { width: Global.POINT_WIDTH, height: Global.POINT_HEIGHT };
+				var pointPosition = new ControlPosition(this.Prop.style, pointProp);
 
-	      // move control point to top
-	      if (Global.isNumeric(this.activeControlPoint)) {
-	        var point = this.ControlPoints[this.activeControlPoint];
-	        point.Prop.className = 'activePoint';
-	        this.ControlPoints.splice(this.activeControlPoint, 1);
-	        this.ControlPoints.push(point);
-	      }
+				for (var i = 0; i < 8; i++) {
+					var point = new _ControlPoint2.default(this, { style: pointProp, position: i });
+					point.Prop.style.left = pointPosition[i][0] - (this.Prop.style.borderLeftWidth || 0);
+					point.Prop.style.top = pointPosition[i][1] - (this.Prop.style.borderTopWidth || 0);
+					this.ControlPoints.push(point);
+				}
 
-	      return this.ControlPoints.map(function (v) {
-	        return v.getView();
-	      });
-	    }
-	  }, {
-	    key: 'remove',
-	    value: function remove() {
-	      this.parent.selectedWidget.splice(this.parent.selectedWidget.indexOf(this), 1);
-	      this.parent.children.splice(this.parent.children.indexOf(this), 1);
-	    }
-	  }, {
-	    key: 'isSelected',
-	    value: function isSelected() {
-	      return this.Prop.className.indexOf(Global.SELECTED_CLASSNAME) >= 0;
-	    }
-	  }, {
-	    key: 'onRectChange',
-	    value: function onRectChange() {}
-	  }, {
-	    key: 'onSelected',
-	    value: function onSelected() {
-	      this.Prop.className = Global.addClass(this.Prop.className, Global.SELECTED_CLASSNAME);
-	    }
-	  }, {
-	    key: 'onUnSelected',
-	    value: function onUnSelected() {
-	      this.Prop.className = Global.removeClass(this.Prop.className, Global.SELECTED_CLASSNAME);
-	      this.activeControlPoint = undefined;
-	    }
-	  }, {
-	    key: 'getElementInside',
-	    value: function getElementInside(rect) {
-	      if (!this.isSelected()) return [];
-	      rect = Global._deepCopy({}, rect);
-	      rect.left -= this.Prop.style.left + (this.Prop.style.borderLeftWidth || 0);
-	      rect.top -= this.Prop.style.top + (this.Prop.style.borderTopWidth || 0);
-	      return this.ControlPoints.filter(function (v) {
-	        if (Global.rectsIntersect(rect, v.Prop.style)) {
-	          return true;
-	        }
-	      });
-	    }
-	  }, {
-	    key: 'controller',
-	    value: function controller() {
-	      return;
-	    }
-	  }, {
-	    key: 'view',
-	    value: function view() {
-	      return;
-	    }
-	  }, {
-	    key: 'getView',
-	    value: function getView() {
-	      return this.view(new this.controller());
-	    }
-	  }]);
+				// move control point to top
+				if (Global.isNumeric(this.activeControlPoint)) {
+					var point = this.ControlPoints[this.activeControlPoint];
+					point.Prop.className = 'activePoint';
+					this.ControlPoints.splice(this.activeControlPoint, 1);
+					this.ControlPoints.push(point);
+				}
 
-	  return LayerBaseClass;
+				return this.ControlPoints.map(function (v) {
+					return v.getView();
+				});
+			}
+		}, {
+			key: 'remove',
+			value: function remove() {
+				this.parent.selectedWidget.splice(this.parent.selectedWidget.indexOf(this), 1);
+				this.parent.children.splice(this.parent.children.indexOf(this), 1);
+			}
+		}, {
+			key: 'isSelected',
+			value: function isSelected() {
+				return this.Prop.className.indexOf(Global.SELECTED_CLASSNAME) >= 0;
+			}
+		}, {
+			key: 'onRectChange',
+			value: function onRectChange() {}
+		}, {
+			key: 'onSelected',
+			value: function onSelected() {
+				this.Prop.className = Global.addClass(this.Prop.className, Global.SELECTED_CLASSNAME);
+			}
+		}, {
+			key: 'onUnSelected',
+			value: function onUnSelected() {
+				this.Prop.className = Global.removeClass(this.Prop.className, Global.SELECTED_CLASSNAME);
+				this.activeControlPoint = undefined;
+			}
+		}, {
+			key: 'getElementInside',
+			value: function getElementInside(rect) {
+				if (!this.isSelected()) return [];
+				rect = Global._deepCopy({}, rect);
+				rect.left -= this.Prop.style.left + (this.Prop.style.borderLeftWidth || 0);
+				rect.top -= this.Prop.style.top + (this.Prop.style.borderTopWidth || 0);
+				return this.ControlPoints.filter(function (v) {
+					if (Global.rectsIntersect(rect, v.Prop.style)) {
+						return true;
+					}
+				});
+			}
+		}, {
+			key: 'controller',
+			value: function controller() {
+				return;
+			}
+		}, {
+			key: 'view',
+			value: function view() {
+				return;
+			}
+		}, {
+			key: 'getView',
+			value: function getView() {
+				return this.view(new this.controller());
+			}
+		}]);
+
+		return LayerBaseClass;
 	})();
 
 	exports.default = LayerBaseClass;
@@ -2352,17 +2184,9 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	  value: true
+		value: true
 	});
 	exports.default = addEditorToLayerBase;
-
-	var _global = __webpack_require__(4);
-
-	var Global = _interopRequireWildcard(_global);
-
-	var _mithril = __webpack_require__(2);
-
-	var _mithril2 = _interopRequireDefault(_mithril);
 
 	var _extend = __webpack_require__(9);
 
@@ -2370,61 +2194,24 @@
 
 	var _LayerBaseClass2 = _interopRequireDefault(_LayerBaseClass);
 
-	var _JsonEditor = __webpack_require__(10);
+	var _DataTemplate = __webpack_require__(16);
 
-	var _JsonEditor2 = _interopRequireDefault(_JsonEditor);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	var DataTemplate = _interopRequireWildcard(_DataTemplate);
 
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-	function renderJsonEditor() {
-	  var self = this;
-	  if (this.isValidRect() && this.jsonData && this.jsonSchema) {
-	    Global._extend(this.jsonData().style, this.Prop.style);
-	    _mithril2.default.mount(document.querySelector('.editor'), new _JsonEditor2.default(this.jsonSchema, this.jsonData, { config: function config(el) {
-	        $(el).find('.inherit').each(function () {
-	          var inheritClass = $(this).attr('class').split(/\s+/).filter(function (v) {
-	            return v.indexOf('inherit-') >= 0;
-	          }).pop();
-	          if (inheritClass) {
-	            var parentClass = inheritClass.split('-').pop();
-	            var pEl = $('[data-key="' + parentClass + '"]');
-	            var con = pEl.next('.inheritCon');
-	            if (!con.length) {
-	              con = $('<div class="inheritCon"></div>');
-	              pEl.after(con);
-	              $('.' + inheritClass).appendTo(con);
-	            }
-	            // $(`.${inheritClass}`).after(pEl)
-	            pEl.addClass('plus').off().on('click', '.itemTitle', function (e) {
-	              pEl.toggleClass('minus');
-	              con.toggleClass('visible');
-	            });
-	          }
-	        });
-	      } }, function (path, value, getData, data) {
-	      path = path.replace(/^root\./, '');
-	      // if borderStyle is none/'', set width to 0
-	      if (/(border\w+)Style$/i.test(path) && (value == 'none' || !value) || /(border\w+)Width$/i.test(path) && /^$|none/.test(Global.objectPath(data, path.replace(/Width$/, 'Style')))) {
-	        Global.objectPath(data, path.replace(/Style$/, 'Width'), 0);
-	      }
-	      Global._extend(self.Prop.style, getData.style);
-	      _mithril2.default.redraw();
-	    }));
-	  }
-	}
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function addEditorToLayerBase() {
-	  (0, _extend.override)(_LayerBaseClass2.default.prototype, 'onRectChange', function (original) {
-	    original();
-	    renderJsonEditor.apply(this);
-	  });
+		(0, _extend.override)(_LayerBaseClass2.default.prototype, 'onRectChange', function (original) {
+			original();
+			DataTemplate.renderJsonEditor.apply(this);
+		});
 
-	  (0, _extend.override)(_LayerBaseClass2.default.prototype, 'onSelected', function (original) {
-	    original();
-	    renderJsonEditor.apply(this);
-	  });
+		(0, _extend.override)(_LayerBaseClass2.default.prototype, 'onSelected', function (original) {
+			original();
+			DataTemplate.renderJsonEditor.apply(this);
+		});
 	}
 
 /***/ },
@@ -3227,7 +3014,7 @@
 
 					if (index == undefined) {
 						widget = !evt.shiftKey ? new _WidgetDiv2.default(self) : new _WidgetCanvas2.default(self);
-						Global._extend(widget.Prop.style, { backgroundColor: Global.RandomColor() });
+						// Global._extend( widget.Prop.style, { backgroundColor:Global.RandomColor() } )
 						PropLayer = widget.Prop;
 						PropLayer.style.left = offsetX - (Global.BORDER_BOX ? 0 : PropLayer.style.borderLeftWidth || 0);
 						PropLayer.style.top = offsetY - (Global.BORDER_BOX ? 0 : PropLayer.style.borderTopWidth || 0);
@@ -3662,6 +3449,307 @@
 		var con = document.querySelector('.editorContainer');
 		con.style.width = initEditorWidth + 'px';
 	};
+
+/***/ },
+/* 16 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.jsonSchema = exports.jsonData = exports.jsonTypeSchema = exports.jsonType = undefined;
+	exports.renderJsonEditor = renderJsonEditor;
+
+	var _global = __webpack_require__(4);
+
+	var Global = _interopRequireWildcard(_global);
+
+	var _mithril = __webpack_require__(2);
+
+	var _mithril2 = _interopRequireDefault(_mithril);
+
+	var _JsonEditor = __webpack_require__(10);
+
+	var _JsonEditor2 = _interopRequireDefault(_JsonEditor);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+	var jsonType = exports.jsonType = {
+	  plain: { type: 'plain', attrs: { title: 'plain text' }, style: {}, children: { tag: 'span', html: false, children: "文字" } },
+	  inputText: { type: 'inputText', attrs: { title: 'input text' }, style: {}, children: { tag: 'input', attrs: { value: '输入文字', type: 'text' } } }
+	};
+	var jsonTypeSchema = exports.jsonTypeSchema = {
+	  plain: {
+	    "title": "文字",
+	    "properties": {
+	      attrs: {
+	        "title": "attrs",
+	        "type": "object",
+	        "properties": {}
+	      },
+
+	      "children": {
+	        "title": "children",
+	        "type": "object",
+	        "properties": {
+	          "html": {
+	            "title": "is html",
+	            "type": "boolean",
+	            "default": false
+	          },
+	          "children": {
+	            "title": "children",
+	            "type": "string",
+	            "default": ""
+	          }
+	        }
+	      }
+
+	    }
+	  },
+	  inputText: {
+	    "title": "输入",
+	    "properties": {
+	      "attrs": {
+	        "title": "attrs",
+	        "type": "object",
+	        "properties": {}
+
+	      },
+	      "children": {
+	        "title": "children",
+	        "type": "object",
+	        "properties": {
+	          "attrs": {
+	            "title": "attrs",
+	            "type": "object",
+	            "properties": {
+	              "type": {
+	                "title": "input type",
+	                "type": "string",
+	                "enum": ["text", "password", "number", "color"],
+	                "default": "text"
+	              },
+	              "value": {
+	                "title": "value",
+	                "type": "string",
+	                "default": ""
+	              }
+	            }
+	          }
+	        }
+	      }
+
+	    }
+	  }
+
+	};
+
+	var jsonData = exports.jsonData = {
+	  "attrs": { title: 'radio', name: 'Client4', required: false },
+	  "style": {
+	    "left": 0,
+	    "top": 0,
+	    "width": 100,
+	    "height": 100,
+
+	    "borderWidth": 1,
+	    "borderTopWidth": 1,
+	    "borderRightWidth": 1,
+	    "borderBottomWidth": 1,
+	    "borderLeftWidth": 1,
+
+	    "borderStyle": "solid",
+	    "borderTopStyle": "solid",
+	    "borderRightStyle": "solid",
+	    "borderBottomStyle": "solid",
+	    "borderLeftStyle": "solid",
+
+	    "borderColor": "#993333",
+	    "borderTopColor": "#993333",
+	    "borderRightColor": "#993333",
+	    "borderBottomColor": "#993333",
+	    "borderLeftColor": "#993333",
+
+	    "backgroundColor": "#ffffff"
+	  },
+	  "children": ""
+	};
+
+	var jsonSchema = exports.jsonSchema = {
+	  "$schema": "http://json-schema.org/draft-04/schema#",
+	  "title": "CONTROL_NAME",
+	  "type": "object",
+	  "properties": {
+	    "attrs": {
+	      "title": "attrs",
+	      "type": "object",
+	      "properties": {
+
+	        "title": {
+	          "title": "title",
+	          "type": "string",
+	          "default": ""
+	        },
+	        "name": {
+	          "title": "name",
+	          "type": "string",
+	          "default": ""
+	        },
+	        "required": {
+	          "title": "required",
+	          "type": "boolean",
+	          "default": false
+	        }
+
+	      }
+	    },
+	    "style": {
+	      "title": "style",
+	      "type": "object",
+	      "properties": {
+	        "left": {
+	          "title": "left",
+	          "type": "integer",
+	          "default": 100
+	        },
+	        "top": {
+	          "title": "top",
+	          "type": "integer",
+	          "default": 100
+	        },
+	        "width": {
+	          "title": "width",
+	          "type": "integer",
+	          "minimum": 0,
+	          "default": 100
+	        },
+	        "height": {
+	          "title": "height",
+	          "type": "integer",
+	          "minimum": 0,
+	          "default": 100
+	        },
+	        "borderWidth": {
+	          "title": "border width",
+	          "type": "integer",
+	          "minimum": 0,
+	          "default": 1
+	        },
+	        "borderStyle": {
+	          "title": "border style",
+	          "type": "string",
+	          "enum": ["", "none", "solid", "dotted", "dashed"],
+	          "default": "solid"
+	        },
+	        "borderColor": {
+	          "title": "border color",
+	          "format": "color",
+	          "type": "string",
+	          "default": "#993333",
+	          "empty": "#000000"
+	        },
+	        "borderLeftWidth": {
+	          "title": "border left width",
+	          "inherit": "borderWidth"
+	        },
+	        "borderLeftStyle": {
+	          "title": "border left style",
+	          "inherit": "borderStyle"
+	        },
+	        "borderLeftColor": {
+	          "title": "border left color",
+	          "inherit": "borderColor"
+	        },
+	        "borderTopWidth": {
+	          "title": "border top width",
+	          "inherit": "borderWidth"
+	        },
+	        "borderTopStyle": {
+	          "title": "border top style",
+	          "inherit": "borderStyle"
+	        },
+	        "borderTopColor": {
+	          "title": "border top color",
+	          "inherit": "borderColor"
+	        },
+	        "borderRightWidth": {
+	          "title": "border right width",
+	          "inherit": "borderWidth"
+	        },
+	        "borderRightStyle": {
+	          "title": "border right style",
+	          "inherit": "borderStyle"
+	        },
+	        "borderRightColor": {
+	          "title": "border right color",
+	          "inherit": "borderColor"
+	        },
+	        "borderBottomWidth": {
+	          "title": "border bottom width",
+	          "inherit": "borderWidth"
+	        },
+	        "borderBottomStyle": {
+	          "title": "border bottom style",
+	          "inherit": "borderStyle"
+	        },
+	        "borderBottomColor": {
+	          "title": "border bottom color",
+	          "inherit": "borderColor"
+	        },
+
+	        "backgroundColor": {
+	          "title": "background color",
+	          "type": "string",
+	          "format": "color",
+	          "default": "#ffffff"
+	        }
+	      }
+	    }
+	  }
+	};
+
+	function renderJsonEditor() {
+	  var self = this;
+	  if (this.isValidRect() && this.jsonData && this.jsonSchema) {
+	    Global._extend(this.jsonData().style, this.Prop.style);
+	    _mithril2.default.mount(document.querySelector('.editor'), new _JsonEditor2.default(this.jsonSchema, this.jsonData, { config: function config(el) {
+	        $(el).find('.inherit').each(function () {
+	          var inheritClass = $(this).attr('class').split(/\s+/).filter(function (v) {
+	            return v.indexOf('inherit-') >= 0;
+	          }).pop();
+	          if (inheritClass) {
+	            var parentClass = inheritClass.split('-').pop();
+	            var pEl = $('[data-key="' + parentClass + '"]');
+	            var con = pEl.next('.inheritCon');
+	            if (!con.length) {
+	              con = $('<div class="inheritCon"></div>');
+	              pEl.after(con);
+	              $('.' + inheritClass).appendTo(con);
+	            }
+	            // $(`.${inheritClass}`).after(pEl)
+	            pEl.addClass('plus').off().on('click', '.itemTitle', function (e) {
+	              pEl.toggleClass('minus');
+	              con.toggleClass('visible');
+	            });
+	          }
+	        });
+	      } }, function (path, value, getData, data) {
+	      path = path.replace(/^root\./, '');
+	      // if borderStyle is none/'', set width to 0
+	      if (/(border\w+)Style$/i.test(path) && (value == 'none' || !value) || /(border\w+)Width$/i.test(path) && /^$|none/.test(Global.objectPath(data, path.replace(/Width$/, 'Style')))) {
+	        Global.objectPath(data, path.replace(/Style$/, 'Width'), 0);
+	      }
+	      Global._extend(self.Prop, getData.attrs);
+	      Global._extend(self.Prop.style, getData.style);
+	      _mithril2.default.redraw();
+	    }));
+	  }
+	}
 
 /***/ }
 /******/ ]);

@@ -28,7 +28,7 @@ export default class WidgetDiv extends LayerBaseClass {
     var self = this;
     var Prop = Global.applyProp(this.Prop)
     var dom = m('div.layer', Prop, [
-        m('.content', {config: function(el,isInit,context){context.retain=true} } ),
+        m('.content', {config: function(el,isInit,context){context.retain=true} }, this.jsonData().children ),
         m('.bbox', {config: function(el,isInit,context){context.retain=true} } ),
         this.buildControlPoint()
       ] )

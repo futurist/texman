@@ -251,7 +251,7 @@ export default class ContainerBaseClass extends LayerBaseClass {
 
 				if(index==undefined){
 					widget = !evt.shiftKey? new WidgetDiv( self ) : new WidgetCanvas( self );
-					Global._extend( widget.Prop.style, { backgroundColor:Global.RandomColor() } )
+					// Global._extend( widget.Prop.style, { backgroundColor:Global.RandomColor() } )
 					PropLayer = widget.Prop
 					PropLayer.style.left = offsetX-(Global.BORDER_BOX? 0 : PropLayer.style.borderLeftWidth||0)
 					PropLayer.style.top = offsetY-(Global.BORDER_BOX? 0 : PropLayer.style.borderTopWidth||0)
