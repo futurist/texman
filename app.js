@@ -1778,6 +1778,9 @@
 	    document.querySelector('#debug').innerHTML = msg;
 	};
 
+	var _applyJsonStyle = exports._applyJsonStyle = function _applyJsonStyle(propStyle) {
+	    return _exclude(propStyle, ['borderWidth', 'borderStyle', 'borderColor', 'backgroundColor', 'backgroundType']);
+	};
 	/**
 	 * applyProp from this.Prop, remove unused props, and apply style to int width/height etc.
 	 * @param  {[type]} thisProp [description]
@@ -1790,7 +1793,7 @@
 	        Prop.style.border = thisProp.style.borderWidth + 'px ' + thisProp.style.borderStyle + ' ' + thisProp.style.borderColor;
 	    }
 	    applyStyle(Prop, thisProp.style);
-	    Prop.style = _exclude(Prop.style, ['borderWidth', 'borderStyle', 'borderColor']);
+	    Prop.style = _applyJsonStyle(Prop.style);
 	    if (Prop.class) Prop.class = Prop.class.replace(/\s+/, ' ').trim();
 	    if (Prop.className) Prop.className = Prop.className.replace(/\s+/, ' ').trim();
 	    return Prop;
@@ -1949,12 +1952,7 @@
 			this.Prop.className = '';
 
 			var curTool = parent && parent.children.length % 2 ? 'plain' : 'inputText';
-			var newJsonData = Global._deepCopy({}, DataTemplate.jsonData, DataTemplate.jsonType[curTool]);
-			var newJsonSchema = Global._deepCopy({}, DataTemplate.jsonSchema, DataTemplate.jsonTypeSchema[curTool]);
-			this.Prop = Global._deepCopy(this.Prop, newJsonData.attrs);
-			this.Prop.style = Global.clone(newJsonData.style);
-			this.jsonSchema = _mithril2.default.prop(newJsonSchema);
-			this.jsonData = _mithril2.default.prop(newJsonData);
+			DataTemplate.initDataTemplate.call(this, curTool);
 
 			this.Prop = Global._deepCopy(this.Prop, prop || {});
 
@@ -3461,6 +3459,7 @@
 	});
 	exports.jsonSchema = exports.jsonData = exports.jsonTypeSchema = exports.jsonType = undefined;
 	exports.renderJsonEditor = renderJsonEditor;
+	exports.initDataTemplate = initDataTemplate;
 
 	var _global = __webpack_require__(4);
 
@@ -3575,7 +3574,9 @@
 	    "borderBottomColor": "#993333",
 	    "borderLeftColor": "#993333",
 
-	    "backgroundColor": "#ffffff"
+	    "backgroundType": "none",
+	    "backgroundColor": "#ffffff",
+	    "background": "none"
 	  },
 	  "children": ""
 	};
@@ -3589,7 +3590,6 @@
 	      "title": "attrs",
 	      "type": "object",
 	      "properties": {
-
 	        "title": {
 	          "title": "title",
 	          "type": "string",
@@ -3702,6 +3702,13 @@
 	          "inherit": "borderColor"
 	        },
 
+	        "backgroundType": {
+	          "title": "background type",
+	          "type": "string",
+	          "enum": ["none", "color", "transparent"],
+	          "default": "none"
+	        },
+
 	        "backgroundColor": {
 	          "title": "background color",
 	          "type": "string",
@@ -3740,15 +3747,42 @@
 	        });
 	      } }, function (path, value, getData, data) {
 	      path = path.replace(/^root\./, '');
+
 	      // if borderStyle is none/'', set width to 0
-	      if (/(border\w+)Style$/i.test(path) && (value == 'none' || !value) || /(border\w+)Width$/i.test(path) && /^$|none/.test(Global.objectPath(data, path.replace(/Width$/, 'Style')))) {
-	        Global.objectPath(data, path.replace(/Style$/, 'Width'), 0);
+	      if (/(border\w+)Style$/i.test(path) && (value == 'none' || !value) || /(border\w+)Width$/i.test(path) && /^$|none/.test(objectPath(data, path.replace(/Width$/, 'Style')))) {
+	        objectPath(data, path.replace(/Style$/, 'Width'), 0);
 	      }
+
+	      if (data && /backgroundType/i.test(path)) {
+	        if (value == 'none') {
+	          getData.style.background = 'none';
+	        }
+	        if (value == 'color') {
+	          getData.style.background = data.style.backgroundColor;
+	        }
+	      }
+
 	      Global._extend(self.Prop, getData.attrs);
-	      Global._extend(self.Prop.style, getData.style);
+	      Global._extend(self.Prop.style, Global._applyJsonStyle(getData.style));
 	      _mithril2.default.redraw();
 	    }));
 	  }
+	}
+
+	/**
+	 * init this.jsonSchema & this.jsonData from DataTemplate Data for LayerBaseClass and inherited 
+	 * @param  {String} curTool toolset of jsonType, like 'plain', 'inputText' etc.
+	 * Usage: initDataTemplate.call(this, 'plain')
+	 */
+	function initDataTemplate() {
+	  var curTool = arguments.length <= 0 || arguments[0] === undefined ? 'plain' : arguments[0];
+
+	  var newJsonData = Global._deepCopy({}, jsonData, jsonType[curTool]);
+	  var newJsonSchema = Global._deepCopy({}, jsonSchema, jsonTypeSchema[curTool]);
+	  this.Prop = Global._deepCopy(this.Prop, newJsonData.attrs);
+	  this.Prop.style = Global.clone(newJsonData.style);
+	  this.jsonSchema = _mithril2.default.prop(newJsonSchema);
+	  this.jsonData = _mithril2.default.prop(newJsonData);
 	}
 
 /***/ }

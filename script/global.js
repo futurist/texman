@@ -242,6 +242,10 @@ export var debug = function( msg ){
     document.querySelector('#debug').innerHTML = msg
 }
 
+
+export var _applyJsonStyle = function( propStyle ){
+    return _exclude( propStyle, ['borderWidth','borderStyle', 'borderColor', 'backgroundColor', 'backgroundType'] )
+}
 /**
  * applyProp from this.Prop, remove unused props, and apply style to int width/height etc.
  * @param  {[type]} thisProp [description]
@@ -254,7 +258,7 @@ export var applyProp = function( thisProp ){
         Prop.style.border = thisProp.style.borderWidth+'px '+thisProp.style.borderStyle+' '+thisProp.style.borderColor
     }
     applyStyle( Prop, thisProp.style )
-    Prop.style = _exclude( Prop.style, ['borderWidth','borderStyle', 'borderColor'] )
+    Prop.style = _applyJsonStyle( Prop.style )
     if(Prop.class) Prop.class = Prop.class.replace(/\s+/, ' ').trim()
     if(Prop.className) Prop.className = Prop.className.replace(/\s+/, ' ').trim()
     return Prop

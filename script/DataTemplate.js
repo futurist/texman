@@ -112,7 +112,9 @@ export var jsonData = {
     "borderBottomColor": "#993333",
     "borderLeftColor": "#993333",
 
-    "backgroundColor": "#ffffff"
+    "backgroundType": "none",
+    "backgroundColor": "#ffffff",
+    "background": "none"
   },
   "children": ""
 }
@@ -126,7 +128,6 @@ export var jsonSchema = {
       "title": "attrs",
       "type": "object",
       "properties": {
-
         "title": {
           "title": "title",
           "type": "string",
@@ -245,6 +246,17 @@ export var jsonSchema = {
           "inherit":"borderColor"
         },
 
+        "backgroundType": {
+          "title": "background type",
+          "type": "string",
+          "enum": [
+            "none",
+            "color",
+            "transparent",
+          ],
+          "default": "none"
+        },
+
         "backgroundColor": {
           "title": "background color",
           "type": "string",
@@ -282,16 +294,41 @@ export function renderJsonEditor(){
         })
       } }, function(path,value, getData, data ){
         path = path.replace(/^root\./,'')
+
         // if borderStyle is none/'', set width to 0 
         if( /(border\w+)Style$/i.test(path) && (value=='none'|| !value) 
-          || /(border\w+)Width$/i.test(path) && /^$|none/.test( Global.objectPath( data, path.replace(/Width$/, 'Style') ) )
+          || /(border\w+)Width$/i.test(path) && /^$|none/.test( objectPath( data, path.replace(/Width$/, 'Style') ) )
         ) {
-          Global.objectPath( data, path.replace(/Style$/, 'Width'), 0 );
+          objectPath( data, path.replace(/Style$/, 'Width'), 0 );
         }
+
+        if( data && /backgroundType/i.test(path) ) {
+          if(value=='none'){
+            getData.style.background = 'none'
+          }
+          if(value=='color'){
+            getData.style.background = data.style.backgroundColor
+          }
+        }
+
         Global._extend(self.Prop, getData.attrs)
-        Global._extend(self.Prop.style, getData.style)
+        Global._extend(self.Prop.style, Global._applyJsonStyle( getData.style ) )
         m.redraw()
       }) )
     }
+}
+
+/**
+ * init this.jsonSchema & this.jsonData from DataTemplate Data for LayerBaseClass and inherited 
+ * @param  {String} curTool toolset of jsonType, like 'plain', 'inputText' etc.
+ * Usage: initDataTemplate.call(this, 'plain')
+ */
+export function initDataTemplate(curTool='plain') {
+    var newJsonData = Global._deepCopy( {}, jsonData, jsonType[curTool] )
+    var newJsonSchema = Global._deepCopy( {}, jsonSchema, jsonTypeSchema[curTool] )
+    this.Prop = Global._deepCopy( this.Prop, newJsonData.attrs )
+    this.Prop.style = Global.clone(  newJsonData.style )
+    this.jsonSchema = m.prop(newJsonSchema)
+    this.jsonData = m.prop(newJsonData)
 }
 

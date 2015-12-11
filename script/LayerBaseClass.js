@@ -13,12 +13,7 @@ export default class LayerBaseClass {
     this.Prop.className = ''
 
     var curTool = parent&&parent.children.length%2 ? 'plain' : 'inputText'
-    var newJsonData = Global._deepCopy( {}, DataTemplate.jsonData, DataTemplate.jsonType[curTool] )
-    var newJsonSchema = Global._deepCopy( {}, DataTemplate.jsonSchema, DataTemplate.jsonTypeSchema[curTool] )
-    this.Prop = Global._deepCopy( this.Prop, newJsonData.attrs )
-    this.Prop.style = Global.clone(  newJsonData.style )
-    this.jsonSchema = m.prop(newJsonSchema)
-    this.jsonData = m.prop(newJsonData)
+    DataTemplate.initDataTemplate.call(this, curTool)
 
 		this.Prop = Global._deepCopy( this.Prop, prop||{} );
 
