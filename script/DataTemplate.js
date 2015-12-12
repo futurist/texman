@@ -113,7 +113,7 @@ export var jsonData = {
     "borderLeftColor": "#993333",
 
     "backgroundType": "none",
-    "backgroundColor": "#993333",
+    "backgroundColor": "#999933",
     "background": "none"
   },
   "children": ""
@@ -301,7 +301,6 @@ export function renderJsonEditor(){
         })
       } }, function(path,value, getData, data ){
         path = path.replace(/^root\./,'')
-
         // if borderStyle is none/'', set width to 0
         if( /(border\w+)Style$/i.test(path) && (value=='none'|| !value)
           || /(border\w+)Width$/i.test(path) && /^$|none/.test( Global.objectPath( data, path.replace(/Width$/, 'Style') ) )
@@ -309,7 +308,7 @@ export function renderJsonEditor(){
           Global.objectPath( data, path.replace(/Style$/, 'Width'), 0 );
         }
         Global._extend(self.Prop, getData.attrs)
-        Global._extend(self.Prop.style, Global._applyJsonStyle( getData.style ) )
+        Global._extend(self.Prop.style, Global._exlucdeJsonStyle( getData.style ) )
         m.redraw()
       }) )
     }
@@ -324,7 +323,7 @@ export function initDataTemplate(curTool='plain') {
     var newJsonData = Global._deepCopy( {}, jsonData, jsonType[curTool] )
     var newJsonSchema = Global._deepCopy( {}, jsonSchema, jsonTypeSchema[curTool] )
     this.Prop = Global._deepCopy( this.Prop, newJsonData.attrs )
-    this.Prop.style = Global.clone(  newJsonData.style )
+    this.Prop.style = Global._exlucdeJsonStyle( Global._deepCopy( {},  newJsonData.style ) )
     this.jsonSchema = m.prop(newJsonSchema)
     this.jsonData = m.prop(newJsonData)
 }

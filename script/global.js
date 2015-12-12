@@ -108,18 +108,18 @@ export function _deepCopy(obj) {
     obj = obj || {};
     if(arguments.length<2) return obj;
     for(var i=1; i<arguments.length; i++){
-        var props = arguments[i];
-        for(var prop in props) {
-            if( props.hasOwnProperty(prop) ) {
-                var type = Object.prototype.toString.call( props[prop] );
+        var dest = arguments[i];
+        for(var prop in dest) {
+            if( dest.hasOwnProperty(prop) ) {
+                var type = Object.prototype.toString.call( dest[prop] );
                 if( type==='[object Object]' ){
                     obj[prop]= obj[prop] || {}
-                    _deepCopy(obj[prop], props[prop]);
+                    _deepCopy(obj[prop], dest[prop]);
                 } else if( type==='[object Array]' ){
                     obj[prop]= obj[prop] || []
-                    _deepCopy(obj[prop], props[prop]);
+                    _deepCopy(obj[prop], dest[prop]);
                 } else {
-                    obj[prop] = clone(props[prop]);
+                    obj[prop] = clone(dest[prop]);
                 }
             }
         }
@@ -131,18 +131,18 @@ export function _extend(obj) {
     obj = obj || {};
     if(arguments.length<2) return obj;
     for(var i=1; i<arguments.length; i++){
-        var props = arguments[i];
-        for(var prop in props) {
-            if( props.hasOwnProperty(prop) ) {
-                var type = Object.prototype.toString.call( props[prop] );
+        var dest = arguments[i];
+        for(var prop in dest) {
+            if( dest.hasOwnProperty(prop) ) {
+                var type = Object.prototype.toString.call( dest[prop] );
                 if( type==='[object Object]' ){
                     obj[prop]= obj[prop] || {}
-                    _extend(obj[prop], props[prop]);
+                    _extend(obj[prop], dest[prop]);
                 } else if( type==='[object Array]' ){
                     obj[prop]= obj[prop] || []
-                    _extend(obj[prop], props[prop]);
+                    _extend(obj[prop], dest[prop]);
                 } else {
-                    obj[prop] = (props[prop]);
+                    obj[prop] = (dest[prop]);
                 }
             }
         }
@@ -243,7 +243,7 @@ export var debug = function( msg ){
 }
 
 
-export var _applyJsonStyle = function( propStyle ){
+export var _exlucdeJsonStyle = function( propStyle ){
     return _exclude( propStyle, ['borderWidth','borderStyle', 'borderColor', 'backgroundColor'] )
 }
 /**
@@ -258,7 +258,7 @@ export var applyProp = function( thisProp ){
         Prop.style.border = thisProp.style.borderWidth+'px '+thisProp.style.borderStyle+' '+thisProp.style.borderColor
     }
     applyStyle( Prop, thisProp.style )
-    Prop.style = _applyJsonStyle( Prop.style )
+    Prop.style = _exlucdeJsonStyle( Prop.style )
     if(Prop.class) Prop.class = Prop.class.replace(/\s+/, ' ').trim()
     if(Prop.className) Prop.className = Prop.className.replace(/\s+/, ' ').trim()
     return Prop

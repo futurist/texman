@@ -1648,18 +1648,18 @@
 	    obj = obj || {};
 	    if (arguments.length < 2) return obj;
 	    for (var i = 1; i < arguments.length; i++) {
-	        var props = arguments[i];
-	        for (var prop in props) {
-	            if (props.hasOwnProperty(prop)) {
-	                var type = Object.prototype.toString.call(props[prop]);
+	        var dest = arguments[i];
+	        for (var prop in dest) {
+	            if (dest.hasOwnProperty(prop)) {
+	                var type = Object.prototype.toString.call(dest[prop]);
 	                if (type === '[object Object]') {
 	                    obj[prop] = obj[prop] || {};
-	                    _deepCopy(obj[prop], props[prop]);
+	                    _deepCopy(obj[prop], dest[prop]);
 	                } else if (type === '[object Array]') {
 	                    obj[prop] = obj[prop] || [];
-	                    _deepCopy(obj[prop], props[prop]);
+	                    _deepCopy(obj[prop], dest[prop]);
 	                } else {
-	                    obj[prop] = clone(props[prop]);
+	                    obj[prop] = clone(dest[prop]);
 	                }
 	            }
 	        }
@@ -1671,18 +1671,18 @@
 	    obj = obj || {};
 	    if (arguments.length < 2) return obj;
 	    for (var i = 1; i < arguments.length; i++) {
-	        var props = arguments[i];
-	        for (var prop in props) {
-	            if (props.hasOwnProperty(prop)) {
-	                var type = Object.prototype.toString.call(props[prop]);
+	        var dest = arguments[i];
+	        for (var prop in dest) {
+	            if (dest.hasOwnProperty(prop)) {
+	                var type = Object.prototype.toString.call(dest[prop]);
 	                if (type === '[object Object]') {
 	                    obj[prop] = obj[prop] || {};
-	                    _extend(obj[prop], props[prop]);
+	                    _extend(obj[prop], dest[prop]);
 	                } else if (type === '[object Array]') {
 	                    obj[prop] = obj[prop] || [];
-	                    _extend(obj[prop], props[prop]);
+	                    _extend(obj[prop], dest[prop]);
 	                } else {
-	                    obj[prop] = props[prop];
+	                    obj[prop] = dest[prop];
 	                }
 	            }
 	        }
@@ -1778,7 +1778,7 @@
 	    document.querySelector('#debug').innerHTML = msg;
 	};
 
-	var _applyJsonStyle = exports._applyJsonStyle = function _applyJsonStyle(propStyle) {
+	var _exlucdeJsonStyle = exports._exlucdeJsonStyle = function _exlucdeJsonStyle(propStyle) {
 	    return _exclude(propStyle, ['borderWidth', 'borderStyle', 'borderColor', 'backgroundColor']);
 	};
 	/**
@@ -1793,7 +1793,7 @@
 	        Prop.style.border = thisProp.style.borderWidth + 'px ' + thisProp.style.borderStyle + ' ' + thisProp.style.borderColor;
 	    }
 	    applyStyle(Prop, thisProp.style);
-	    Prop.style = _applyJsonStyle(Prop.style);
+	    Prop.style = _exlucdeJsonStyle(Prop.style);
 	    if (Prop.class) Prop.class = Prop.class.replace(/\s+/, ' ').trim();
 	    if (Prop.className) Prop.className = Prop.className.replace(/\s+/, ' ').trim();
 	    return Prop;
@@ -1950,7 +1950,6 @@
 			this.Prop = {};
 			this.Prop.key = this.ID;
 			this.Prop.className = '';
-
 			var curTool = parent && parent.children.length % 2 ? 'plain' : 'inputText';
 			DataTemplate.initDataTemplate.call(this, curTool);
 
@@ -2432,7 +2431,7 @@
 	    "borderLeftColor": "#993333",
 
 	    "backgroundType": "none",
-	    "backgroundColor": "#993333",
+	    "backgroundColor": "#999933",
 	    "background": "none"
 	  },
 	  "children": ""
@@ -2611,13 +2610,12 @@
 	        });
 	      } }, function (path, value, getData, data) {
 	      path = path.replace(/^root\./, '');
-
 	      // if borderStyle is none/'', set width to 0
 	      if (/(border\w+)Style$/i.test(path) && (value == 'none' || !value) || /(border\w+)Width$/i.test(path) && /^$|none/.test(Global.objectPath(data, path.replace(/Width$/, 'Style')))) {
 	        Global.objectPath(data, path.replace(/Style$/, 'Width'), 0);
 	      }
 	      Global._extend(self.Prop, getData.attrs);
-	      Global._extend(self.Prop.style, Global._applyJsonStyle(getData.style));
+	      Global._extend(self.Prop.style, Global._exlucdeJsonStyle(getData.style));
 	      _mithril2.default.redraw();
 	    }));
 	  }
@@ -2634,7 +2632,7 @@
 	  var newJsonData = Global._deepCopy({}, jsonData, jsonType[curTool]);
 	  var newJsonSchema = Global._deepCopy({}, jsonSchema, jsonTypeSchema[curTool]);
 	  this.Prop = Global._deepCopy(this.Prop, newJsonData.attrs);
-	  this.Prop.style = Global.clone(newJsonData.style);
+	  this.Prop.style = Global._exlucdeJsonStyle(Global._deepCopy({}, newJsonData.style));
 	  this.jsonSchema = _mithril2.default.prop(newJsonSchema);
 	  this.jsonData = _mithril2.default.prop(newJsonData);
 	}
