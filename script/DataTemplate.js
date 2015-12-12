@@ -3,8 +3,8 @@ import m from 'mithril'
 import JsonEditor from './JsonEditor'
 
 export var jsonType = {
-  plain:{type:'plain', attrs: {title:'plain text'}, style:{}, children:{tag:'span', html:false, children:"文字"} },
-  inputText:{type:'inputText', attrs: {title:'input text'}, style:{}, children:{ tag:'input', attrs:{ value:'输入文字', type:'text' } }  },
+  plain:{type:'plain', attrs: {title:'plain text'}, children:{tag:'span', html:false, children:"文字"}, style:{} },
+  inputText:{type:'inputText', attrs: {title:'input text'}, children:{ tag:'input', attrs:{ value:'输入文字', type:'text' } }, style:{}  },
 }
 export var jsonTypeSchema = {
   plain: {
@@ -77,7 +77,7 @@ export var jsonTypeSchema = {
             }
           }
         }
-      }
+      },
 
     }
   },
@@ -88,6 +88,7 @@ export var jsonTypeSchema = {
 
 export var jsonData = {
   "attrs": {title:'radio', name:'Client4',required:false,  },
+  "children": {},
   "style": {
     "left": 0,
     "top": 0,
@@ -116,7 +117,6 @@ export var jsonData = {
     "backgroundColor": "#999933",
     "background": "none"
   },
-  "children": ""
 }
 
 export var jsonSchema = {
@@ -146,6 +146,7 @@ export var jsonSchema = {
 
       }
     },
+    "children": {},
     "style": {
       "title": "style",
       "type": "object",

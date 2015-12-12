@@ -2334,8 +2334,8 @@
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 	var jsonType = exports.jsonType = {
-	  plain: { type: 'plain', attrs: { title: 'plain text' }, style: {}, children: { tag: 'span', html: false, children: "文字" } },
-	  inputText: { type: 'inputText', attrs: { title: 'input text' }, style: {}, children: { tag: 'input', attrs: { value: '输入文字', type: 'text' } } }
+	  plain: { type: 'plain', attrs: { title: 'plain text' }, children: { tag: 'span', html: false, children: "文字" }, style: {} },
+	  inputText: { type: 'inputText', attrs: { title: 'input text' }, children: { tag: 'input', attrs: { value: '输入文字', type: 'text' } }, style: {} }
 	};
 	var jsonTypeSchema = exports.jsonTypeSchema = {
 	  plain: {
@@ -2406,6 +2406,7 @@
 
 	var jsonData = exports.jsonData = {
 	  "attrs": { title: 'radio', name: 'Client4', required: false },
+	  "children": {},
 	  "style": {
 	    "left": 0,
 	    "top": 0,
@@ -2433,8 +2434,7 @@
 	    "backgroundType": "none",
 	    "backgroundColor": "#999933",
 	    "background": "none"
-	  },
-	  "children": ""
+	  }
 	};
 
 	var jsonSchema = exports.jsonSchema = {
@@ -2464,6 +2464,7 @@
 
 	      }
 	    },
+	    "children": {},
 	    "style": {
 	      "title": "style",
 	      "type": "object",
