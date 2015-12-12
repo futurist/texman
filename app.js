@@ -1950,7 +1950,7 @@
 			this.Prop = {};
 			this.Prop.key = this.ID;
 			this.Prop.className = '';
-			var curTool = parent && parent.children.length % 2 ? 'plain' : 'inputText';
+			var curTool = parent && parent.children.length % 2 ? 'select' : 'inputText';
 			DataTemplate.initDataTemplate.call(this, curTool);
 
 			this.Prop = Global._deepCopy(this.Prop, prop || {});
@@ -2335,7 +2335,8 @@
 
 	var jsonType = exports.jsonType = {
 	  plain: { type: 'plain', attrs: { title: 'plain text' }, children: { tag: 'span', html: false, children: "文字" }, style: {} },
-	  inputText: { type: 'inputText', attrs: { title: 'input text' }, children: { tag: 'input', attrs: { value: '输入文字', type: 'text' } }, style: {} }
+	  inputText: { type: 'inputText', attrs: { title: 'input text' }, children: { tag: 'input', attrs: { value: '输入文字', type: 'text' } }, style: {} },
+	  select: { type: 'select', attrs: {}, children: { tag: 'select', attrs: { title: 'select', name: 'Client2', placeholder: 'select client...', value: '', required: true, multiple: false }, children: [{ value: 1234, option: 'oij' }] }, style: {} }
 	};
 	var jsonTypeSchema = exports.jsonTypeSchema = {
 	  plain: {
@@ -2396,6 +2397,77 @@
 	              }
 	            }
 	          }
+	        }
+	      }
+
+	    }
+	  },
+
+	  select: {
+	    "title": "选择",
+	    "properties": {
+	      "attrs": {
+	        "title": "attrs",
+	        "type": "object",
+	        "properties": {}
+
+	      },
+	      "children": {
+	        "title": "children",
+	        "type": "object",
+	        "properties": {
+	          "attrs": {
+	            "title": "attrs",
+	            "type": "object",
+	            "properties": {
+	              "multiple": {
+	                "title": "multiple",
+	                "type": "boolean",
+	                "default": false
+	              },
+	              "value": {
+	                "title": "value",
+	                "type": "string",
+	                "default": ""
+	              }
+
+	            }
+	          },
+
+	          // "children":{
+
+	          //     "title": "Options",
+	          //     "type": "array",
+	          //     "items": {
+	          //       "title": "value",
+	          //       "type": "string",
+	          //       "format": "search",
+	          //       "default":"222"
+	          //     }
+	          // }
+
+	          "children": {
+
+	            "title": "Options",
+	            "type": "array",
+	            "items": {
+	              "type": "object",
+	              "properties": {
+	                "option": {
+	                  "type": "string",
+	                  "default": "98usd"
+	                },
+	                "value": {
+	                  "type": "string"
+	                }
+	              },
+	              "default": {
+	                "option": "oisdjf",
+	                "value": 111
+	              }
+	            }
+	          }
+
 	        }
 	      }
 
@@ -2765,6 +2837,7 @@
 				if (arguments.length >= 3) {
 					if (data === undefined) {
 						data = Global.clone(schemaPathValue(path.slice(0, i)));
+						if (data === undefined) data = {};
 						_dotPathValue(obj, path.slice(0, i), data);
 					}
 					if (i == path.length - 1) {
@@ -2863,6 +2936,9 @@
 				attrs['key'] = path.join('.');
 				return attrs;
 			};
+			var addArrayItem = function addArrayItem() {
+				dataPathValue(path).push(Global.clone(schema.items.default || ''));
+			};
 			path = path || [key];
 			var level = path.length - 1;
 			var initAttrs = level == 0 ? Global._extend({ key: +new Date() }, PROPS) : {};
@@ -2879,15 +2955,20 @@
 			switch (schema.type) {
 				case 'array':
 					schemaPathValue(path, schema.default || []);
-					return (0, _mithril2.default)('div.array', Global._extend(initAttrs, getAttrs()), [(0, _mithril2.default)('h2.arrayTitle', schema.title), (0, _mithril2.default)('div.props', [schema.format == 'table' ? (function () {
+					return (0, _mithril2.default)('div.array', Global._extend(initAttrs, getAttrs()), [(0, _mithril2.default)('h2.arrayTitle', { onclick: function onclick() {
+							addArrayItem();
+						} }, schema.title), (0, _mithril2.default)('div.props', [schema.items.type == 'object' ? (function () {
 						var keys = Object.keys(schema.items.properties);
 						return dataPathValue(path).map(function (v, i) {
-							var keys = Object.keys(schema.items.properties);
 							return keys.map(function (key) {
-								return _this.parseSchema(schema.items.properties[key], key, path.concat(i, key));
+								return _this.parseSchema(schema.items.properties[key], i + "." + key, path.concat(i, key));
 							});
 						});
-					})() : ''])]);
+					})() : (function () {
+						return dataPathValue(path).map(function (v, i) {
+							return _this.parseSchema(schema.items, i, path.concat(i));
+						});
+					})()])]);
 					break;
 				case 'object':
 					schemaPathValue(path, schema.default || {});
@@ -2925,7 +3006,7 @@
 						} }, ['enum', 'type']), schema.enum.map(function (v) {
 						return (0, _mithril2.default)('option', v);
 					})) : (0, _mithril2.default)(schema.format == 'textarea' ? 'textarea' : 'input', buildAttrs(path, schema, {
-						type: schema.format == 'color' ? 'color' : 'text',
+						type: schema.format || 'text',
 						oninput: function oninput() {
 							dataPathValue(path, this.value);
 							if (inheritPath) dataPathValue(inheritPath, null);

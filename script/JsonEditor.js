@@ -99,6 +99,7 @@ export default class JsonEditor {
 				if(arguments.length>=3){
 					if(data===undefined){
 						data = Global.clone(schemaPathValue( path.slice(0, i) ))
+						if(data===undefined) data={}
 						_dotPathValue(obj, path.slice(0, i), data);
 					}
 					if(i==path.length-1){
@@ -191,6 +192,9 @@ export default class JsonEditor {
 				attrs['key'] = path.join('.')
 				return attrs;
 			}
+			var addArrayItem = function addArrayItem(){
+				dataPathValue( path ).push( Global.clone(schema.items.default||'') )
+			}
 		  path = path || [key]
 		  var level=path.length-1
 		  var initAttrs = level==0? Global._extend({ key:+new Date() }, PROPS) : {}
@@ -208,18 +212,22 @@ export default class JsonEditor {
 		    case 'array':
 		      schemaPathValue(path, schema.default||[]);
 		      return m('div.array', Global._extend(initAttrs, getAttrs() ), [
-		          m('h2.arrayTitle', schema.title),
+		          m('h2.arrayTitle', {onclick:function(){ addArrayItem() }}, schema.title),
 		          m('div.props', [
-		            schema.format == 'table' ?
-		            ( ()=>{
+		            schema.items.type == 'object' 
+		            ? ( ()=>{
 		            	var keys = Object.keys(schema.items.properties)
 			            return dataPathValue( path ).map( (v, i)=> {
-			              var keys = Object.keys(schema.items.properties)
 			              return keys.map( (key)=> {
-			              	return this.parseSchema( schema.items.properties[key], key, path.concat(i, key) );
+			              	return this.parseSchema( schema.items.properties[key], i+"."+key, path.concat(i, key) );
 			              })
 			            })
-			        }) () : ''
+			        }) () 
+			        : ( ()=>{
+			            return dataPathValue( path ).map( (v, i)=> {
+			              return this.parseSchema( schema.items, i, path.concat(i) );
+			            })
+			        }) ()
 		          ])
 		      ])
 		      break;
@@ -281,7 +289,7 @@ export default class JsonEditor {
 			          	)
 			          : m(schema.format=='textarea'? 'textarea': 'input',
 			          		buildAttrs(path, schema, {
-			          			type: schema.format=='color'?'color':'text',
+			          			type: schema.format || 'text',
 			          			oninput:function(){
 			          				dataPathValue(path, this.value)
 			          				if(inheritPath) dataPathValue( inheritPath, null );

@@ -11,7 +11,7 @@ export default class LayerBaseClass {
 		this.Prop = {}
     this.Prop.key = this.ID
     this.Prop.className = ''
-    var curTool = parent&&parent.children.length%2 ? 'plain' : 'inputText'
+    var curTool = parent&&parent.children.length%2 ? 'select' : 'inputText'
     DataTemplate.initDataTemplate.call(this, curTool)
 
 		this.Prop = Global._deepCopy( this.Prop, prop||{} );
