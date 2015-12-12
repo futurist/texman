@@ -50,7 +50,7 @@
 
 	var _canvas2 = _interopRequireDefault(_canvas);
 
-	var _addEditorDom = __webpack_require__(15);
+	var _addEditorDom = __webpack_require__(16);
 
 	var _addEditorDom2 = _interopRequireDefault(_addEditorDom);
 
@@ -85,15 +85,15 @@
 
 	var _WidgetDiv2 = _interopRequireDefault(_WidgetDiv);
 
-	var _WidgetCanvas = __webpack_require__(11);
+	var _WidgetCanvas = __webpack_require__(12);
 
 	var _WidgetCanvas2 = _interopRequireDefault(_WidgetCanvas);
 
-	var _JsonEditor = __webpack_require__(10);
+	var _JsonEditor = __webpack_require__(11);
 
 	var _JsonEditor2 = _interopRequireDefault(_JsonEditor);
 
-	var _Events = __webpack_require__(13);
+	var _Events = __webpack_require__(14);
 
 	var _Events2 = _interopRequireDefault(_Events);
 
@@ -1779,7 +1779,7 @@
 	};
 
 	var _applyJsonStyle = exports._applyJsonStyle = function _applyJsonStyle(propStyle) {
-	    return _exclude(propStyle, ['borderWidth', 'borderStyle', 'borderColor', 'backgroundColor', 'backgroundType']);
+	    return _exclude(propStyle, ['borderWidth', 'borderStyle', 'borderColor', 'backgroundColor']);
 	};
 	/**
 	 * applyProp from this.Prop, remove unused props, and apply style to int width/height etc.
@@ -1929,7 +1929,7 @@
 
 	var _addEditorToLayerBase2 = _interopRequireDefault(_addEditorToLayerBase);
 
-	var _DataTemplate = __webpack_require__(16);
+	var _DataTemplate = __webpack_require__(10);
 
 	var DataTemplate = _interopRequireWildcard(_DataTemplate);
 
@@ -2192,7 +2192,7 @@
 
 	var _LayerBaseClass2 = _interopRequireDefault(_LayerBaseClass);
 
-	var _DataTemplate = __webpack_require__(16);
+	var _DataTemplate = __webpack_require__(10);
 
 	var DataTemplate = _interopRequireWildcard(_DataTemplate);
 
@@ -2307,6 +2307,343 @@
 
 /***/ },
 /* 10 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.jsonSchema = exports.jsonData = exports.jsonTypeSchema = exports.jsonType = undefined;
+	exports.renderJsonEditor = renderJsonEditor;
+	exports.initDataTemplate = initDataTemplate;
+
+	var _global = __webpack_require__(4);
+
+	var Global = _interopRequireWildcard(_global);
+
+	var _mithril = __webpack_require__(2);
+
+	var _mithril2 = _interopRequireDefault(_mithril);
+
+	var _JsonEditor = __webpack_require__(11);
+
+	var _JsonEditor2 = _interopRequireDefault(_JsonEditor);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+	var jsonType = exports.jsonType = {
+	  plain: { type: 'plain', attrs: { title: 'plain text' }, style: {}, children: { tag: 'span', html: false, children: "文字" } },
+	  inputText: { type: 'inputText', attrs: { title: 'input text' }, style: {}, children: { tag: 'input', attrs: { value: '输入文字', type: 'text' } } }
+	};
+	var jsonTypeSchema = exports.jsonTypeSchema = {
+	  plain: {
+	    "title": "文字",
+	    "properties": {
+	      attrs: {
+	        "title": "attrs",
+	        "type": "object",
+	        "properties": {}
+	      },
+
+	      "children": {
+	        "title": "children",
+	        "type": "object",
+	        "properties": {
+	          "html": {
+	            "title": "is html",
+	            "type": "boolean",
+	            "default": false
+	          },
+	          "children": {
+	            "title": "children",
+	            "type": "string",
+	            "default": ""
+	          }
+	        }
+	      }
+
+	    }
+	  },
+	  inputText: {
+	    "title": "输入",
+	    "properties": {
+	      "attrs": {
+	        "title": "attrs",
+	        "type": "object",
+	        "properties": {}
+
+	      },
+	      "children": {
+	        "title": "children",
+	        "type": "object",
+	        "properties": {
+	          "attrs": {
+	            "title": "attrs",
+	            "type": "object",
+	            "properties": {
+	              "type": {
+	                "title": "input type",
+	                "type": "string",
+	                "enum": ["text", "password", "number", "color"],
+	                "default": "text"
+	              },
+	              "value": {
+	                "title": "value",
+	                "type": "string",
+	                "default": ""
+	              }
+	            }
+	          }
+	        }
+	      }
+
+	    }
+	  }
+
+	};
+
+	var jsonData = exports.jsonData = {
+	  "attrs": { title: 'radio', name: 'Client4', required: false },
+	  "style": {
+	    "left": 0,
+	    "top": 0,
+	    "width": 100,
+	    "height": 100,
+
+	    "borderWidth": 1,
+	    "borderTopWidth": 1,
+	    "borderRightWidth": 1,
+	    "borderBottomWidth": 1,
+	    "borderLeftWidth": 1,
+
+	    "borderStyle": "solid",
+	    "borderTopStyle": "solid",
+	    "borderRightStyle": "solid",
+	    "borderBottomStyle": "solid",
+	    "borderLeftStyle": "solid",
+
+	    "borderColor": "#993333",
+	    "borderTopColor": "#993333",
+	    "borderRightColor": "#993333",
+	    "borderBottomColor": "#993333",
+	    "borderLeftColor": "#993333",
+
+	    "backgroundType": "none",
+	    "backgroundColor": "#993333",
+	    "background": "none"
+	  },
+	  "children": ""
+	};
+
+	var jsonSchema = exports.jsonSchema = {
+	  "$schema": "http://json-schema.org/draft-04/schema#",
+	  "title": "CONTROL_NAME",
+	  "type": "object",
+	  "properties": {
+	    "attrs": {
+	      "title": "attrs",
+	      "type": "object",
+	      "properties": {
+	        "title": {
+	          "title": "title",
+	          "type": "string",
+	          "default": ""
+	        },
+	        "name": {
+	          "title": "name",
+	          "type": "string",
+	          "default": ""
+	        },
+	        "required": {
+	          "title": "required",
+	          "type": "boolean",
+	          "default": false
+	        }
+
+	      }
+	    },
+	    "style": {
+	      "title": "style",
+	      "type": "object",
+	      "properties": {
+	        "left": {
+	          "title": "left",
+	          "type": "integer",
+	          "default": 100
+	        },
+	        "top": {
+	          "title": "top",
+	          "type": "integer",
+	          "default": 100
+	        },
+	        "width": {
+	          "title": "width",
+	          "type": "integer",
+	          "minimum": 0,
+	          "default": 100
+	        },
+	        "height": {
+	          "title": "height",
+	          "type": "integer",
+	          "minimum": 0,
+	          "default": 100
+	        },
+	        "borderWidth": {
+	          "title": "border width",
+	          "type": "integer",
+	          "minimum": 0,
+	          "default": 1
+	        },
+	        "borderStyle": {
+	          "title": "border style",
+	          "type": "string",
+	          "enum": ["", "none", "solid", "dotted", "dashed"],
+	          "default": "solid"
+	        },
+	        "borderColor": {
+	          "title": "border color",
+	          "format": "color",
+	          "type": "string",
+	          "default": "#993333",
+	          "empty": "#000000"
+	        },
+	        "borderLeftWidth": {
+	          "title": "border left width",
+	          "inherit": "borderWidth"
+	        },
+	        "borderLeftStyle": {
+	          "title": "border left style",
+	          "inherit": "borderStyle"
+	        },
+	        "borderLeftColor": {
+	          "title": "border left color",
+	          "inherit": "borderColor"
+	        },
+	        "borderTopWidth": {
+	          "title": "border top width",
+	          "inherit": "borderWidth"
+	        },
+	        "borderTopStyle": {
+	          "title": "border top style",
+	          "inherit": "borderStyle"
+	        },
+	        "borderTopColor": {
+	          "title": "border top color",
+	          "inherit": "borderColor"
+	        },
+	        "borderRightWidth": {
+	          "title": "border right width",
+	          "inherit": "borderWidth"
+	        },
+	        "borderRightStyle": {
+	          "title": "border right style",
+	          "inherit": "borderStyle"
+	        },
+	        "borderRightColor": {
+	          "title": "border right color",
+	          "inherit": "borderColor"
+	        },
+	        "borderBottomWidth": {
+	          "title": "border bottom width",
+	          "inherit": "borderWidth"
+	        },
+	        "borderBottomStyle": {
+	          "title": "border bottom style",
+	          "inherit": "borderStyle"
+	        },
+	        "borderBottomColor": {
+	          "title": "border bottom color",
+	          "inherit": "borderColor"
+	        },
+
+	        "backgroundType": {
+	          "title": "background type",
+	          "type": "string",
+	          "enum": ["none", "color", "transparent"],
+	          "default": "none"
+	        },
+
+	        "backgroundColor": {
+	          "title": "background color",
+	          "type": "string",
+	          "format": "color",
+	          "default": "#ffffff"
+	        }
+	      }
+	    }
+	  }
+	};
+
+	function renderJsonEditor() {
+	  var self = this;
+	  if (this.isValidRect() && this.jsonData && this.jsonSchema) {
+	    Global._extend(this.jsonData().style, this.Prop.style);
+	    _mithril2.default.mount(document.querySelector('.editor'), new _JsonEditor2.default(this.jsonSchema, this.jsonData, { config: function config(el) {
+	        $(el).find('.inherit').each(function () {
+	          var inheritClass = $(this).attr('class').split(/\s+/).filter(function (v) {
+	            return v.indexOf('inherit-') >= 0;
+	          }).pop();
+	          if (inheritClass) {
+	            var parentClass = inheritClass.split('-').pop();
+	            var pEl = $('[data-key="' + parentClass + '"]');
+	            var con = pEl.next('.inheritCon');
+	            if (!con.length) {
+	              con = $('<div class="inheritCon"></div>');
+	              pEl.after(con);
+	              $('.' + inheritClass).appendTo(con);
+	            }
+	            // $(`.${inheritClass}`).after(pEl)
+	            pEl.addClass('plus').off().on('click', '.itemTitle', function (e) {
+	              pEl.toggleClass('minus');
+	              con.toggleClass('visible');
+	            });
+	          }
+	        });
+	      } }, function (path, value, getData, data) {
+	      path = path.replace(/^root\./, '');
+
+	      // if borderStyle is none/'', set width to 0
+	      if (/(border\w+)Style$/i.test(path) && (value == 'none' || !value) || /(border\w+)Width$/i.test(path) && /^$|none/.test(objectPath(data, path.replace(/Width$/, 'Style')))) {
+	        objectPath(data, path.replace(/Style$/, 'Width'), 0);
+	      }
+
+	      if (data && /backgroundType/i.test(path)) {
+	        if (value == 'none') {
+	          data.style.background = getData.style.background = 'none';
+	        }
+	        if (value == 'color') {
+	          data.style.background = getData.style.background = data.style.backgroundColor;
+	        }
+	      }
+
+	      Global._extend(self.Prop, getData.attrs);
+	      Global._extend(self.Prop.style, Global._applyJsonStyle(getData.style));
+	      _mithril2.default.redraw();
+	    }));
+	  }
+	}
+
+	/**
+	 * init this.jsonSchema & this.jsonData from DataTemplate Data for LayerBaseClass and inherited
+	 * @param  {String} curTool toolset of jsonType, like 'plain', 'inputText' etc.
+	 * Usage: initDataTemplate.call(this, 'plain')
+	 */
+	function initDataTemplate() {
+	  var curTool = arguments.length <= 0 || arguments[0] === undefined ? 'plain' : arguments[0];
+
+	  var newJsonData = Global._deepCopy({}, jsonData, jsonType[curTool]);
+	  var newJsonSchema = Global._deepCopy({}, jsonSchema, jsonTypeSchema[curTool]);
+	  this.Prop = Global._deepCopy(this.Prop, newJsonData.attrs);
+	  this.Prop.style = Global.clone(newJsonData.style);
+	  this.jsonSchema = _mithril2.default.prop(newJsonSchema);
+	  this.jsonData = _mithril2.default.prop(newJsonData);
+	}
+
+/***/ },
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2626,7 +2963,7 @@
 	};
 
 /***/ },
-/* 11 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2645,7 +2982,7 @@
 
 	var Global = _interopRequireWildcard(_global);
 
-	var _ContainerBaseClass2 = __webpack_require__(12);
+	var _ContainerBaseClass2 = __webpack_require__(13);
 
 	var _ContainerBaseClass3 = _interopRequireDefault(_ContainerBaseClass2);
 
@@ -2699,7 +3036,7 @@
 	exports.default = WidgetCanvas;
 
 /***/ },
-/* 12 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2728,11 +3065,11 @@
 
 	var _WidgetDiv2 = _interopRequireDefault(_WidgetDiv);
 
-	var _WidgetCanvas = __webpack_require__(11);
+	var _WidgetCanvas = __webpack_require__(12);
 
 	var _WidgetCanvas2 = _interopRequireDefault(_WidgetCanvas);
 
-	var _Events = __webpack_require__(13);
+	var _Events = __webpack_require__(14);
 
 	var _Events2 = _interopRequireDefault(_Events);
 
@@ -3172,7 +3509,7 @@
 	exports.default = ContainerBaseClass;
 
 /***/ },
-/* 13 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -3181,7 +3518,7 @@
 	  value: true
 	});
 
-	var _eventKeeper = __webpack_require__(14);
+	var _eventKeeper = __webpack_require__(15);
 
 	var _eventKeeper2 = _interopRequireDefault(_eventKeeper);
 
@@ -3190,7 +3527,7 @@
 	exports.default = new _eventKeeper2.default();
 
 /***/ },
-/* 14 */
+/* 15 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -3423,7 +3760,7 @@
 	module.exports = EventEmitter;
 
 /***/ },
-/* 15 */
+/* 16 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -3447,343 +3784,6 @@
 		var con = document.querySelector('.editorContainer');
 		con.style.width = initEditorWidth + 'px';
 	};
-
-/***/ },
-/* 16 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	exports.jsonSchema = exports.jsonData = exports.jsonTypeSchema = exports.jsonType = undefined;
-	exports.renderJsonEditor = renderJsonEditor;
-	exports.initDataTemplate = initDataTemplate;
-
-	var _global = __webpack_require__(4);
-
-	var Global = _interopRequireWildcard(_global);
-
-	var _mithril = __webpack_require__(2);
-
-	var _mithril2 = _interopRequireDefault(_mithril);
-
-	var _JsonEditor = __webpack_require__(10);
-
-	var _JsonEditor2 = _interopRequireDefault(_JsonEditor);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-	var jsonType = exports.jsonType = {
-	  plain: { type: 'plain', attrs: { title: 'plain text' }, style: {}, children: { tag: 'span', html: false, children: "文字" } },
-	  inputText: { type: 'inputText', attrs: { title: 'input text' }, style: {}, children: { tag: 'input', attrs: { value: '输入文字', type: 'text' } } }
-	};
-	var jsonTypeSchema = exports.jsonTypeSchema = {
-	  plain: {
-	    "title": "文字",
-	    "properties": {
-	      attrs: {
-	        "title": "attrs",
-	        "type": "object",
-	        "properties": {}
-	      },
-
-	      "children": {
-	        "title": "children",
-	        "type": "object",
-	        "properties": {
-	          "html": {
-	            "title": "is html",
-	            "type": "boolean",
-	            "default": false
-	          },
-	          "children": {
-	            "title": "children",
-	            "type": "string",
-	            "default": ""
-	          }
-	        }
-	      }
-
-	    }
-	  },
-	  inputText: {
-	    "title": "输入",
-	    "properties": {
-	      "attrs": {
-	        "title": "attrs",
-	        "type": "object",
-	        "properties": {}
-
-	      },
-	      "children": {
-	        "title": "children",
-	        "type": "object",
-	        "properties": {
-	          "attrs": {
-	            "title": "attrs",
-	            "type": "object",
-	            "properties": {
-	              "type": {
-	                "title": "input type",
-	                "type": "string",
-	                "enum": ["text", "password", "number", "color"],
-	                "default": "text"
-	              },
-	              "value": {
-	                "title": "value",
-	                "type": "string",
-	                "default": ""
-	              }
-	            }
-	          }
-	        }
-	      }
-
-	    }
-	  }
-
-	};
-
-	var jsonData = exports.jsonData = {
-	  "attrs": { title: 'radio', name: 'Client4', required: false },
-	  "style": {
-	    "left": 0,
-	    "top": 0,
-	    "width": 100,
-	    "height": 100,
-
-	    "borderWidth": 1,
-	    "borderTopWidth": 1,
-	    "borderRightWidth": 1,
-	    "borderBottomWidth": 1,
-	    "borderLeftWidth": 1,
-
-	    "borderStyle": "solid",
-	    "borderTopStyle": "solid",
-	    "borderRightStyle": "solid",
-	    "borderBottomStyle": "solid",
-	    "borderLeftStyle": "solid",
-
-	    "borderColor": "#993333",
-	    "borderTopColor": "#993333",
-	    "borderRightColor": "#993333",
-	    "borderBottomColor": "#993333",
-	    "borderLeftColor": "#993333",
-
-	    "backgroundType": "none",
-	    "backgroundColor": "#ffffff",
-	    "background": "none"
-	  },
-	  "children": ""
-	};
-
-	var jsonSchema = exports.jsonSchema = {
-	  "$schema": "http://json-schema.org/draft-04/schema#",
-	  "title": "CONTROL_NAME",
-	  "type": "object",
-	  "properties": {
-	    "attrs": {
-	      "title": "attrs",
-	      "type": "object",
-	      "properties": {
-	        "title": {
-	          "title": "title",
-	          "type": "string",
-	          "default": ""
-	        },
-	        "name": {
-	          "title": "name",
-	          "type": "string",
-	          "default": ""
-	        },
-	        "required": {
-	          "title": "required",
-	          "type": "boolean",
-	          "default": false
-	        }
-
-	      }
-	    },
-	    "style": {
-	      "title": "style",
-	      "type": "object",
-	      "properties": {
-	        "left": {
-	          "title": "left",
-	          "type": "integer",
-	          "default": 100
-	        },
-	        "top": {
-	          "title": "top",
-	          "type": "integer",
-	          "default": 100
-	        },
-	        "width": {
-	          "title": "width",
-	          "type": "integer",
-	          "minimum": 0,
-	          "default": 100
-	        },
-	        "height": {
-	          "title": "height",
-	          "type": "integer",
-	          "minimum": 0,
-	          "default": 100
-	        },
-	        "borderWidth": {
-	          "title": "border width",
-	          "type": "integer",
-	          "minimum": 0,
-	          "default": 1
-	        },
-	        "borderStyle": {
-	          "title": "border style",
-	          "type": "string",
-	          "enum": ["", "none", "solid", "dotted", "dashed"],
-	          "default": "solid"
-	        },
-	        "borderColor": {
-	          "title": "border color",
-	          "format": "color",
-	          "type": "string",
-	          "default": "#993333",
-	          "empty": "#000000"
-	        },
-	        "borderLeftWidth": {
-	          "title": "border left width",
-	          "inherit": "borderWidth"
-	        },
-	        "borderLeftStyle": {
-	          "title": "border left style",
-	          "inherit": "borderStyle"
-	        },
-	        "borderLeftColor": {
-	          "title": "border left color",
-	          "inherit": "borderColor"
-	        },
-	        "borderTopWidth": {
-	          "title": "border top width",
-	          "inherit": "borderWidth"
-	        },
-	        "borderTopStyle": {
-	          "title": "border top style",
-	          "inherit": "borderStyle"
-	        },
-	        "borderTopColor": {
-	          "title": "border top color",
-	          "inherit": "borderColor"
-	        },
-	        "borderRightWidth": {
-	          "title": "border right width",
-	          "inherit": "borderWidth"
-	        },
-	        "borderRightStyle": {
-	          "title": "border right style",
-	          "inherit": "borderStyle"
-	        },
-	        "borderRightColor": {
-	          "title": "border right color",
-	          "inherit": "borderColor"
-	        },
-	        "borderBottomWidth": {
-	          "title": "border bottom width",
-	          "inherit": "borderWidth"
-	        },
-	        "borderBottomStyle": {
-	          "title": "border bottom style",
-	          "inherit": "borderStyle"
-	        },
-	        "borderBottomColor": {
-	          "title": "border bottom color",
-	          "inherit": "borderColor"
-	        },
-
-	        "backgroundType": {
-	          "title": "background type",
-	          "type": "string",
-	          "enum": ["none", "color", "transparent"],
-	          "default": "none"
-	        },
-
-	        "backgroundColor": {
-	          "title": "background color",
-	          "type": "string",
-	          "format": "color",
-	          "default": "#ffffff"
-	        }
-	      }
-	    }
-	  }
-	};
-
-	function renderJsonEditor() {
-	  var self = this;
-	  if (this.isValidRect() && this.jsonData && this.jsonSchema) {
-	    Global._extend(this.jsonData().style, this.Prop.style);
-	    _mithril2.default.mount(document.querySelector('.editor'), new _JsonEditor2.default(this.jsonSchema, this.jsonData, { config: function config(el) {
-	        $(el).find('.inherit').each(function () {
-	          var inheritClass = $(this).attr('class').split(/\s+/).filter(function (v) {
-	            return v.indexOf('inherit-') >= 0;
-	          }).pop();
-	          if (inheritClass) {
-	            var parentClass = inheritClass.split('-').pop();
-	            var pEl = $('[data-key="' + parentClass + '"]');
-	            var con = pEl.next('.inheritCon');
-	            if (!con.length) {
-	              con = $('<div class="inheritCon"></div>');
-	              pEl.after(con);
-	              $('.' + inheritClass).appendTo(con);
-	            }
-	            // $(`.${inheritClass}`).after(pEl)
-	            pEl.addClass('plus').off().on('click', '.itemTitle', function (e) {
-	              pEl.toggleClass('minus');
-	              con.toggleClass('visible');
-	            });
-	          }
-	        });
-	      } }, function (path, value, getData, data) {
-	      path = path.replace(/^root\./, '');
-
-	      // if borderStyle is none/'', set width to 0
-	      if (/(border\w+)Style$/i.test(path) && (value == 'none' || !value) || /(border\w+)Width$/i.test(path) && /^$|none/.test(objectPath(data, path.replace(/Width$/, 'Style')))) {
-	        objectPath(data, path.replace(/Style$/, 'Width'), 0);
-	      }
-
-	      if (data && /backgroundType/i.test(path)) {
-	        if (value == 'none') {
-	          getData.style.background = 'none';
-	        }
-	        if (value == 'color') {
-	          getData.style.background = data.style.backgroundColor;
-	        }
-	      }
-
-	      Global._extend(self.Prop, getData.attrs);
-	      Global._extend(self.Prop.style, Global._applyJsonStyle(getData.style));
-	      _mithril2.default.redraw();
-	    }));
-	  }
-	}
-
-	/**
-	 * init this.jsonSchema & this.jsonData from DataTemplate Data for LayerBaseClass and inherited 
-	 * @param  {String} curTool toolset of jsonType, like 'plain', 'inputText' etc.
-	 * Usage: initDataTemplate.call(this, 'plain')
-	 */
-	function initDataTemplate() {
-	  var curTool = arguments.length <= 0 || arguments[0] === undefined ? 'plain' : arguments[0];
-
-	  var newJsonData = Global._deepCopy({}, jsonData, jsonType[curTool]);
-	  var newJsonSchema = Global._deepCopy({}, jsonSchema, jsonTypeSchema[curTool]);
-	  this.Prop = Global._deepCopy(this.Prop, newJsonData.attrs);
-	  this.Prop.style = Global.clone(newJsonData.style);
-	  this.jsonSchema = _mithril2.default.prop(newJsonSchema);
-	  this.jsonData = _mithril2.default.prop(newJsonData);
-	}
 
 /***/ }
 /******/ ]);

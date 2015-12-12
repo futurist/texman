@@ -10,7 +10,7 @@ export var jsonTypeSchema = {
   plain: {
     "title":"文字",
     "properties": {
-      attrs: 
+      attrs:
       {
         "title": "attrs",
         "type": "object",
@@ -41,12 +41,12 @@ export var jsonTypeSchema = {
   inputText: {
     "title":"输入",
     "properties": {
-      "attrs": 
+      "attrs":
       {
         "title": "attrs",
         "type": "object",
         "properties": {
-          
+
         },
 
       },
@@ -113,7 +113,7 @@ export var jsonData = {
     "borderLeftColor": "#993333",
 
     "backgroundType": "none",
-    "backgroundColor": "#ffffff",
+    "backgroundColor": "#993333",
     "background": "none"
   },
   "children": ""
@@ -286,7 +286,7 @@ export function renderJsonEditor(){
               $(`.${inheritClass}`).appendTo(con)
             }
             // $(`.${inheritClass}`).after(pEl)
-            pEl.addClass('plus').off().on('click', '.itemTitle', e=>{ 
+            pEl.addClass('plus').off().on('click', '.itemTitle', e=>{
               pEl.toggleClass('minus')
               con.toggleClass('visible')
             } )
@@ -295,8 +295,8 @@ export function renderJsonEditor(){
       } }, function(path,value, getData, data ){
         path = path.replace(/^root\./,'')
 
-        // if borderStyle is none/'', set width to 0 
-        if( /(border\w+)Style$/i.test(path) && (value=='none'|| !value) 
+        // if borderStyle is none/'', set width to 0
+        if( /(border\w+)Style$/i.test(path) && (value=='none'|| !value)
           || /(border\w+)Width$/i.test(path) && /^$|none/.test( objectPath( data, path.replace(/Width$/, 'Style') ) )
         ) {
           objectPath( data, path.replace(/Style$/, 'Width'), 0 );
@@ -304,10 +304,10 @@ export function renderJsonEditor(){
 
         if( data && /backgroundType/i.test(path) ) {
           if(value=='none'){
-            getData.style.background = 'none'
+            data.style.background = getData.style.background = 'none'
           }
           if(value=='color'){
-            getData.style.background = data.style.backgroundColor
+            data.style.background = getData.style.background = data.style.backgroundColor
           }
         }
 
@@ -319,7 +319,7 @@ export function renderJsonEditor(){
 }
 
 /**
- * init this.jsonSchema & this.jsonData from DataTemplate Data for LayerBaseClass and inherited 
+ * init this.jsonSchema & this.jsonData from DataTemplate Data for LayerBaseClass and inherited
  * @param  {String} curTool toolset of jsonType, like 'plain', 'inputText' etc.
  * Usage: initDataTemplate.call(this, 'plain')
  */

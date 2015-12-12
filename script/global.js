@@ -244,7 +244,7 @@ export var debug = function( msg ){
 
 
 export var _applyJsonStyle = function( propStyle ){
-    return _exclude( propStyle, ['borderWidth','borderStyle', 'borderColor', 'backgroundColor', 'backgroundType'] )
+    return _exclude( propStyle, ['borderWidth','borderStyle', 'borderColor', 'backgroundColor'] )
 }
 /**
  * applyProp from this.Prop, remove unused props, and apply style to int width/height etc.
