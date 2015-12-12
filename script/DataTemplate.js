@@ -5,7 +5,7 @@ import JsonEditor from './JsonEditor'
 export var jsonType = {
   plain:{type:'plain', attrs: {title:'plain text'}, children:{tag:'span', html:false, children:"文字"}, style:{} },
   inputText:{type:'inputText', attrs: {title:'input text'}, children:{ tag:'input', attrs:{ value:'输入文字', type:'text' } }, style:{}  },
-  select:{type:'select',  attrs:{}, children:{ tag:'select', attrs:{title:'select', name:'Client2', placeholder:'select client...', value:'', required:true, multiple:false,  }, children:[{value:1234, option:'oij'}] }, style:{}   }
+  select:{type:'select',  attrs:{}, children:{ tag:'select', attrs:{title:'select', name:'Client2', placeholder:'select client...', value:'', required:true, multiple:false,  }, children:[2,3,4] }, style:{}   }
 }
 export var jsonTypeSchema = {
   plain: {
@@ -117,40 +117,39 @@ export var jsonTypeSchema = {
             }
           },
 
-          // "children":{
+          "children":{
+              "title": "Options",
+              "type": "array",
+              "items": {
+                "title": "value",
+                "type": "string",
+                "format": "search",
+                "default":""
+              }
+          }
+
+
+          //           "children":{
 
           //     "title": "Options",
           //     "type": "array",
           //     "items": {
-          //       "title": "value",
-          //       "type": "string",
-          //       "format": "search",
-          //       "default":"222"
+          //       "type": "object",
+          //       "properties": {
+          //         "option": {
+          //           "type": "string",
+          //           "default":"98usd"
+          //         },
+          //         "value": {
+          //           "type": "string"
+          //         },
+          //       },
+          //       "default":{
+          //         "option":"oisdjf",
+          //         "value":111
+          //       }
           //     }
           // }
-
-
-                    "children":{
-
-              "title": "Options",
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "option": {
-                    "type": "string",
-                    "default":"98usd"
-                  },
-                  "value": {
-                    "type": "string"
-                  },
-                },
-                "default":{
-                  "option":"oisdjf",
-                  "value":111
-                }
-              }
-          }
 
         }
       },
@@ -358,6 +357,11 @@ export function renderJsonEditor(){
     if( this.isValidRect() && this.jsonData && this.jsonSchema ){
       Global._extend(this.jsonData().style, this.Prop.style)
       m.mount( document.querySelector('.editor'), new JsonEditor( this.jsonSchema, this.jsonData, { config:function(el){
+        // below add drag&drop function to change array item order
+        $(el).find('.array .props .row').each(function(){
+
+        })
+        // below move all inherit to it's parent, wrap into .inheritCon, hide, and show when click
         $(el).find('.inherit').each(function(){
           var inheritClass = $(this).attr('class').split(/\s+/).filter(v=>{return v.indexOf('inherit-')>=0 }).pop()
           if(inheritClass) {
@@ -376,6 +380,7 @@ export function renderJsonEditor(){
             } )
           }
         })
+
       } }, function(path,value, getData, data ){
         path = path.replace(/^root\./,'')
         // if borderStyle is none/'', set width to 0

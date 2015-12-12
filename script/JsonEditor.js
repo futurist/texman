@@ -195,6 +195,14 @@ export default class JsonEditor {
 			var addArrayItem = function addArrayItem(){
 				dataPathValue( path ).push( Global.clone(schema.items.default||'') )
 			}
+			var swapArrayItems =function(i){
+				return function(e){
+	          		var a,b, data = dataPathValue( path );
+	          		if(e.keyCode==38) b=i, a=i-1;
+	          		if(e.keyCode==40) b=i, a=i+1;
+	          		if(a>=0&&b>=0) data[a] = data.splice(b, 1, data[a]).shift();
+	          	}
+	         }
 		  path = path || [key]
 		  var level=path.length-1
 		  var initAttrs = level==0? Global._extend({ key:+new Date() }, PROPS) : {}
@@ -219,13 +227,17 @@ export default class JsonEditor {
 		            	var keys = Object.keys(schema.items.properties)
 			            return dataPathValue( path ).map( (v, i)=> {
 			              return keys.map( (key)=> {
-			              	return this.parseSchema( schema.items.properties[key], i+"."+key, path.concat(i, key) );
+			              	var dom = this.parseSchema( schema.items.properties[key], i+" "+key, path.concat(i, key) );
+			              	dom.attrs.onkeydown=swapArrayItems(i)
+			              	return dom;
 			              })
 			            })
 			        }) () 
 			        : ( ()=>{
 			            return dataPathValue( path ).map( (v, i)=> {
-			              return this.parseSchema( schema.items, i, path.concat(i) );
+			              var dom = this.parseSchema( schema.items, i, path.concat(i) );
+			              dom.attrs.onkeydown=swapArrayItems(i)
+			              return dom;
 			            })
 			        }) ()
 		          ])

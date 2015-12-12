@@ -2336,7 +2336,7 @@
 	var jsonType = exports.jsonType = {
 	  plain: { type: 'plain', attrs: { title: 'plain text' }, children: { tag: 'span', html: false, children: "文字" }, style: {} },
 	  inputText: { type: 'inputText', attrs: { title: 'input text' }, children: { tag: 'input', attrs: { value: '输入文字', type: 'text' } }, style: {} },
-	  select: { type: 'select', attrs: {}, children: { tag: 'select', attrs: { title: 'select', name: 'Client2', placeholder: 'select client...', value: '', required: true, multiple: false }, children: [{ value: 1234, option: 'oij' }] }, style: {} }
+	  select: { type: 'select', attrs: {}, children: { tag: 'select', attrs: { title: 'select', name: 'Client2', placeholder: 'select client...', value: '', required: true, multiple: false }, children: [2, 3, 4] }, style: {} }
 	};
 	var jsonTypeSchema = exports.jsonTypeSchema = {
 	  plain: {
@@ -2434,39 +2434,38 @@
 	            }
 	          },
 
-	          // "children":{
+	          "children": {
+	            "title": "Options",
+	            "type": "array",
+	            "items": {
+	              "title": "value",
+	              "type": "string",
+	              "format": "search",
+	              "default": ""
+	            }
+	          }
+
+	          //           "children":{
 
 	          //     "title": "Options",
 	          //     "type": "array",
 	          //     "items": {
-	          //       "title": "value",
-	          //       "type": "string",
-	          //       "format": "search",
-	          //       "default":"222"
+	          //       "type": "object",
+	          //       "properties": {
+	          //         "option": {
+	          //           "type": "string",
+	          //           "default":"98usd"
+	          //         },
+	          //         "value": {
+	          //           "type": "string"
+	          //         },
+	          //       },
+	          //       "default":{
+	          //         "option":"oisdjf",
+	          //         "value":111
+	          //       }
 	          //     }
 	          // }
-
-	          "children": {
-
-	            "title": "Options",
-	            "type": "array",
-	            "items": {
-	              "type": "object",
-	              "properties": {
-	                "option": {
-	                  "type": "string",
-	                  "default": "98usd"
-	                },
-	                "value": {
-	                  "type": "string"
-	                }
-	              },
-	              "default": {
-	                "option": "oisdjf",
-	                "value": 111
-	              }
-	            }
-	          }
 
 	        }
 	      }
@@ -2661,6 +2660,9 @@
 	  if (this.isValidRect() && this.jsonData && this.jsonSchema) {
 	    Global._extend(this.jsonData().style, this.Prop.style);
 	    _mithril2.default.mount(document.querySelector('.editor'), new _JsonEditor2.default(this.jsonSchema, this.jsonData, { config: function config(el) {
+	        // below add drag&drop function to change array item order
+	        $(el).find('.array .props .row').each(function () {});
+	        // below move all inherit to it's parent, wrap into .inheritCon, hide, and show when click
 	        $(el).find('.inherit').each(function () {
 	          var inheritClass = $(this).attr('class').split(/\s+/).filter(function (v) {
 	            return v.indexOf('inherit-') >= 0;
@@ -2939,6 +2941,16 @@
 			var addArrayItem = function addArrayItem() {
 				dataPathValue(path).push(Global.clone(schema.items.default || ''));
 			};
+			var swapArrayItems = function swapArrayItems(i) {
+				return function (e) {
+					var a,
+					    b,
+					    data = dataPathValue(path);
+					if (e.keyCode == 38) b = i, a = i - 1;
+					if (e.keyCode == 40) b = i, a = i + 1;
+					if (a >= 0 && b >= 0) data[a] = data.splice(b, 1, data[a]).shift();
+				};
+			};
 			path = path || [key];
 			var level = path.length - 1;
 			var initAttrs = level == 0 ? Global._extend({ key: +new Date() }, PROPS) : {};
@@ -2961,12 +2973,16 @@
 						var keys = Object.keys(schema.items.properties);
 						return dataPathValue(path).map(function (v, i) {
 							return keys.map(function (key) {
-								return _this.parseSchema(schema.items.properties[key], i + "." + key, path.concat(i, key));
+								var dom = _this.parseSchema(schema.items.properties[key], i + " " + key, path.concat(i, key));
+								dom.attrs.onkeydown = swapArrayItems(i);
+								return dom;
 							});
 						});
 					})() : (function () {
 						return dataPathValue(path).map(function (v, i) {
-							return _this.parseSchema(schema.items, i, path.concat(i));
+							var dom = _this.parseSchema(schema.items, i, path.concat(i));
+							dom.attrs.onkeydown = swapArrayItems(i);
+							return dom;
 						});
 					})()])]);
 					break;
