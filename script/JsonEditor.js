@@ -1,5 +1,6 @@
 import * as Global from './global'
 import m from 'mithril'
+import doT from './doT'
 
 export default class JsonEditor {
 
@@ -120,9 +121,15 @@ export default class JsonEditor {
 		      return dataPathValue( watchPath );
 		    }
 		    var attrs = ['value', '' , 'disabled', true ]
+	    	obj[key].match(/it\.(\w+)/g).forEach(v=>{
+	    		var watchPath = path.slice(0,-1).join('.')+'.'+v.replace('it.','')
+				if( !templateFieldValue[path.join('.')] ) templateFieldValue[path.join('.')] = [updateValue]
+				Global.addToObject( templateFieldValue[path.join('.')], watchPath );
+	    	})
 		    function updateValue(){
-		    	dataPathValue( path.join('.'), obj[key].replace(/\{\{([^}]+)\}\}/g, replacer) )
-		    	attrs[1] = dataPathValue( path.join('.') )
+		    	var value = doT.template(obj[key])( dataPathValue( path.slice(0,-1).join('.') ) )
+		    	dataPathValue(path.join('.'), value)
+		    	attrs[1] = value;
 		    }
 		    updateValue();
 		    return attrs

@@ -263,6 +263,13 @@ export var jsonSchema = {
           "format": "color",
           "default": "#ffffff"
         },
+
+        "background": {
+          "title": "background",
+          "type": "string",
+          "template": "{{=it.backgroundType=='none'?'none': (it.backgroundType=='color'?it.backgroundColor:'') }}"
+        },
+
       }
     }
   }
@@ -297,20 +304,10 @@ export function renderJsonEditor(){
 
         // if borderStyle is none/'', set width to 0
         if( /(border\w+)Style$/i.test(path) && (value=='none'|| !value)
-          || /(border\w+)Width$/i.test(path) && /^$|none/.test( objectPath( data, path.replace(/Width$/, 'Style') ) )
+          || /(border\w+)Width$/i.test(path) && /^$|none/.test( Global.objectPath( data, path.replace(/Width$/, 'Style') ) )
         ) {
-          objectPath( data, path.replace(/Style$/, 'Width'), 0 );
+          Global.objectPath( data, path.replace(/Style$/, 'Width'), 0 );
         }
-
-        if( data && /backgroundType/i.test(path) ) {
-          if(value=='none'){
-            data.style.background = getData.style.background = 'none'
-          }
-          if(value=='color'){
-            data.style.background = getData.style.background = data.style.backgroundColor
-          }
-        }
-
         Global._extend(self.Prop, getData.attrs)
         Global._extend(self.Prop.style, Global._applyJsonStyle( getData.style ) )
         m.redraw()
