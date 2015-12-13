@@ -52,8 +52,8 @@ export default class JsonEditor {
 				var temp = DATA()
 				_dotPathValue(temp, path, value===null? schemaObjects[path.join('.')].empty||'' :value)
 				DATA(temp)
-				var callback = function(p, v){ 
-					CALLBACK(p||path.join('.'), v||value, getOriginalKeyVal( temp, orgData ), temp, templateFieldValue, inheritFieldValue, schemaObjects ); 
+				var callback = function(p, v){
+					CALLBACK(p||path.join('.'), v||value, getOriginalKeyVal( temp, orgData ), temp, templateFieldValue, inheritFieldValue, schemaObjects );
 				}
 				// below line will update the key for force update view
 				var shouldCallback = true;
@@ -195,14 +195,31 @@ export default class JsonEditor {
 			var addArrayItem = function addArrayItem(){
 				dataPathValue( path ).push( Global.clone(schema.items.default||'') )
 			}
-			var swapArrayItems =function(i){
+			var swapArrayItems =function(i, dom){
 				return function(e){
+					setTimeout(function(){
+						if( a>=0&&a<data.length ){
+							var f = $(e.target).closest('.array').find('.row').eq(a).find('input,select,textarea').get(0)
+							if(f) f.focus()
+						}
+					},0)
 	          		var a,b, data = dataPathValue( path );
 	          		if(e.keyCode==38) b=i, a=i-1;
 	          		if(e.keyCode==40) b=i, a=i+1;
-	          		if(a>=0&&b>=0) data[a] = data.splice(b, 1, data[a]).shift();
+	          		if(a>=data.length) data.push(undefined);
+	          		else if(a<0) data.unshift(undefined);
+	          		else if(a>=0&&b>=0) data[a] = data.splice(b, 1, data[a]).shift();
 	          	}
 	         }
+	         var filterArray = function(index){
+	         	return function(e){
+	         		var data = dataPathValue( path );
+	         		if( e.target.value!='' ) return;
+	         		data.splice( index, 1 )
+	         		dataPathValue( path, data )
+	         	}
+	         }
+
 		  path = path || [key]
 		  var level=path.length-1
 		  var initAttrs = level==0? Global._extend({ key:+new Date() }, PROPS) : {}
@@ -222,21 +239,27 @@ export default class JsonEditor {
 		      return m('div.array', Global._extend(initAttrs, getAttrs() ), [
 		          m('h2.arrayTitle', {onclick:function(){ addArrayItem() }}, schema.title),
 		          m('div.props', [
-		            schema.items.type == 'object' 
+		            schema.items.type == 'object'
 		            ? ( ()=>{
 		            	var keys = Object.keys(schema.items.properties)
 			            return dataPathValue( path ).map( (v, i)=> {
 			              return keys.map( (key)=> {
 			              	var dom = this.parseSchema( schema.items.properties[key], i+" "+key, path.concat(i, key) );
-			              	dom.attrs.onkeydown=swapArrayItems(i)
+			              	dom.attrs.onkeydown=swapArrayItems(i, dom)
 			              	return dom;
 			              })
 			            })
-			        }) () 
+			        }) ()
 			        : ( ()=>{
 			            return dataPathValue( path ).map( (v, i)=> {
 			              var dom = this.parseSchema( schema.items, i, path.concat(i) );
-			              dom.attrs.onkeydown=swapArrayItems(i)
+			              dom.attrs.onkeydown=swapArrayItems(i);
+			              // dom.attrs.onblur=filterArray;
+			              function interDom(dom){
+			              	if(dom.tag=='input') dom.attrs.onblur=filterArray(i);
+			              	dom.children && dom.children.forEach(interDom)
+			              }
+			              interDom(dom)
 			              return dom;
 			            })
 			        }) ()
