@@ -195,28 +195,44 @@ export default class JsonEditor {
 			var addArrayItem = function addArrayItem(){
 				dataPathValue( path ).push( Global.clone(schema.items.default||'') )
 			}
-			var swapArrayItems =function(i, dom){
+			var swapArrayItems =function(i, itemSchema){
 				return function(e){
 					setTimeout(function(){
 						if( a>=0&&a<data.length ){
-							var f = $(e.target).closest('.array').find('.row').eq(a).find('input,select,textarea').get(0)
+							var f = $(e.target).closest('.array').find('.arrayItem').eq(a).find('input,select,textarea').get(0)
 							if(f) f.focus()
 						}
 					},0)
 	          		var a,b, data = dataPathValue( path );
 	          		if(e.keyCode==38) b=i, a=i-1;
 	          		if(e.keyCode==40) b=i, a=i+1;
-	          		if(a>=data.length) data.push(undefined);
-	          		else if(a<0) data.unshift(undefined);
+	          		if(a>=data.length) data.push( Global.clone(itemSchema.default) );
+	          		else if(a<0) data.unshift( Global.clone(itemSchema.default) );
 	          		else if(a>=0&&b>=0) data[a] = data.splice(b, 1, data[a]).shift();
 	          	}
 	         }
+			var _helper_notEmpty = function(v){
+				if(v===null)return false;
+				if(v===0)return true;
+				if( typeof v =='object'){
+					for(var i in v){
+						if( _helper_notEmpty(v[i]) ) return true
+					}
+					return false
+				} else {
+					return !!v
+				}
+			}
 	         var filterArray = function(index){
 	         	return function(e){
 	         		var data = dataPathValue( path );
-	         		if( e.target.value!='' ) return;
-	         		data.splice( index, 1 )
-	         		dataPathValue( path, data )
+	         		console.log(222, e.target.value )
+	         		// if( e.target.value!='' ) return;
+	         		// data.splice( index, 1 )
+	         		setTimeout(function(){
+	         			data = data.filter( _helper_notEmpty )
+		         		dataPathValue( path, data )
+	         		},100)
 	         	}
 	         }
 
@@ -243,24 +259,28 @@ export default class JsonEditor {
 		            ? ( ()=>{
 		            	var keys = Object.keys(schema.items.properties)
 			            return dataPathValue( path ).map( (v, i)=> {
-			              return keys.map( (key)=> {
+			              return m('.arrayItem', [ keys.map( (key)=> {
 			              	var dom = this.parseSchema( schema.items.properties[key], i+" "+key, path.concat(i, key) );
-			              	dom.attrs.onkeydown=swapArrayItems(i, dom)
-			              	return dom;
-			              })
+			              	dom.attrs.onkeydown=swapArrayItems(i, schema.items)
+							function interDom(dom){
+								if(dom.tag=='input') dom.attrs.onblur=filterArray(i);
+								dom.children && dom.children.forEach(interDom)
+							}
+							interDom(dom)
+			              	return dom
+			              }) ])
 			            })
 			        }) ()
 			        : ( ()=>{
 			            return dataPathValue( path ).map( (v, i)=> {
 			              var dom = this.parseSchema( schema.items, i, path.concat(i) );
-			              dom.attrs.onkeydown=swapArrayItems(i);
-			              // dom.attrs.onblur=filterArray;
+			              dom.attrs.onkeydown=swapArrayItems(i, schema.items);
 			              function interDom(dom){
 			              	if(dom.tag=='input') dom.attrs.onblur=filterArray(i);
 			              	dom.children && dom.children.forEach(interDom)
 			              }
 			              interDom(dom)
-			              return dom;
+			              return m('.arrayItem', [dom]);
 			            })
 			        }) ()
 		          ])

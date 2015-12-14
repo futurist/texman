@@ -5,7 +5,7 @@ import JsonEditor from './JsonEditor'
 export var jsonType = {
   plain:{type:'plain', attrs: {title:'plain text'}, children:{tag:'span', html:false, children:"文字"}, style:{} },
   inputText:{type:'inputText', attrs: {title:'input text'}, children:{ tag:'input', attrs:{ value:'输入文字', type:'text' } }, style:{}  },
-  select:{type:'select',  attrs:{}, children:{ tag:'select', attrs:{title:'select', name:'Client2', placeholder:'select client...', value:'', required:true, multiple:false,  }, children:[2,3,4] }, style:{}   }
+  select:{type:'select',  attrs:{}, children:{ tag:'select', attrs:{title:'select', name:'Client2', placeholder:'select client...', value:'', required:true, multiple:false,  }, children:[{value:'oi',option:'oisdj'}] }, style:{}   }
 }
 export var jsonTypeSchema = {
   plain: {
@@ -117,39 +117,38 @@ export var jsonTypeSchema = {
             }
           },
 
-          "children":{
-              "title": "Options",
-              "type": "array",
-              "items": {
-                "title": "value",
-                "type": "string",
-                "format": "search",
-                "default":""
-              }
-          }
-
-
-          //           "children":{
-
+          // "children":{
           //     "title": "Options",
           //     "type": "array",
           //     "items": {
-          //       "type": "object",
-          //       "properties": {
-          //         "option": {
-          //           "type": "string",
-          //           "default":"98usd"
-          //         },
-          //         "value": {
-          //           "type": "string"
-          //         },
-          //       },
-          //       "default":{
-          //         "option":"oisdjf",
-          //         "value":111
-          //       }
+          //       "title": "value",
+          //       "type": "string",
+          //       "format": "search",
+          //       "default":""
           //     }
           // }
+
+
+                    "children":{
+
+              "title": "Options",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "option": {
+                    "type": "string",
+                  },
+                  "value": {
+                    "type": "string"
+                  },
+                },
+                "default":{
+                  "option":"oisdjf",
+                  "value":111
+                }
+              }
+          }
 
         }
       },
