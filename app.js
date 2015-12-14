@@ -2336,7 +2336,7 @@
 	var jsonType = exports.jsonType = {
 	  plain: { type: 'plain', attrs: { title: 'plain text' }, children: { tag: 'span', html: false, children: "文字" }, style: {} },
 	  inputText: { type: 'inputText', attrs: { title: 'input text' }, children: { tag: 'input', attrs: { value: '输入文字', type: 'text' } }, style: {} },
-	  select: { type: 'select', attrs: {}, children: { tag: 'select', attrs: { title: 'select', name: 'Client2', placeholder: 'select client...', value: '', required: true, multiple: false }, children: [{ value: 'oi', option: 'oisdj' }] }, style: {} }
+	  select: { type: 'select', attrs: {}, children: { tag: 'select', attrs: { title: 'select', name: 'Client2', placeholder: 'select client...', value: '', required: true, multiple: false }, children: [345] }, style: {} }
 	};
 	var jsonTypeSchema = exports.jsonTypeSchema = {
 	  plain: {
@@ -2434,37 +2434,37 @@
 	            }
 	          },
 
-	          // "children":{
-	          //     "title": "Options",
-	          //     "type": "array",
-	          //     "items": {
-	          //       "title": "value",
-	          //       "type": "string",
-	          //       "format": "search",
-	          //       "default":""
-	          //     }
-	          // }
-
 	          "children": {
-
 	            "title": "Options",
 	            "type": "array",
 	            "items": {
-	              "type": "object",
-	              "properties": {
-	                "option": {
-	                  "type": "string"
-	                },
-	                "value": {
-	                  "type": "string"
-	                }
-	              },
-	              "default": {
-	                "option": "oisdjf",
-	                "value": 111
-	              }
+	              "title": "value",
+	              "type": "string",
+	              "format": "search",
+	              "default": ""
 	            }
 	          }
+
+	          //           "children":{
+
+	          //     "title": "Options",
+	          //     "type": "array",
+	          //     "items": {
+	          //       "type": "object",
+	          //       "properties": {
+	          //         "option": {
+	          //           "type": "string",
+	          //         },
+	          //         "value": {
+	          //           "type": "string"
+	          //         },
+	          //       },
+	          //       "default":{
+	          //         "option":"",
+	          //         "value":''
+	          //       }
+	          //     }
+	          // }
 
 	        }
 	      }
@@ -2944,18 +2944,19 @@
 			};
 			var swapArrayItems = function swapArrayItems(i, itemSchema) {
 				return function (e) {
-					setTimeout(function () {
-						if (a >= 0 && a < data.length) {
-							var f = $(e.target).closest('.array').find('.arrayItem').eq(a).find('input,select,textarea').get(0);
-							if (f) f.focus();
-						}
-					}, 0);
+					if (!e.ctrlKey) return;
 					var a,
 					    b,
 					    data = dataPathValue(path);
 					if (e.keyCode == 38) b = i, a = i - 1;
 					if (e.keyCode == 40) b = i, a = i + 1;
-					if (a >= data.length) data.push(Global.clone(itemSchema.default));else if (a < 0) data.unshift(Global.clone(itemSchema.default));else if (a >= 0 && b >= 0) data[a] = data.splice(b, 1, data[a]).shift();
+					if (a >= data.length) data.push(Global.clone(itemSchema.default));else if (a < 0) data.unshift(Global.clone(itemSchema.default));else if (a >= 0 && b >= 0) data[a] = data.splice(b, 1, data[a]).shift();else return;
+					setTimeout(function () {
+						if (a >= 0 && a < data.length) {
+							var f = $(e.target).closest('.array').find('.arrayItem').eq(a).find('.row').find('input,select,textarea').get(0);
+							if (f) f.focus();
+						}
+					}, 0);
 				};
 			};
 			var _helper_notEmpty = function _helper_notEmpty(v) {
@@ -2970,16 +2971,12 @@
 					return !!v;
 				}
 			};
-			var filterArray = function filterArray(index) {
+			var onInputBlur = function onInputBlur(index) {
 				return function (e) {
 					var data = dataPathValue(path);
-					console.log(222, e.target.value);
-					// if( e.target.value!='' ) return;
-					// data.splice( index, 1 )
-					setTimeout(function () {
-						data = data.filter(_helper_notEmpty);
-						dataPathValue(path, data);
-					}, 100);
+					if (_helper_notEmpty(data[index])) return;
+					data = data.filter(_helper_notEmpty);
+					dataPathValue(path, data);
 				};
 			};
 
@@ -2999,16 +2996,21 @@
 			switch (schema.type) {
 				case 'array':
 					schemaPathValue(path, schema.default || []);
-					return (0, _mithril2.default)('div.array', Global._extend(initAttrs, getAttrs()), [(0, _mithril2.default)('h2.arrayTitle', { onclick: function onclick() {
+					return (0, _mithril2.default)('div.array', Global._extend(initAttrs, getAttrs()), [(0, _mithril2.default)('h2.arrayTitle', { onclick: function onclick(e) {
 							addArrayItem();
+							setTimeout(function () {
+								var f = $(e.target).closest('.array').find('.arrayItem').eq(dataPathValue(path).length - 1).find('input,select,textarea').get(0);
+								if (f) f.focus();
+							});
 						} }, schema.title), (0, _mithril2.default)('div.props', [schema.items.type == 'object' ? (function () {
 						var keys = Object.keys(schema.items.properties);
 						return dataPathValue(path).map(function (v, i) {
-							return (0, _mithril2.default)('.arrayItem', [keys.map(function (key) {
+							return (0, _mithril2.default)('.arrayItem', [keys.map(function (key, index) {
 								var dom = _this.parseSchema(schema.items.properties[key], i + " " + key, path.concat(i, key));
+								dom.attrs['data-array-index'] = index;
 								dom.attrs.onkeydown = swapArrayItems(i, schema.items);
 								function interDom(dom) {
-									if (dom.tag == 'input') dom.attrs.onblur = filterArray(i);
+									if (dom.tag == 'input') dom.attrs.onblur = onInputBlur(i);
 									dom.children && dom.children.forEach(interDom);
 								}
 								interDom(dom);
@@ -3020,7 +3022,7 @@
 							var dom = _this.parseSchema(schema.items, i, path.concat(i));
 							dom.attrs.onkeydown = swapArrayItems(i, schema.items);
 							function interDom(dom) {
-								if (dom.tag == 'input') dom.attrs.onblur = filterArray(i);
+								if (dom.tag == 'input') dom.attrs.onblur = onInputBlur(i);
 								dom.children && dom.children.forEach(interDom);
 							}
 							interDom(dom);

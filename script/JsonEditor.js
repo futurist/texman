@@ -197,18 +197,20 @@ export default class JsonEditor {
 			}
 			var swapArrayItems =function(i, itemSchema){
 				return function(e){
-					setTimeout(function(){
-						if( a>=0&&a<data.length ){
-							var f = $(e.target).closest('.array').find('.arrayItem').eq(a).find('input,select,textarea').get(0)
-							if(f) f.focus()
-						}
-					},0)
+	          		if( !e.ctrlKey ) return
 	          		var a,b, data = dataPathValue( path );
 	          		if(e.keyCode==38) b=i, a=i-1;
 	          		if(e.keyCode==40) b=i, a=i+1;
 	          		if(a>=data.length) data.push( Global.clone(itemSchema.default) );
 	          		else if(a<0) data.unshift( Global.clone(itemSchema.default) );
 	          		else if(a>=0&&b>=0) data[a] = data.splice(b, 1, data[a]).shift();
+	          		else return
+	          		setTimeout(function(){
+						if( a>=0&&a<data.length ){
+							var f = $(e.target).closest('.array').find('.arrayItem').eq(a).find('.row').find('input,select,textarea').get(0)
+							if(f) f.focus()
+						}
+					},0)
 	          	}
 	         }
 			var _helper_notEmpty = function(v){
@@ -223,16 +225,12 @@ export default class JsonEditor {
 					return !!v
 				}
 			}
-	         var filterArray = function(index){
+	         var onInputBlur = function(index){
 	         	return function(e){
 	         		var data = dataPathValue( path );
-	         		console.log(222, e.target.value )
-	         		// if( e.target.value!='' ) return;
-	         		// data.splice( index, 1 )
-	         		setTimeout(function(){
-	         			data = data.filter( _helper_notEmpty )
-		         		dataPathValue( path, data )
-	         		},100)
+	         		if( _helper_notEmpty( data[index] ) ) return;
+         			data = data.filter( _helper_notEmpty )
+	         		dataPathValue( path, data )
 	         	}
 	         }
 
@@ -253,17 +251,24 @@ export default class JsonEditor {
 		    case 'array':
 		      schemaPathValue(path, schema.default||[]);
 		      return m('div.array', Global._extend(initAttrs, getAttrs() ), [
-		          m('h2.arrayTitle', {onclick:function(){ addArrayItem() }}, schema.title),
+		          m('h2.arrayTitle', {onclick:function(e){ 
+		          	addArrayItem(); 
+		          	setTimeout(function(){
+			          	var f=$(e.target).closest('.array').find('.arrayItem').eq( dataPathValue( path ).length-1 ).find('input,select,textarea').get(0)
+			          	if(f) f.focus()
+		          	})
+		          } }, schema.title),
 		          m('div.props', [
 		            schema.items.type == 'object'
 		            ? ( ()=>{
 		            	var keys = Object.keys(schema.items.properties)
 			            return dataPathValue( path ).map( (v, i)=> {
-			              return m('.arrayItem', [ keys.map( (key)=> {
+			              return m('.arrayItem', [ keys.map( (key, index)=> {
 			              	var dom = this.parseSchema( schema.items.properties[key], i+" "+key, path.concat(i, key) );
+			              	dom.attrs['data-array-index'] = index;
 			              	dom.attrs.onkeydown=swapArrayItems(i, schema.items)
 							function interDom(dom){
-								if(dom.tag=='input') dom.attrs.onblur=filterArray(i);
+								if(dom.tag=='input') dom.attrs.onblur=onInputBlur(i);
 								dom.children && dom.children.forEach(interDom)
 							}
 							interDom(dom)
@@ -276,7 +281,7 @@ export default class JsonEditor {
 			              var dom = this.parseSchema( schema.items, i, path.concat(i) );
 			              dom.attrs.onkeydown=swapArrayItems(i, schema.items);
 			              function interDom(dom){
-			              	if(dom.tag=='input') dom.attrs.onblur=filterArray(i);
+			              	if(dom.tag=='input') dom.attrs.onblur=onInputBlur(i);
 			              	dom.children && dom.children.forEach(interDom)
 			              }
 			              interDom(dom)
