@@ -167,6 +167,8 @@ export var jsonData = {
   "attrs": {title:'', name:'',required:false,  },
   "children": {},
   "style": {
+    "fontFamily":"宋体",
+    "fontSize":12,
     "left": 0,
     "top": 0,
     "width": 100,
@@ -228,6 +230,25 @@ export var jsonSchema = {
       "title": "style",
       "type": "object",
       "properties": {
+        "fontFamily": {
+          "title": "font name",
+          "type": "string",
+          "enum": [
+            "宋体",
+            "黑体",
+            "微软雅黑",
+            "Arial",
+            "Verdana",
+            "Times New Roman",
+            "Tahoma",
+          ],
+          "default": "宋体"
+        },
+        "fontSize": {
+          "title": "font size",
+          "type": "integer",
+          "default":12
+        },
         "left": {
           "title": "left",
           "type": "integer",

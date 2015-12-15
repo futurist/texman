@@ -1764,9 +1764,15 @@
 	}
 
 	function applyStyle(el, styleObj) {
-	    var pxReg = /width$|height$|radius$|left$|top$|right$|bottom$/i;
+	    var pxReg = /size$|width$|height$|radius$|left$|top$|right$|bottom$/i;
+	    var quoteReg = /family$/i;
+	    try {
+	        el.style = el.style || {};
+	    } catch (e) {}
 	    for (var i in styleObj) {
-	        var attr = pxReg.test(i) ? styleObj[i] + 'px' : styleObj[i];
+	        var attr = styleObj[i];
+	        attr = pxReg.test(i) ? attr + 'px' : attr;
+	        attr = quoteReg.test(i) ? '"' + attr + '"' : attr;
 	        el.style[i] = attr;
 	    }
 	}
@@ -1878,6 +1884,28 @@
 	      _get(Object.getPrototypeOf(WidgetDiv.prototype), 'onUnSelected', this).call(this);
 	    }
 	  }, {
+	    key: 'getChildren',
+	    value: function getChildren() {
+	      var data = this.jsonData();
+	      var isRadio = data.type == 'radio';
+	      var isCheckbox = data.type == 'checkbox';
+	      var isSelect = data.type == 'select';
+
+	      Global.applyStyle(data.children.attrs, Global._pluck(data.style, ['fontFamily', 'fontSize']));
+
+	      if (isSelect) {
+	        var options = data.children.children.map(function (v) {
+	          return (0, _mithril2.default)('option', v);
+	        });
+	        if (data.children.attrs.placeholder) options.unshift((0, _mithril2.default)('option', { disabled: true, value: '' }, data.children.attrs.placeholder));
+	        var dom = Global._extend({}, data.children);
+	        dom.children = options;
+	        return dom;
+	      } else if (isCheckbox) {} else if (isRadio) {} else {
+	        return data.children;
+	      }
+	    }
+	  }, {
 	    key: 'controller',
 	    value: function controller() {
 	      this.onunload = function () {};
@@ -1887,9 +1915,9 @@
 	    value: function view(ctrl) {
 	      var self = this;
 	      var Prop = Global.applyProp(this.Prop);
-	      var dom = (0, _mithril2.default)('div.layer', Prop, [(0, _mithril2.default)('.content', { config: function config(el, isInit, context) {
-	          context.retain = true;
-	        } }, this.jsonData().children), (0, _mithril2.default)('.bbox', { config: function config(el, isInit, context) {
+	      var dom = (0, _mithril2.default)('div.layer', Prop, [(0, _mithril2.default)('.content', { key: Global.NewID(), config: function config(el, isInit, context) {
+	          context.retain = false;
+	        } }, this.getChildren()), (0, _mithril2.default)('.bbox', { config: function config(el, isInit, context) {
 	          context.retain = true;
 	        } }), this.buildControlPoint()]);
 	      return this.isValidRect() ? dom : [];
@@ -2478,6 +2506,8 @@
 	  "attrs": { title: '', name: '', required: false },
 	  "children": {},
 	  "style": {
+	    "fontFamily": "宋体",
+	    "fontSize": 12,
 	    "left": 0,
 	    "top": 0,
 	    "width": 100,
@@ -2539,6 +2569,17 @@
 	      "title": "style",
 	      "type": "object",
 	      "properties": {
+	        "fontFamily": {
+	          "title": "font name",
+	          "type": "string",
+	          "enum": ["宋体", "黑体", "微软雅黑", "Arial", "Verdana", "Times New Roman", "Tahoma"],
+	          "default": "宋体"
+	        },
+	        "fontSize": {
+	          "title": "font size",
+	          "type": "integer",
+	          "default": 12
+	        },
 	        "left": {
 	          "title": "left",
 	          "type": "integer",

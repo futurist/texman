@@ -225,9 +225,13 @@ export function NewID(){
 }
 
 export function applyStyle(el, styleObj){
-	var pxReg = /width$|height$|radius$|left$|top$|right$|bottom$/i
+    var pxReg = /size$|width$|height$|radius$|left$|top$|right$|bottom$/i
+	var quoteReg = /family$/i
+    try{ el.style = el.style||{} } catch(e){}
 	for(var i in styleObj){
-		var attr = pxReg.test(i) ? styleObj[i] + 'px': styleObj[i] ;
+        var attr = styleObj[i];
+        attr = pxReg.test(i) ? attr + 'px': attr ;
+		attr = quoteReg.test(i) ? '"'+ attr + '"': attr ;
 		el.style[i] = attr;
 	}
 }

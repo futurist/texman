@@ -12,5 +12,5 @@ export default function addEditorToLayerBase () {
 		original();
 		DataTemplate.renderJsonEditor.apply(this)
 	} )
-
+	
 }
