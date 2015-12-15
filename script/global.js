@@ -225,9 +225,9 @@ export function NewID(){
 }
 
 export function applyStyle(el, styleObj){
-    var pxReg = /size$|width$|height$|radius$|left$|top$|right$|bottom$/i
+    var pxReg = /^padding|^margin|size$|width$|height$|radius$|left$|top$|right$|bottom$/i
 	var quoteReg = /family$/i
-    try{ el.style = el.style||{} } catch(e){}
+    // try{ el.style = el.style||{} } catch(e){}
 	for(var i in styleObj){
         var attr = styleObj[i];
         attr = pxReg.test(i) ? attr + 'px': attr ;
@@ -248,7 +248,7 @@ export var debug = function( msg ){
 
 
 export var _exlucdeJsonStyle = function( propStyle ){
-    return _exclude( propStyle, ['borderWidth','borderStyle', 'borderColor', 'backgroundColor'] )
+    return _exclude( propStyle, ['borderWidth','borderStyle', 'borderColor', 'backgroundColor', 'padding'] )
 }
 /**
  * applyProp from this.Prop, remove unused props, and apply style to int width/height etc.
@@ -281,3 +281,10 @@ export var getOuterRect = function( style ){
         height: BORDER_BOX? style.height: style.height + (style.borderTopWidth||0) + (style.borderBottomWidth||0),
     }
 }
+
+/**
+ * curTool for canvas & layer to determine type
+ * @type {String}
+ */
+export var curTool = 'plain'
+

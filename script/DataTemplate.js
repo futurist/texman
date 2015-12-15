@@ -4,8 +4,18 @@ import JsonEditor from './JsonEditor'
 
 export var jsonType = {
   plain:{type:'plain', attrs: {title:'plain text'}, children:{tag:'span', html:false, children:"文字"}, style:{} },
-  inputText:{type:'inputText', attrs: {title:'input text'}, children:{ tag:'input', attrs:{ value:'输入文字', type:'text' } }, style:{}  },
-  select:{type:'select',  attrs:{}, children:{ tag:'select', attrs:{title:'select', name:'Client2', placeholder:'select client...', value:'', required:true, multiple:false,  }, children:[345] }, style:{}   }
+  inputText:{type:'inputText', attrs: {title:'input text'}, children:{ tag:'input', attrs:{ value:'输入文字', type:'text' } }, 
+            style:{
+              "borderWidth": 1, "borderTopWidth": 1, "borderRightWidth": 1, "borderBottomWidth": 1, "borderLeftWidth": 1,
+              "padding": 2, "paddingTop": 2, "paddingBottom": 2, "paddingRight": 2, "paddingLeft": 2,
+            }  
+          },
+  select:{type:'select',  attrs:{}, children:{ tag:'select', attrs:{title:'select', name:'Client2', placeholder:'select client...', value:'', required:true, multiple:false,  }, children:[] }, 
+        style:{
+          "borderWidth": 1, "borderTopWidth": 1, "borderRightWidth": 1, "borderBottomWidth": 1, "borderLeftWidth": 1,
+          "padding": 2, "paddingTop": 2, "paddingBottom": 2, "paddingRight": 2, "paddingLeft": 2,
+        }
+      }
 }
 export var jsonTypeSchema = {
   plain: {
@@ -174,11 +184,17 @@ export var jsonData = {
     "width": 100,
     "height": 100,
 
-    "borderWidth": 1,
-    "borderTopWidth": 1,
-    "borderRightWidth": 1,
-    "borderBottomWidth": 1,
-    "borderLeftWidth": 1,
+    "padding": 0,
+    "paddingTop": 0,
+    "paddingBottom": 0,
+    "paddingRight": 0,
+    "paddingLeft": 0,
+
+    "borderWidth": 0,
+    "borderTopWidth": 0,
+    "borderRightWidth": 0,
+    "borderBottomWidth": 0,
+    "borderLeftWidth": 0,
 
     "borderStyle": "solid",
     "borderTopStyle": "solid",
@@ -186,14 +202,14 @@ export var jsonData = {
     "borderBottomStyle": "solid",
     "borderLeftStyle": "solid",
 
-    "borderColor": "#993333",
-    "borderTopColor": "#993333",
-    "borderRightColor": "#993333",
-    "borderBottomColor": "#993333",
-    "borderLeftColor": "#993333",
+    "borderColor": "#666666",
+    "borderTopColor": "#666666",
+    "borderRightColor": "#666666",
+    "borderBottomColor": "#666666",
+    "borderLeftColor": "#666666",
 
     "backgroundType": "none",
-    "backgroundColor": "#999933",
+    "backgroundColor": "#aaaaaa",
     "background": "none"
   },
 }
@@ -271,6 +287,29 @@ export var jsonSchema = {
           "minimum": 0,
           "default":100
         },
+        "padding": {
+          "title": "padding",
+          "type": "integer",
+          "minimum": 0,
+          "default":0
+        },
+        "paddingTop":{
+          "title": "padding top",
+          "inherit":"padding"
+        },
+        "paddingBottom":{
+          "title": "padding Bottom",
+          "inherit":"padding"
+        },
+        "paddingLeft":{
+          "title": "padding Left",
+          "inherit":"padding"
+        },
+        "paddingRight":{
+          "title": "padding Right",
+          "inherit":"padding"
+        },
+
         "borderWidth": {
           "title": "border width",
           "type": "integer",

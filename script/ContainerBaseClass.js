@@ -301,6 +301,7 @@ export default class ContainerBaseClass extends LayerBaseClass {
 
 				if( !self.isContainerMode() ){
 					if( self.isChild( self.getRoot().editingContainer ) ) checkChildMoveOut(evt);
+					m.redraw.strategy('none')
 					return;
 				}
 

@@ -25,7 +25,10 @@ export default class WidgetDiv extends LayerBaseClass {
     var isCheckbox = data.type=='checkbox';
     var isSelect = data.type=='select';
 
-    Global.applyStyle( data.children.attrs, Global._pluck(data.style, ['fontFamily', 'fontSize']) );
+    if(typeof data.children.children=='object'){
+      data.children.attrs.style = data.children.attrs.style||{}
+      Global.applyStyle( data.children.attrs, Global._pluck(data.style, ['fontFamily', 'fontSize']) );
+    }
 
     if( isSelect ) {
         var options = data.children.children.map(function(v){ return m('option', v) });

@@ -1764,11 +1764,9 @@
 	}
 
 	function applyStyle(el, styleObj) {
-	    var pxReg = /size$|width$|height$|radius$|left$|top$|right$|bottom$/i;
+	    var pxReg = /^padding|^margin|size$|width$|height$|radius$|left$|top$|right$|bottom$/i;
 	    var quoteReg = /family$/i;
-	    try {
-	        el.style = el.style || {};
-	    } catch (e) {}
+	    // try{ el.style = el.style||{} } catch(e){}
 	    for (var i in styleObj) {
 	        var attr = styleObj[i];
 	        attr = pxReg.test(i) ? attr + 'px' : attr;
@@ -1785,7 +1783,7 @@
 	};
 
 	var _exlucdeJsonStyle = exports._exlucdeJsonStyle = function _exlucdeJsonStyle(propStyle) {
-	    return _exclude(propStyle, ['borderWidth', 'borderStyle', 'borderColor', 'backgroundColor']);
+	    return _exclude(propStyle, ['borderWidth', 'borderStyle', 'borderColor', 'backgroundColor', 'padding']);
 	};
 	/**
 	 * applyProp from this.Prop, remove unused props, and apply style to int width/height etc.
@@ -1819,6 +1817,12 @@
 	    };
 	};
 
+	/**
+	 * curTool for canvas & layer to determine type
+	 * @type {String}
+	 */
+	var curTool = exports.curTool = 'plain';
+
 /***/ },
 /* 5 */
 /***/ function(module, exports, __webpack_require__) {
@@ -1848,6 +1852,8 @@
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _typeof(obj) { return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -1891,7 +1897,10 @@
 	      var isCheckbox = data.type == 'checkbox';
 	      var isSelect = data.type == 'select';
 
-	      Global.applyStyle(data.children.attrs, Global._pluck(data.style, ['fontFamily', 'fontSize']));
+	      if (_typeof(data.children.children) == 'object') {
+	        data.children.attrs.style = data.children.attrs.style || {};
+	        Global.applyStyle(data.children.attrs, Global._pluck(data.style, ['fontFamily', 'fontSize']));
+	      }
 
 	      if (isSelect) {
 	        var options = data.children.children.map(function (v) {
@@ -1978,8 +1987,8 @@
 			this.Prop = {};
 			this.Prop.key = this.ID;
 			this.Prop.className = '';
-			var curTool = parent && parent.children.length % 2 ? 'select' : 'inputText';
-			DataTemplate.initDataTemplate.call(this, curTool);
+			// var curTool = parent&&parent.children.length%2 ? 'select' : 'inputText'
+			DataTemplate.initDataTemplate.call(this, Global.curTool);
 
 			this.Prop = Global._deepCopy(this.Prop, prop || {});
 
@@ -2363,8 +2372,18 @@
 
 	var jsonType = exports.jsonType = {
 	  plain: { type: 'plain', attrs: { title: 'plain text' }, children: { tag: 'span', html: false, children: "文字" }, style: {} },
-	  inputText: { type: 'inputText', attrs: { title: 'input text' }, children: { tag: 'input', attrs: { value: '输入文字', type: 'text' } }, style: {} },
-	  select: { type: 'select', attrs: {}, children: { tag: 'select', attrs: { title: 'select', name: 'Client2', placeholder: 'select client...', value: '', required: true, multiple: false }, children: [345] }, style: {} }
+	  inputText: { type: 'inputText', attrs: { title: 'input text' }, children: { tag: 'input', attrs: { value: '输入文字', type: 'text' } },
+	    style: {
+	      "borderWidth": 1, "borderTopWidth": 1, "borderRightWidth": 1, "borderBottomWidth": 1, "borderLeftWidth": 1,
+	      "padding": 2, "paddingTop": 2, "paddingBottom": 2, "paddingRight": 2, "paddingLeft": 2
+	    }
+	  },
+	  select: { type: 'select', attrs: {}, children: { tag: 'select', attrs: { title: 'select', name: 'Client2', placeholder: 'select client...', value: '', required: true, multiple: false }, children: [] },
+	    style: {
+	      "borderWidth": 1, "borderTopWidth": 1, "borderRightWidth": 1, "borderBottomWidth": 1, "borderLeftWidth": 1,
+	      "padding": 2, "paddingTop": 2, "paddingBottom": 2, "paddingRight": 2, "paddingLeft": 2
+	    }
+	  }
 	};
 	var jsonTypeSchema = exports.jsonTypeSchema = {
 	  plain: {
@@ -2513,11 +2532,17 @@
 	    "width": 100,
 	    "height": 100,
 
-	    "borderWidth": 1,
-	    "borderTopWidth": 1,
-	    "borderRightWidth": 1,
-	    "borderBottomWidth": 1,
-	    "borderLeftWidth": 1,
+	    "padding": 0,
+	    "paddingTop": 0,
+	    "paddingBottom": 0,
+	    "paddingRight": 0,
+	    "paddingLeft": 0,
+
+	    "borderWidth": 0,
+	    "borderTopWidth": 0,
+	    "borderRightWidth": 0,
+	    "borderBottomWidth": 0,
+	    "borderLeftWidth": 0,
 
 	    "borderStyle": "solid",
 	    "borderTopStyle": "solid",
@@ -2525,14 +2550,14 @@
 	    "borderBottomStyle": "solid",
 	    "borderLeftStyle": "solid",
 
-	    "borderColor": "#993333",
-	    "borderTopColor": "#993333",
-	    "borderRightColor": "#993333",
-	    "borderBottomColor": "#993333",
-	    "borderLeftColor": "#993333",
+	    "borderColor": "#666666",
+	    "borderTopColor": "#666666",
+	    "borderRightColor": "#666666",
+	    "borderBottomColor": "#666666",
+	    "borderLeftColor": "#666666",
 
 	    "backgroundType": "none",
-	    "backgroundColor": "#999933",
+	    "backgroundColor": "#aaaaaa",
 	    "background": "none"
 	  }
 	};
@@ -2602,6 +2627,29 @@
 	          "minimum": 0,
 	          "default": 100
 	        },
+	        "padding": {
+	          "title": "padding",
+	          "type": "integer",
+	          "minimum": 0,
+	          "default": 0
+	        },
+	        "paddingTop": {
+	          "title": "padding top",
+	          "inherit": "padding"
+	        },
+	        "paddingBottom": {
+	          "title": "padding Bottom",
+	          "inherit": "padding"
+	        },
+	        "paddingLeft": {
+	          "title": "padding Left",
+	          "inherit": "padding"
+	        },
+	        "paddingRight": {
+	          "title": "padding Right",
+	          "inherit": "padding"
+	        },
+
 	        "borderWidth": {
 	          "title": "border width",
 	          "type": "integer",
@@ -3729,6 +3777,7 @@
 
 					if (!self.isContainerMode()) {
 						if (self.isChild(self.getRoot().editingContainer)) checkChildMoveOut(evt);
+						_mithril2.default.redraw.strategy('none');
 						return;
 					}
 
@@ -4093,7 +4142,7 @@
 
 /***/ },
 /* 17 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -4104,7 +4153,7 @@
 	exports.default = function () {
 		// editor container & resize bar
 		var dragFunc = DragFactory();
-		var initEditorWidth = 300;
+		var initEditorWidth = 400;
 		var downFunc = dragFunc('resizeBar', { width: initEditorWidth }, function (e, data) {
 			if (data.data.width + data.dx <= 40) return false;
 			con.style.width = data.data.width + data.dx + 'px';
@@ -4115,7 +4164,35 @@
 
 		var con = document.querySelector('.editorContainer');
 		con.style.width = initEditorWidth + 'px';
+
+		// add toolbox
+		_mithril2.default.mount(document.querySelector('.toolbarContainer'), { view: function view() {
+				return (0, _mithril2.default)('.toolSet', Object.keys(DataTemplate.jsonType).map(function (v) {
+					return (0, _mithril2.default)('.tool', {
+						className: v == Global.curTool ? 'active' : '',
+						onclick: function onclick() {
+							Global.curTool = v;
+						}
+					}, v);
+				}));
+			} });
 	};
+
+	var _mithril = __webpack_require__(2);
+
+	var _mithril2 = _interopRequireDefault(_mithril);
+
+	var _global = __webpack_require__(4);
+
+	var Global = _interopRequireWildcard(_global);
+
+	var _DataTemplate = __webpack_require__(10);
+
+	var DataTemplate = _interopRequireWildcard(_DataTemplate);
+
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /***/ }
 /******/ ]);
