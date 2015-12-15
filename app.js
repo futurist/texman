@@ -2445,7 +2445,7 @@
 	            }
 	          }
 
-	          //           "children":{
+	          // "children":{
 
 	          //     "title": "Options",
 	          //     "type": "array",
@@ -2475,7 +2475,7 @@
 	};
 
 	var jsonData = exports.jsonData = {
-	  "attrs": { title: 'radio', name: 'Client4', required: false },
+	  "attrs": { title: '', name: '', required: false },
 	  "children": {},
 	  "style": {
 	    "left": 0,
@@ -2523,9 +2523,9 @@
 	        },
 	        "name": {
 	          "title": "name",
-	          "type": "string",
-	          "default": ""
+	          "type": "string"
 	        },
+	        // "template":"{{=3245}}"
 	        "required": {
 	          "title": "required",
 	          "type": "boolean",
@@ -2655,12 +2655,15 @@
 	};
 
 	function renderJsonEditor() {
+	  var _this = this;
+
 	  var self = this;
 	  if (this.isValidRect() && this.jsonData && this.jsonSchema) {
 	    Global._extend(this.jsonData().style, this.Prop.style);
 	    _mithril2.default.mount(document.querySelector('.editor'), new _JsonEditor2.default(this.jsonSchema, this.jsonData, { config: function config(el) {
 	        // below add drag&drop function to change array item order
 	        $(el).find('.array .props .row').each(function () {});
+	        if (!_this.jsonData().attrs.name) _this.jsonData().attrs.name = _this.jsonData().type + _this.parent.children.length;
 	        // below move all inherit to it's parent, wrap into .inheritCon, hide, and show when click
 	        $(el).find('.inherit').each(function () {
 	          var inheritClass = $(this).attr('class').split(/\s+/).filter(function (v) {
@@ -2863,7 +2866,7 @@
 					return dataPathValue(watchPath);
 				}
 				var attrs = ['value', '', 'disabled', true];
-				obj[key].match(/it\.(\w+)/g).forEach(function (v) {
+				(obj[key].match(/it\.(\w+)/g) || []).forEach(function (v) {
 					var watchPath = path.slice(0, -1).join('.') + '.' + v.replace('it.', '');
 					if (!templateFieldValue[path.join('.')]) templateFieldValue[path.join('.')] = [updateValue];
 					Global.addToObject(templateFieldValue[path.join('.')], watchPath);
@@ -2944,7 +2947,7 @@
 			};
 			var swapArrayItems = function swapArrayItems(i, itemSchema) {
 				return function (e) {
-					if (!e.ctrlKey) return;
+					// if( !e.ctrlKey ) return
 					var a,
 					    b,
 					    data = dataPathValue(path);

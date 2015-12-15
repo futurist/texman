@@ -129,7 +129,7 @@ export var jsonTypeSchema = {
           }
 
 
-          //           "children":{
+          // "children":{
 
           //     "title": "Options",
           //     "type": "array",
@@ -164,7 +164,7 @@ export var jsonTypeSchema = {
 
 
 export var jsonData = {
-  "attrs": {title:'radio', name:'Client4',required:false,  },
+  "attrs": {title:'', name:'',required:false,  },
   "children": {},
   "style": {
     "left": 0,
@@ -213,7 +213,7 @@ export var jsonSchema = {
         "name": {
           "title": "name",
           "type": "string",
-          "default":""
+          // "template":"{{=3245}}"
         },
         "required": {
           "title": "required",
@@ -358,11 +358,12 @@ export function renderJsonEditor(){
   var self = this;
     if( this.isValidRect() && this.jsonData && this.jsonSchema ){
       Global._extend(this.jsonData().style, this.Prop.style)
-      m.mount( document.querySelector('.editor'), new JsonEditor( this.jsonSchema, this.jsonData, { config:function(el){
+      m.mount( document.querySelector('.editor'), new JsonEditor( this.jsonSchema, this.jsonData, { config:(el)=>{
         // below add drag&drop function to change array item order
         $(el).find('.array .props .row').each(function(){
 
         })
+        if(!this.jsonData().attrs.name) this.jsonData().attrs.name = this.jsonData().type+ this.parent.children.length
         // below move all inherit to it's parent, wrap into .inheritCon, hide, and show when click
         $(el).find('.inherit').each(function(){
           var inheritClass = $(this).attr('class').split(/\s+/).filter(v=>{return v.indexOf('inherit-')>=0 }).pop()

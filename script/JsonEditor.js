@@ -121,8 +121,8 @@ export default class JsonEditor {
 		      Global.addToObject( templateFieldValue[path.join('.')], watchPath );
 		      return dataPathValue( watchPath );
 		    }
-		    var attrs = ['value', '' , 'disabled', true ]
-	    	obj[key].match(/it\.(\w+)/g).forEach(v=>{
+		    var attrs = ['value', '' , 'disabled', true ];
+	    	(obj[key].match(/it\.(\w+)/g)||[]).forEach(v=>{
 	    		var watchPath = path.slice(0,-1).join('.')+'.'+v.replace('it.','')
 				if( !templateFieldValue[path.join('.')] ) templateFieldValue[path.join('.')] = [updateValue]
 				Global.addToObject( templateFieldValue[path.join('.')], watchPath );
@@ -197,7 +197,7 @@ export default class JsonEditor {
 			}
 			var swapArrayItems =function(i, itemSchema){
 				return function(e){
-	          		if( !e.ctrlKey ) return
+	          		// if( !e.ctrlKey ) return
 	          		var a,b, data = dataPathValue( path );
 	          		if(e.keyCode==38) b=i, a=i-1;
 	          		if(e.keyCode==40) b=i, a=i+1;
