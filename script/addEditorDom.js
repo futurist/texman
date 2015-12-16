@@ -20,15 +20,21 @@ export default function(){
 	
 	// add toolbox
 	m.mount( document.querySelector('.toolbarContainer'), {view: ()=>{
-		return m('.toolSet', Object.keys(DataTemplate.jsonType).map(
-		v=>
-			m('.tool', {
-				className: v==Global.curTool?'active':'',
-				onclick:function(){
-					Global.curTool=v
-				}
-			}, v)
-		) )
+		return m('.toolSet', 
+			[
+				m('.stageProp.tool', {onclick:function(){
+					DataTemplate.renderJsonEditor.apply(Canvas1)
+				}}, 'STAGE' ),
+				Object.keys(DataTemplate.jsonType).map(
+					v=>
+						m('.tool', {
+							className: v==Global.curTool?'active':'',
+							onclick:function(){
+								Global.curTool=v
+							}
+						}, v)
+					)
+			] )
 	} }
 	)
 }

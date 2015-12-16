@@ -11,9 +11,9 @@ constructor(){
  * Main Code below
  */
   var container = document.querySelector('#container');
-  var Canvas1 = new WidgetCanvas(null, { style:{left:100, top:100, width:800, height:500, backgroundColor:'#eee'} } );
+  var Canvas1 = new WidgetCanvas(null, { style:{left:100, top:100, width:800, height:500, backgroundColor:'#eeeeee'} } );
   m.mount(container, Canvas1);
-
+  window.Canvas1 = Canvas1;
 
   /**
    * DOM EVENT BELOW

@@ -2,6 +2,8 @@ import * as Global from './global'
 import m from 'mithril'
 import JsonEditor from './JsonEditor'
 
+export var StageProp = { type:'stage', attrs: {title:'Stage Name', name:''} }
+
 export var jsonType = {
   plain:{type:'plain', attrs: {title:'plain text'}, children:{tag:'span', html:false, children:"文字"}, style:{} },
   inputText:{type:'inputText', attrs: {title:'input text'}, children:{ tag:'input', attrs:{ value:'输入文字', type:'text' } },
@@ -78,6 +80,11 @@ export var jsonTypeSchema = {
               "title": "attrs",
               "type": "object",
               "properties": {
+					"required": {
+					  "title": "required",
+					  "type": "boolean",
+					  "default":false
+					},
                   "type": {
                     "title": "input type",
                     "type": "string",
@@ -122,6 +129,11 @@ export var jsonTypeSchema = {
               "title": "attrs",
               "type": "object",
               "properties": {
+					"required": {
+					  "title": "required",
+					  "type": "boolean",
+					  "default":false
+					},
                   "multiple": {
                     "title": "multiple",
                     "type": "boolean",
@@ -199,6 +211,11 @@ export var jsonTypeSchema = {
               "title": "attrs",
               "type": "object",
               "properties": {
+					"required": {
+					  "title": "required",
+					  "type": "boolean",
+					  "default":false
+					},
                   "value": {
                     "title": "value",
                     "type": "string",
@@ -232,7 +249,6 @@ export var jsonTypeSchema = {
         "title": "attrs",
         "type": "object",
         "properties": {
-
         },
 
       },
@@ -244,6 +260,11 @@ export var jsonTypeSchema = {
               "title": "attrs",
               "type": "object",
               "properties": {
+					"required": {
+					  "title": "required",
+					  "type": "boolean",
+					  "default":false
+					},
                   "value": {
                     "title": "value",
                     "type": "string",
@@ -333,12 +354,6 @@ export var jsonSchema = {
           "type": "string",
           // "template":"{{=3245}}"
         },
-        "required": {
-          "title": "required",
-          "type": "boolean",
-          "default":false
-        },
-
       }
     },
     "children": {},
@@ -584,7 +599,7 @@ export function renderJsonEditor(){
         $(el).find('.array .props .row').each(function(){
 
         })
-        if(!this.jsonData().attrs.name) this.jsonData().attrs.name = this.jsonData().type+ this.parent.children.length
+        if(!this.jsonData().attrs.name && self.parent) this.jsonData().attrs.name = this.jsonData().type+ this.parent.children.length
         // below move all inherit to it's parent, wrap into .inheritCon, hide, and show when click
         $(el).find('.inherit').each(function(){
           var inheritClass = $(this).attr('class').split(/\s+/).filter(v=>{return v.indexOf('inherit-')>=0 }).pop()
@@ -615,21 +630,20 @@ export function renderJsonEditor(){
           Global.objectPath( data, path.replace(/Style$/, 'Width'), 0 );
         }
 
-        if(self.parent){
-          self.parent.selectedWidget.forEach(v=>{
-            // v.jsonData() is like {attrs:{}, style:{}, children:{}}
-            // v.Prop is like { key:key, className:..., style:{} }
-            // so we lookup _path[0] for which part of jsonData changed and update
-            var val = Global.objectPath( data, _path );
-          	Global.objectPath( v.jsonData() , _path, val );
+      (self.parent?self.parent.selectedWidget:[self]).forEach(v=>{
+        // v.jsonData() is like {attrs:{}, style:{}, children:{}}
+        // v.Prop is like { key:key, className:..., style:{} }
+        // so we lookup _path[0] for which part of jsonData changed and update
+        var val = Global.objectPath( data, _path );
+      	Global.objectPath( v.jsonData() , _path, val );
 
-            if(_path[0]=='style') Global.objectPath( v.Prop , _path, val );
-            else if(_path[0]=='attrs'){
-              Global.objectPath( v.Prop , _path.slice(1), val );
-            }
-            v.key( Global.NewID() )
-          })
+        if(_path[0]=='style') Global.objectPath( v.Prop , _path, val );
+        else if(_path[0]=='attrs'){
+          Global.objectPath( v.Prop , _path.slice(1), val );
         }
+        v.key( Global.NewID() )
+      })
+
         m.redraw()
       }) )
     }
@@ -640,11 +654,11 @@ export function renderJsonEditor(){
  * @param  {String} curTool toolset of jsonType, like 'plain', 'inputText' etc.
  * Usage: initDataTemplate.call(this, 'plain')
  */
-export function initDataTemplate(curTool='plain') {
-    var newJsonData = Global._deepCopy( {}, jsonData, jsonType[curTool] )
+export function initDataTemplate(curTool='') {
+    var newJsonData = Global._deepCopy( {}, jsonData, curTool=='stage'? StageProp: jsonType[curTool] )
     var newJsonSchema = Global._deepCopy( {}, jsonSchema, jsonTypeSchema[curTool] )
     this.Prop = Global._deepCopy( this.Prop, newJsonData.attrs )
-    this.Prop.style = Global._exlucdeJsonStyle( Global._deepCopy( {},  newJsonData.style ) )
+    this.Prop.style = Global._excludeJsonStyle( Global._deepCopy( {},  newJsonData.style ) )
     this.jsonSchema = m.prop(newJsonSchema)
     this.jsonData = m.prop(newJsonData)
 }

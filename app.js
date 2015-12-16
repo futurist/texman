@@ -110,8 +110,9 @@
 	   * Main Code below
 	   */
 	  var container = document.querySelector('#container');
-	  var Canvas1 = new _WidgetCanvas2.default(null, { style: { left: 100, top: 100, width: 800, height: 500, backgroundColor: '#eee' } });
+	  var Canvas1 = new _WidgetCanvas2.default(null, { style: { left: 100, top: 100, width: 800, height: 500, backgroundColor: '#eeeeee' } });
 	  _mithril2.default.mount(container, Canvas1);
+	  window.Canvas1 = Canvas1;
 
 	  /**
 	   * DOM EVENT BELOW
@@ -1782,7 +1783,7 @@
 	    document.querySelector('#debug').innerHTML = msg;
 	};
 
-	var _exlucdeJsonStyle = exports._exlucdeJsonStyle = function _exlucdeJsonStyle(propStyle) {
+	var _excludeJsonStyle = exports._excludeJsonStyle = function _excludeJsonStyle(propStyle) {
 	    return _exclude(propStyle, ['borderWidth', 'borderStyle', 'borderColor', 'backgroundColor', 'padding']);
 	};
 	/**
@@ -1797,7 +1798,7 @@
 	        Prop.style.border = thisProp.style.borderWidth + 'px ' + thisProp.style.borderStyle + ' ' + thisProp.style.borderColor;
 	    }
 	    applyStyle(Prop, thisProp.style);
-	    Prop.style = _exlucdeJsonStyle(Prop.style);
+	    Prop.style = _excludeJsonStyle(Prop.style);
 	    if (Prop.class) Prop.class = Prop.class.replace(/\s+/, ' ').trim();
 	    if (Prop.className) Prop.className = Prop.className.replace(/\s+/, ' ').trim();
 	    return Prop;
@@ -1821,7 +1822,7 @@
 	 * curTool for canvas & layer to determine type
 	 * @type {String}
 	 */
-	var curTool = exports.curTool = 'plain';
+	var curTool = exports.curTool = 'stage';
 
 /***/ },
 /* 5 */
@@ -2371,7 +2372,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.jsonSchema = exports.jsonData = exports.jsonTypeSchema = exports.jsonType = undefined;
+	exports.jsonSchema = exports.jsonData = exports.jsonTypeSchema = exports.jsonType = exports.StageProp = undefined;
 	exports.renderJsonEditor = renderJsonEditor;
 	exports.initDataTemplate = initDataTemplate;
 
@@ -2390,6 +2391,8 @@
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+	var StageProp = exports.StageProp = { type: 'stage', attrs: { title: 'Stage Name', name: '' } };
 
 	var jsonType = exports.jsonType = {
 	  plain: { type: 'plain', attrs: { title: 'plain text' }, children: { tag: 'span', html: false, children: "文字" }, style: {} },
@@ -2459,6 +2462,11 @@
 	            "title": "attrs",
 	            "type": "object",
 	            "properties": {
+	              "required": {
+	                "title": "required",
+	                "type": "boolean",
+	                "default": false
+	              },
 	              "type": {
 	                "title": "input type",
 	                "type": "string",
@@ -2495,6 +2503,11 @@
 	            "title": "attrs",
 	            "type": "object",
 	            "properties": {
+	              "required": {
+	                "title": "required",
+	                "type": "boolean",
+	                "default": false
+	              },
 	              "multiple": {
 	                "title": "multiple",
 	                "type": "boolean",
@@ -2564,6 +2577,11 @@
 	            "title": "attrs",
 	            "type": "object",
 	            "properties": {
+	              "required": {
+	                "title": "required",
+	                "type": "boolean",
+	                "default": false
+	              },
 	              "value": {
 	                "title": "value",
 	                "type": "string",
@@ -2605,6 +2623,11 @@
 	            "title": "attrs",
 	            "type": "object",
 	            "properties": {
+	              "required": {
+	                "title": "required",
+	                "type": "boolean",
+	                "default": false
+	              },
 	              "value": {
 	                "title": "value",
 	                "type": "string",
@@ -2690,16 +2713,10 @@
 	        "name": {
 	          "title": "name",
 	          "type": "string"
-	        },
-	        // "template":"{{=3245}}"
-	        "required": {
-	          "title": "required",
-	          "type": "boolean",
-	          "default": false
 	        }
-
 	      }
 	    },
+	    // "template":"{{=3245}}"
 	    "children": {},
 	    "style": {
 	      "title": "style",
@@ -2905,7 +2922,7 @@
 	    _mithril2.default.mount(document.querySelector('.editor'), new _JsonEditor2.default(this.jsonSchema, this.jsonData, { config: function config(el) {
 	        // below add drag&drop function to change array item order
 	        $(el).find('.array .props .row').each(function () {});
-	        if (!_this.jsonData().attrs.name) _this.jsonData().attrs.name = _this.jsonData().type + _this.parent.children.length;
+	        if (!_this.jsonData().attrs.name && self.parent) _this.jsonData().attrs.name = _this.jsonData().type + _this.parent.children.length;
 	        // below move all inherit to it's parent, wrap into .inheritCon, hide, and show when click
 	        $(el).find('.inherit').each(function () {
 	          var inheritClass = $(this).attr('class').split(/\s+/).filter(function (v) {
@@ -2935,20 +2952,19 @@
 	        Global.objectPath(data, path.replace(/Style$/, 'Width'), 0);
 	      }
 
-	      if (self.parent) {
-	        self.parent.selectedWidget.forEach(function (v) {
-	          // v.jsonData() is like {attrs:{}, style:{}, children:{}}
-	          // v.Prop is like { key:key, className:..., style:{} }
-	          // so we lookup _path[0] for which part of jsonData changed and update
-	          var val = Global.objectPath(data, _path);
-	          Global.objectPath(v.jsonData(), _path, val);
+	      (self.parent ? self.parent.selectedWidget : [self]).forEach(function (v) {
+	        // v.jsonData() is like {attrs:{}, style:{}, children:{}}
+	        // v.Prop is like { key:key, className:..., style:{} }
+	        // so we lookup _path[0] for which part of jsonData changed and update
+	        var val = Global.objectPath(data, _path);
+	        Global.objectPath(v.jsonData(), _path, val);
 
-	          if (_path[0] == 'style') Global.objectPath(v.Prop, _path, val);else if (_path[0] == 'attrs') {
-	            Global.objectPath(v.Prop, _path.slice(1), val);
-	          }
-	          v.key(Global.NewID());
-	        });
-	      }
+	        if (_path[0] == 'style') Global.objectPath(v.Prop, _path, val);else if (_path[0] == 'attrs') {
+	          Global.objectPath(v.Prop, _path.slice(1), val);
+	        }
+	        v.key(Global.NewID());
+	      });
+
 	      _mithril2.default.redraw();
 	    }));
 	  }
@@ -2960,12 +2976,12 @@
 	 * Usage: initDataTemplate.call(this, 'plain')
 	 */
 	function initDataTemplate() {
-	  var curTool = arguments.length <= 0 || arguments[0] === undefined ? 'plain' : arguments[0];
+	  var curTool = arguments.length <= 0 || arguments[0] === undefined ? '' : arguments[0];
 
-	  var newJsonData = Global._deepCopy({}, jsonData, jsonType[curTool]);
+	  var newJsonData = Global._deepCopy({}, jsonData, curTool == 'stage' ? StageProp : jsonType[curTool]);
 	  var newJsonSchema = Global._deepCopy({}, jsonSchema, jsonTypeSchema[curTool]);
 	  this.Prop = Global._deepCopy(this.Prop, newJsonData.attrs);
-	  this.Prop.style = Global._exlucdeJsonStyle(Global._deepCopy({}, newJsonData.style));
+	  this.Prop.style = Global._excludeJsonStyle(Global._deepCopy({}, newJsonData.style));
 	  this.jsonSchema = _mithril2.default.prop(newJsonSchema);
 	  this.jsonData = _mithril2.default.prop(newJsonData);
 	}
@@ -3552,8 +3568,7 @@
 			var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(WidgetCanvas).call(this, parent, prop));
 
 			_this.parent = parent;
-			_this.ID = Global.NewID();
-			_this.Prop.key = _this.ID;
+			_this.key = _mithril2.default.prop(Global.NewID());
 			return _this;
 		}
 
@@ -3564,8 +3579,8 @@
 			key: 'view',
 			value: function view(ctrl) {
 				var self = this;
-
-				var dom = (0, _mithril2.default)('.canvas', Global.applyProp(this.Prop), [(0, _mithril2.default)('.content', { config: function config(el, isInit, context) {
+				var Prop = Global.applyProp(this.Prop);
+				var dom = (0, _mithril2.default)('.canvas', Global._extend({}, Prop, { key: self.key(), 'data-key': self.key() }), [(0, _mithril2.default)('.content', { config: function config(el, isInit, context) {
 						context.retain = true;
 					} }, [(function () {
 					return self.children.map(function (v) {
@@ -4334,14 +4349,16 @@
 
 		// add toolbox
 		_mithril2.default.mount(document.querySelector('.toolbarContainer'), { view: function view() {
-				return (0, _mithril2.default)('.toolSet', Object.keys(DataTemplate.jsonType).map(function (v) {
+				return (0, _mithril2.default)('.toolSet', [(0, _mithril2.default)('.stageProp.tool', { onclick: function onclick() {
+						DataTemplate.renderJsonEditor.apply(Canvas1);
+					} }, 'STAGE'), Object.keys(DataTemplate.jsonType).map(function (v) {
 					return (0, _mithril2.default)('.tool', {
 						className: v == Global.curTool ? 'active' : '',
 						onclick: function onclick() {
 							Global.curTool = v;
 						}
 					}, v);
-				}));
+				})]);
 			} });
 	};
 

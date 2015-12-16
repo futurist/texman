@@ -6,8 +6,7 @@ export default class WidgetCanvas extends ContainerBaseClass {
 	constructor(parent, prop){
 		super(parent, prop)
 		this.parent = parent
-		this.ID = Global.NewID()
-	    this.Prop.key = this.ID
+	    this.key = m.prop( Global.NewID() );
 	}
 
 	controller  () {
@@ -16,8 +15,8 @@ export default class WidgetCanvas extends ContainerBaseClass {
 
 	view (ctrl) {
 		var self = this;
-
-		var dom = m('.canvas', Global.applyProp(this.Prop) , 
+		var Prop = Global.applyProp(this.Prop)
+		var dom = m('.canvas', Global._extend({}, Prop, { key: self.key(), 'data-key': self.key()} ) , 
 			[
 					m('.content', {config: function(el,isInit,context){context.retain=true} }, [
 						function(){

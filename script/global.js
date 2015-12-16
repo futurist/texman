@@ -247,7 +247,7 @@ export var debug = function( msg ){
 }
 
 
-export var _exlucdeJsonStyle = function( propStyle ){
+export var _excludeJsonStyle = function( propStyle ){
     return _exclude( propStyle, ['borderWidth','borderStyle', 'borderColor', 'backgroundColor', 'padding'] )
 }
 /**
@@ -262,7 +262,7 @@ export var applyProp = function( thisProp ){
         Prop.style.border = thisProp.style.borderWidth+'px '+thisProp.style.borderStyle+' '+thisProp.style.borderColor
     }
     applyStyle( Prop, thisProp.style )
-    Prop.style = _exlucdeJsonStyle( Prop.style )
+    Prop.style = _excludeJsonStyle( Prop.style )
     if(Prop.class) Prop.class = Prop.class.replace(/\s+/, ' ').trim()
     if(Prop.className) Prop.className = Prop.className.replace(/\s+/, ' ').trim()
     return Prop
@@ -286,5 +286,5 @@ export var getOuterRect = function( style ){
  * curTool for canvas & layer to determine type
  * @type {String}
  */
-export var curTool = 'plain'
+export var curTool = 'stage'
 
