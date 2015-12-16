@@ -1931,7 +1931,8 @@
 	        dom = Global._extend({}, data.children);
 	        dom.children = options;
 	      } else {
-	        dom = data.children;
+	        dom = Global._extend({}, data.children);
+	        dom.children = dom.html ? _mithril2.default.trust(dom.children) : dom.children;
 	      }
 
 	      return (0, _mithril2.default)('.content', Global._extend({ config: function config(el, isInit, context) {

@@ -55,7 +55,8 @@ export default class WidgetDiv extends LayerBaseClass {
         dom = Global._extend( {}, data.children )
         dom.children = options
     } else {
-      dom = data.children;
+      dom = Global._extend( {}, data.children )
+      dom.children = dom.html? m.trust(dom.children) : dom.children;
     }
 
     return m('.content', Global._extend( { config: function(el,isInit,context){context.retain=false} }, contentProp ), [dom] );
