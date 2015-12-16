@@ -16,7 +16,7 @@ export default class WidgetCanvas extends ContainerBaseClass {
 	view (ctrl) {
 		var self = this;
 		var Prop = Global.applyProp(this.Prop)
-		var dom = m('.canvas', Global._extend({}, Prop, { key: self.key(), 'data-key': self.key()} ) , 
+		var dom = m('.canvas', Global._extend({}, Prop, { key: self.key(), 'data-key': self.key()} ) ,
 			[
 					m('.content', {config: function(el,isInit,context){context.retain=true} }, [
 						function(){
@@ -29,4 +29,9 @@ export default class WidgetCanvas extends ContainerBaseClass {
 
 		return this.isValidRect() ? dom : []
 	}
+
+	getView(){
+		return this.view( new this.controller() );
+	}
+
 }

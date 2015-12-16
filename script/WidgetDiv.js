@@ -42,15 +42,15 @@ export default class WidgetDiv extends LayerBaseClass {
         dom.children = options
     } else if( isCheckbox ) {
         var options = data.children.children.map(function(v){
-          let checked = v==data.children.attrs.value?'[checked]':''; 
-          return m('label', [ v, m(`input.checkbox[type=checkbox]${checked}`, v) ] ); 
+          let checked = v==data.children.attrs.value?'[checked]':'';
+          return m('label', [ v, m(`input.checkbox[type=checkbox]${checked}`, v) ] );
         });
         dom = Global._extend( {}, data.children )
         dom.children = options
     } else if( isRadio ) {
         var options = data.children.children.map(function(v){
-          let checked = v==data.children.attrs.value?'[checked]':''; 
-          return m('label', [ v, m(`input.radio[type=radio]${checked}`, v) ] ); 
+          let checked = v==data.children.attrs.value?'[checked]':'';
+          return m('label', [ v, m(`input.radio[type=radio]${checked}`, v) ] );
         });
         dom = Global._extend( {}, data.children )
         dom.children = options
@@ -81,4 +81,9 @@ export default class WidgetDiv extends LayerBaseClass {
 		? dom
 		: []
 	}
+
+  getView(){
+    return this.view( new this.controller() );
+  }
+
 }

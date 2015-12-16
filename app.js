@@ -111,8 +111,14 @@
 	   */
 	  var container = document.querySelector('#container');
 	  var Canvas1 = new _WidgetCanvas2.default(null, { style: { left: 100, top: 100, width: 800, height: 500, backgroundColor: '#eeeeee' } });
-	  _mithril2.default.mount(container, Canvas1);
+	  _mithril2.default.mount(container, {
+	    view: function view() {
+	      return (0, _mithril2.default)('.mainCanvas', {}, [(0, _mithril2.default)('h2', Canvas1.Prop.title), Canvas1.getView()]);
+	    }
+	  });
+
 	  window.Canvas1 = Canvas1;
+	  Global.curTool = 'plain';
 
 	  /**
 	   * DOM EVENT BELOW
@@ -1954,6 +1960,11 @@
 	        } }), this.buildControlPoint()]);
 	      return this.isValidRect() ? dom : [];
 	    }
+	  }, {
+	    key: 'getView',
+	    value: function getView() {
+	      return this.view(new this.controller());
+	    }
 	  }]);
 
 	  return WidgetDiv;
@@ -3592,6 +3603,11 @@
 				})()]), this.buildControlPoint()]);
 
 				return this.isValidRect() ? dom : [];
+			}
+		}, {
+			key: 'getView',
+			value: function getView() {
+				return this.view(new this.controller());
 			}
 		}]);
 
