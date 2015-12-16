@@ -1896,10 +1896,14 @@
 	      var isRadio = data.type == 'radio';
 	      var isCheckbox = data.type == 'checkbox';
 	      var isSelect = data.type == 'select';
+	      var dom,
+	          contentProp = { style: {} };
 
-	      if (_typeof(data.children.children) == 'object') {
+	      if (_typeof(data.children) == 'object') {
+	        data.children.attrs = data.children.attrs || {};
 	        data.children.attrs.style = data.children.attrs.style || {};
-	        Global.applyStyle(data.children.attrs, Global._pluck(data.style, ['fontFamily', 'fontSize']));
+	        Global.applyStyle(data.children.attrs, Global._pluck(data.style, ['fontFamily', 'fontSize', 'color', 'textAlign', 'fontStyle', 'fontWeight']));
+	        Global.applyStyle(contentProp, Global._pluck(data.style, ['alignItems', 'justifyContent']));
 	      }
 
 	      if (isSelect) {
@@ -1907,12 +1911,29 @@
 	          return (0, _mithril2.default)('option', v);
 	        });
 	        if (data.children.attrs.placeholder) options.unshift((0, _mithril2.default)('option', { disabled: true, value: '' }, data.children.attrs.placeholder));
-	        var dom = Global._extend({}, data.children);
+	        dom = Global._extend({}, data.children);
 	        dom.children = options;
-	        return dom;
-	      } else if (isCheckbox) {} else if (isRadio) {} else {
-	        return data.children;
+	      } else if (isCheckbox) {
+	        var options = data.children.children.map(function (v) {
+	          var checked = v == data.children.attrs.value ? '[checked]' : '';
+	          return (0, _mithril2.default)('label', [v, (0, _mithril2.default)('input.checkbox[type=checkbox]' + checked, v)]);
+	        });
+	        dom = Global._extend({}, data.children);
+	        dom.children = options;
+	      } else if (isRadio) {
+	        var options = data.children.children.map(function (v) {
+	          var checked = v == data.children.attrs.value ? '[checked]' : '';
+	          return (0, _mithril2.default)('label', [v, (0, _mithril2.default)('input.radio[type=radio]' + checked, v)]);
+	        });
+	        dom = Global._extend({}, data.children);
+	        dom.children = options;
+	      } else {
+	        dom = data.children;
 	      }
+
+	      return (0, _mithril2.default)('.content', Global._extend({ key: Global.NewID(), config: function config(el, isInit, context) {
+	          context.retain = false;
+	        } }, contentProp), [dom]);
 	    }
 	  }, {
 	    key: 'controller',
@@ -1924,9 +1945,7 @@
 	    value: function view(ctrl) {
 	      var self = this;
 	      var Prop = Global.applyProp(this.Prop);
-	      var dom = (0, _mithril2.default)('div.layer', Prop, [(0, _mithril2.default)('.content', { key: Global.NewID(), config: function config(el, isInit, context) {
-	          context.retain = false;
-	        } }, this.getChildren()), (0, _mithril2.default)('.bbox', { config: function config(el, isInit, context) {
+	      var dom = (0, _mithril2.default)('div.layer', Prop, [this.getChildren(), (0, _mithril2.default)('.bbox', { config: function config(el, isInit, context) {
 	          context.retain = true;
 	        } }), this.buildControlPoint()]);
 	      return this.isValidRect() ? dom : [];
@@ -2378,12 +2397,19 @@
 	      "padding": 2, "paddingTop": 2, "paddingBottom": 2, "paddingRight": 2, "paddingLeft": 2
 	    }
 	  },
-	  select: { type: 'select', attrs: {}, children: { tag: 'select', attrs: { title: 'select', name: 'Client2', placeholder: 'select client...', value: '', required: true, multiple: false }, children: [] },
+	  select: { type: 'select', attrs: {}, children: { tag: 'select', attrs: { placeholder: 'select client...', value: '', required: true, multiple: false }, children: [] },
 	    style: {
 	      "borderWidth": 1, "borderTopWidth": 1, "borderRightWidth": 1, "borderBottomWidth": 1, "borderLeftWidth": 1,
 	      "padding": 2, "paddingTop": 2, "paddingBottom": 2, "paddingRight": 2, "paddingLeft": 2
 	    }
+	  },
+	  checkbox: { type: 'checkbox', attrs: {}, children: { tag: 'span', attrs: { type: 'checkbox', value: '下拉' }, children: ['下拉', '下拉2', '下拉3'] },
+	    style: {}
+	  },
+	  radio: { type: 'radio', attrs: {}, children: { tag: 'span', attrs: { type: 'radio', value: '下拉' }, children: ['下拉', '下拉2', '下拉3'] },
+	    style: {}
 	  }
+
 	};
 	var jsonTypeSchema = exports.jsonTypeSchema = {
 	  plain: {
@@ -2517,6 +2543,88 @@
 	      }
 
 	    }
+	  },
+
+	  checkbox: {
+	    "title": "选择",
+	    "properties": {
+	      "attrs": {
+	        "title": "attrs",
+	        "type": "object",
+	        "properties": {}
+
+	      },
+	      "children": {
+	        "title": "children",
+	        "type": "object",
+	        "properties": {
+	          "attrs": {
+	            "title": "attrs",
+	            "type": "object",
+	            "properties": {
+	              "value": {
+	                "title": "value",
+	                "type": "string",
+	                "default": ""
+	              }
+
+	            }
+	          },
+	          "children": {
+	            "title": "Options",
+	            "type": "array",
+	            "items": {
+	              "title": "value",
+	              "type": "string",
+	              "format": "search",
+	              "default": ""
+	            }
+	          }
+	        }
+	      }
+
+	    }
+	  },
+
+	  radio: {
+	    "title": "选择",
+	    "properties": {
+	      "attrs": {
+	        "title": "attrs",
+	        "type": "object",
+	        "properties": {}
+
+	      },
+	      "children": {
+	        "title": "children",
+	        "type": "object",
+	        "properties": {
+	          "attrs": {
+	            "title": "attrs",
+	            "type": "object",
+	            "properties": {
+	              "value": {
+	                "title": "value",
+	                "type": "string",
+	                "default": ""
+	              }
+
+	            }
+	          },
+	          "children": {
+	            "title": "Options",
+	            "type": "array",
+	            "items": {
+	              "title": "value",
+	              "type": "string",
+	              "format": "search",
+	              "default": ""
+	            }
+	          }
+	        }
+	      }
+
+	    }
 	  }
 
 	};
@@ -2527,6 +2635,7 @@
 	  "style": {
 	    "fontFamily": "宋体",
 	    "fontSize": 12,
+	    "color": "#000000",
 	    "left": 0,
 	    "top": 0,
 	    "width": 100,
@@ -2605,6 +2714,48 @@
 	          "type": "integer",
 	          "default": 12
 	        },
+	        "color": {
+	          "title": "color",
+	          "type": "string",
+	          "format": "color",
+	          "default": "#000000"
+	        },
+
+	        "fontStyle": {
+	          "title": "font style",
+	          "type": "string",
+	          "enum": ["normal", "italic"],
+	          "default": "normal"
+	        },
+
+	        "fontWeight": {
+	          "title": "font weight",
+	          "type": "string",
+	          "enum": ["normal", "bold", "bolder"],
+	          "default": "normal"
+	        },
+
+	        "textAlign": {
+	          "title": "text align",
+	          "type": "string",
+	          "enum": ["left", "center", "right"],
+	          "default": "left"
+	        },
+
+	        "alignItems": {
+	          "title": "align items",
+	          "type": "string",
+	          "enum": ["flex-start", "center", "flex-end"],
+	          "default": "center"
+	        },
+
+	        "justifyContent": {
+	          "title": "justify content",
+	          "type": "string",
+	          "enum": ["flex-start", "center", "flex-end"],
+	          "default": "flex-start"
+	        },
+
 	        "left": {
 	          "title": "left",
 	          "type": "integer",
@@ -2633,20 +2784,20 @@
 	          "minimum": 0,
 	          "default": 0
 	        },
-	        "paddingTop": {
-	          "title": "padding top",
-	          "inherit": "padding"
-	        },
-	        "paddingBottom": {
-	          "title": "padding Bottom",
-	          "inherit": "padding"
-	        },
 	        "paddingLeft": {
 	          "title": "padding Left",
 	          "inherit": "padding"
 	        },
+	        "paddingTop": {
+	          "title": "padding top",
+	          "inherit": "padding"
+	        },
 	        "paddingRight": {
 	          "title": "padding Right",
+	          "inherit": "padding"
+	        },
+	        "paddingBottom": {
+	          "title": "padding Bottom",
 	          "inherit": "padding"
 	        },
 
@@ -2776,12 +2927,24 @@
 	        });
 	      } }, function (path, value, getData, data) {
 	      path = path.replace(/^root\./, '');
+	      var _path = path.split('.');
 	      // if borderStyle is none/'', set width to 0
 	      if (/(border\w+)Style$/i.test(path) && (value == 'none' || !value) || /(border\w+)Width$/i.test(path) && /^$|none/.test(Global.objectPath(data, path.replace(/Width$/, 'Style')))) {
 	        Global.objectPath(data, path.replace(/Style$/, 'Width'), 0);
 	      }
-	      Global._extend(self.Prop, getData.attrs);
-	      Global._extend(self.Prop.style, Global._exlucdeJsonStyle(getData.style));
+
+	      if (self.parent) {
+	        self.parent.selectedWidget.forEach(function (v) {
+	          // v.jsonData() is like {attrs:{}, style:{}, children:{}}
+	          // v.Prop is like { key:key, className:..., style:{} }
+	          // so we lookup _path[0] for which part of jsonData changed and update
+	          if (_path[0] == 'style') Global.objectPath(v.Prop, _path, Global.objectPath(data, _path));else if (_path[0] == 'attrs') {
+	            Global.objectPath(v.Prop, _path.slice(1), Global.objectPath(data, _path));
+	            Global.objectPath(v.jsonData(), _path, Global.objectPath(data, _path));
+	          } else if (_path[0] == 'children') Global.objectPath(v.jsonData(), _path, Global.objectPath(data, _path));
+	          v.getChildren();
+	        });
+	      }
 	      _mithril2.default.redraw();
 	    }));
 	  }

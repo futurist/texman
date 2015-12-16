@@ -4,18 +4,27 @@ import JsonEditor from './JsonEditor'
 
 export var jsonType = {
   plain:{type:'plain', attrs: {title:'plain text'}, children:{tag:'span', html:false, children:"文字"}, style:{} },
-  inputText:{type:'inputText', attrs: {title:'input text'}, children:{ tag:'input', attrs:{ value:'输入文字', type:'text' } }, 
+  inputText:{type:'inputText', attrs: {title:'input text'}, children:{ tag:'input', attrs:{ value:'输入文字', type:'text' } },
             style:{
               "borderWidth": 1, "borderTopWidth": 1, "borderRightWidth": 1, "borderBottomWidth": 1, "borderLeftWidth": 1,
               "padding": 2, "paddingTop": 2, "paddingBottom": 2, "paddingRight": 2, "paddingLeft": 2,
-            }  
+            }
           },
-  select:{type:'select',  attrs:{}, children:{ tag:'select', attrs:{title:'select', name:'Client2', placeholder:'select client...', value:'', required:true, multiple:false,  }, children:[] }, 
+  select:{type:'select',  attrs:{}, children:{ tag:'select', attrs:{placeholder:'select client...', value:'', required:true, multiple:false,  }, children:[] },
         style:{
           "borderWidth": 1, "borderTopWidth": 1, "borderRightWidth": 1, "borderBottomWidth": 1, "borderLeftWidth": 1,
           "padding": 2, "paddingTop": 2, "paddingBottom": 2, "paddingRight": 2, "paddingLeft": 2,
         }
-      }
+      },
+  checkbox:{type:'checkbox',  attrs:{}, children:{ tag:'span', attrs:{type:'checkbox', value:'下拉' }, children:['下拉','下拉2','下拉3'] },
+        style:{
+        }
+      },
+  radio:{type:'radio',  attrs:{}, children:{ tag:'span', attrs:{type:'radio', value:'下拉' }, children:['下拉','下拉2','下拉3'] },
+        style:{
+        }
+      },
+
 }
 export var jsonTypeSchema = {
   plain: {
@@ -170,6 +179,96 @@ export var jsonTypeSchema = {
   },
 
 
+  checkbox: {
+    "title":"选择",
+    "properties": {
+      "attrs":
+      {
+        "title": "attrs",
+        "type": "object",
+        "properties": {
+
+        },
+
+      },
+      "children": {
+        "title": "children",
+        "type": "object",
+        "properties": {
+            "attrs": {
+              "title": "attrs",
+              "type": "object",
+              "properties": {
+                  "value": {
+                    "title": "value",
+                    "type": "string",
+                    "default":""
+                  },
+
+            }
+          },
+          "children":{
+              "title": "Options",
+              "type": "array",
+              "items": {
+                "title": "value",
+                "type": "string",
+                "format": "search",
+                "default":""
+              }
+          }
+        }
+      },
+
+    }
+  },
+
+
+  radio: {
+    "title":"选择",
+    "properties": {
+      "attrs":
+      {
+        "title": "attrs",
+        "type": "object",
+        "properties": {
+
+        },
+
+      },
+      "children": {
+        "title": "children",
+        "type": "object",
+        "properties": {
+            "attrs": {
+              "title": "attrs",
+              "type": "object",
+              "properties": {
+                  "value": {
+                    "title": "value",
+                    "type": "string",
+                    "default":""
+                  },
+
+            }
+          },
+          "children":{
+              "title": "Options",
+              "type": "array",
+              "items": {
+                "title": "value",
+                "type": "string",
+                "format": "search",
+                "default":""
+              }
+          }
+        }
+      },
+
+    }
+  },
+
+
 }
 
 
@@ -179,6 +278,7 @@ export var jsonData = {
   "style": {
     "fontFamily":"宋体",
     "fontSize":12,
+    "color":"#000000",
     "left": 0,
     "top": 0,
     "width": 100,
@@ -265,6 +365,67 @@ export var jsonSchema = {
           "type": "integer",
           "default":12
         },
+        "color": {
+          "title": "color",
+          "type": "string",
+          "format": "color",
+          "default":"#000000"
+        },
+
+        "fontStyle": {
+          "title": "font style",
+          "type": "string",
+          "enum": [
+            "normal",
+            "italic",
+          ],
+          "default": "normal"
+        },
+
+        "fontWeight": {
+          "title": "font weight",
+          "type": "string",
+          "enum": [
+            "normal",
+            "bold",
+            "bolder",
+          ],
+          "default": "normal"
+        },
+
+        "textAlign": {
+          "title": "text align",
+          "type": "string",
+          "enum": [
+            "left",
+            "center",
+            "right",
+          ],
+          "default": "left"
+        },
+
+        "alignItems": {
+          "title": "align items",
+          "type": "string",
+          "enum": [
+            "flex-start",
+            "center",
+            "flex-end",
+          ],
+          "default": "center"
+        },
+
+        "justifyContent": {
+          "title": "justify content",
+          "type": "string",
+          "enum": [
+            "flex-start",
+            "center",
+            "flex-end",
+          ],
+          "default": "flex-start"
+        },
+
         "left": {
           "title": "left",
           "type": "integer",
@@ -293,20 +454,20 @@ export var jsonSchema = {
           "minimum": 0,
           "default":0
         },
-        "paddingTop":{
-          "title": "padding top",
-          "inherit":"padding"
-        },
-        "paddingBottom":{
-          "title": "padding Bottom",
-          "inherit":"padding"
-        },
         "paddingLeft":{
           "title": "padding Left",
           "inherit":"padding"
         },
+        "paddingTop":{
+          "title": "padding top",
+          "inherit":"padding"
+        },
         "paddingRight":{
           "title": "padding Right",
+          "inherit":"padding"
+        },
+        "paddingBottom":{
+          "title": "padding Bottom",
           "inherit":"padding"
         },
 
@@ -446,14 +607,28 @@ export function renderJsonEditor(){
 
       } }, function(path,value, getData, data ){
         path = path.replace(/^root\./,'')
+        var _path = path.split('.')
         // if borderStyle is none/'', set width to 0
         if( /(border\w+)Style$/i.test(path) && (value=='none'|| !value)
           || /(border\w+)Width$/i.test(path) && /^$|none/.test( Global.objectPath( data, path.replace(/Width$/, 'Style') ) )
         ) {
           Global.objectPath( data, path.replace(/Style$/, 'Width'), 0 );
         }
-        Global._extend(self.Prop, getData.attrs)
-        Global._extend(self.Prop.style, Global._exlucdeJsonStyle( getData.style ) )
+
+        if(self.parent){
+          self.parent.selectedWidget.forEach(v=>{
+            // v.jsonData() is like {attrs:{}, style:{}, children:{}}
+            // v.Prop is like { key:key, className:..., style:{} }
+            // so we lookup _path[0] for which part of jsonData changed and update
+            if(_path[0]=='style') Global.objectPath( v.Prop , _path, Global.objectPath( data, _path ) );
+            else if(_path[0]=='attrs'){
+              Global.objectPath( v.Prop , _path.slice(1), Global.objectPath( data, _path ) );
+              Global.objectPath( v.jsonData() , _path, Global.objectPath( data, _path ) );
+            }
+            else if(_path[0]=='children') Global.objectPath( v.jsonData(), _path, Global.objectPath( data, _path ) );
+            v.getChildren()
+          })
+        }
         m.redraw()
       }) )
     }

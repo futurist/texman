@@ -24,26 +24,39 @@ export default class WidgetDiv extends LayerBaseClass {
     var isRadio = data.type=='radio';
     var isCheckbox = data.type=='checkbox';
     var isSelect = data.type=='select';
+    var dom, contentProp={ style:{} }
 
-    if(typeof data.children.children=='object'){
+    if(typeof data.children=='object'){
+      data.children.attrs = data.children.attrs || {}
       data.children.attrs.style = data.children.attrs.style||{}
-      Global.applyStyle( data.children.attrs, Global._pluck(data.style, ['fontFamily', 'fontSize']) );
+      Global.applyStyle( data.children.attrs, Global._pluck(data.style, ['fontFamily', 'fontSize', 'color', 'textAlign', 'fontStyle', 'fontWeight']) );
+      Global.applyStyle( contentProp, Global._pluck(data.style, ['alignItems', 'justifyContent']) );
     }
 
     if( isSelect ) {
         var options = data.children.children.map(function(v){ return m('option', v) });
         if( data.children.attrs.placeholder ) options.unshift( m('option', {disabled:true, value:''}, data.children.attrs.placeholder ) );
-        var dom = Global._extend( {}, data.children )
+        dom = Global._extend( {}, data.children )
         dom.children = options
-        return dom;
     } else if( isCheckbox ) {
-
+        var options = data.children.children.map(function(v){
+          let checked = v==data.children.attrs.value?'[checked]':''; 
+          return m('label', [ v, m(`input.checkbox[type=checkbox]${checked}`, v) ] ); 
+        });
+        dom = Global._extend( {}, data.children )
+        dom.children = options
     } else if( isRadio ) {
-
+        var options = data.children.children.map(function(v){
+          let checked = v==data.children.attrs.value?'[checked]':''; 
+          return m('label', [ v, m(`input.radio[type=radio]${checked}`, v) ] ); 
+        });
+        dom = Global._extend( {}, data.children )
+        dom.children = options
     } else {
-      return data.children;
+      dom = data.children;
     }
 
+    return m('.content', Global._extend( {key:Global.NewID(), config: function(el,isInit,context){context.retain=false} }, contentProp ), [dom] );
 
   }
 
@@ -57,7 +70,7 @@ export default class WidgetDiv extends LayerBaseClass {
     var self = this;
     var Prop = Global.applyProp(this.Prop)
     var dom = m('div.layer', Prop, [
-        m('.content', {key:Global.NewID(), config: function(el,isInit,context){context.retain=false} }, this.getChildren() ),
+        this.getChildren(),
         m('.bbox', {config: function(el,isInit,context){context.retain=true} } ),
         this.buildControlPoint()
       ] )

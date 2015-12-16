@@ -39,6 +39,15 @@ ul,li{
 	border:1px dashed transparent;
 }
 
+.canvas .content {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
 .canvas .content,
 .canvas .bbox
 {
@@ -139,7 +148,8 @@ ul,li{
 	width:50px;
 }
 
-.canvas .content input,
+.canvas .content input[type=text],
+.canvas .content input[type=number],
 .canvas .content select
 {
 	width:100%;
@@ -147,7 +157,11 @@ ul,li{
 	border:none;
 	background: none;
 }
-
+span[type=radio] label,
+span[type=checkbox] label
+{
+	display: block;
+}
 .toolbarContainer{
 	position: fixed;
 	top:0;
@@ -157,6 +171,13 @@ ul,li{
 }
 .tool{
 	margin:10px 0;
+	cursor:pointer;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 .tool.active{
 	color:red;
