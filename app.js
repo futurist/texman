@@ -3739,7 +3739,7 @@
 				var editing = this.getRoot().editingContainer;
 				for (var i = 0, v; v = editing.selectedWidget[i]; i++) {
 					var index = editing.children.indexOf(v);
-					if (index >= 0) editing.children.splice(index, 1);
+					if (index >= 0) v.onUnSelected(), editing.children.splice(index, 1);
 					// if( v.isSelected() ) v.remove();
 				}
 				editing.selectedWidget = [];
