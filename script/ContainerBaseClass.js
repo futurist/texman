@@ -67,7 +67,7 @@ export default class ContainerBaseClass extends LayerBaseClass {
 
 	duplicateChild (src, dest){
 		src.children && src.children.forEach((child)=>{
-			var newChild = new child.constructor( dest, {style:child.Prop.style} );
+			var newChild = new child.constructor( dest, {style:child.Prop.style } );
 			dest.children.push( newChild )
 			this.duplicateChild( child, newChild )
 		})
@@ -86,6 +86,7 @@ export default class ContainerBaseClass extends LayerBaseClass {
 				widget.onSelected()
 				widget.Prop.style.left+=20
 				widget.Prop.style.top+=20
+				widget.jsonData().attrs.name = (widget.jsonData().type||'widget')+ editing.children.length
 			}
 		}
 		editing.selectedWidget = newWidget

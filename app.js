@@ -3744,6 +3744,7 @@
 						widget.onSelected();
 						widget.Prop.style.left += 20;
 						widget.Prop.style.top += 20;
+						widget.jsonData().attrs.name = (widget.jsonData().type || 'widget') + editing.children.length;
 					}
 				}
 				editing.selectedWidget = newWidget;
