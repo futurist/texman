@@ -75,6 +75,7 @@ export default class JsonEditor {
 					} )
 				}
 				// only callback when it's not update the template
+				shouldCallback=true;
 				if(shouldCallback){
 				    if(temp.attrs) temp.attrs.key = +new Date();
 					callback()

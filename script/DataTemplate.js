@@ -630,7 +630,7 @@ export function renderJsonEditor(){
           Global.objectPath( data, path.replace(/Style$/, 'Width'), 0 );
         }
 
-      (self.parent?self.parent.selectedWidget:[self]).forEach(v=>{
+      ;(self.parent?self.parent.selectedWidget:[self]).forEach(v=>{
         // v.jsonData() is like {attrs:{}, style:{}, children:{}}
         // v.Prop is like { key:key, className:..., style:{} }
         // so we lookup _path[0] for which part of jsonData changed and update
@@ -641,7 +641,6 @@ export function renderJsonEditor(){
         else if(_path[0]=='attrs'){
           Global.objectPath( v.Prop , _path.slice(1), val );
         }
-        v.key( Global.NewID() )
       })
 
         m.redraw()

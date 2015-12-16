@@ -16,7 +16,13 @@ export default class LayerBaseClass {
 
 		this.Prop = Global._deepCopy( this.Prop, prop||{} );
 
-		this.Prop.config = (el, isInit, context)=> { Global.applyStyle(el, this.Prop.style); context.retain=true; }
+		this.Prop.config = (el, isInit, context)=> { 
+			/**
+			 * below will trigger a BUG that background color cannot removed!!!!
+			**/
+			// Global.applyStyle(el, this.Prop.style); 
+			// context.retain=false; 
+		}
 		this.Prop.onkeypress = function(e){ console.log(e,this)  }
 		this.ControlPoints = []
 		this.activeControlPoint = undefined;

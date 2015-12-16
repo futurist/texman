@@ -2001,8 +2001,6 @@
 
 	var LayerBaseClass = (function () {
 		function LayerBaseClass(parent, prop) {
-			var _this = this;
-
 			_classCallCheck(this, LayerBaseClass);
 
 			this.parent = parent;
@@ -2016,7 +2014,11 @@
 			this.Prop = Global._deepCopy(this.Prop, prop || {});
 
 			this.Prop.config = function (el, isInit, context) {
-				Global.applyStyle(el, _this.Prop.style);context.retain = true;
+				/**
+	    * below will trigger a BUG that background color cannot removed!!!!
+	   **/
+				// Global.applyStyle(el, this.Prop.style);
+				// context.retain=false;
 			};
 			this.Prop.onkeypress = function (e) {
 				console.log(e, this);
@@ -2953,7 +2955,7 @@
 	        Global.objectPath(data, path.replace(/Style$/, 'Width'), 0);
 	      }
 
-	      (self.parent ? self.parent.selectedWidget : [self]).forEach(function (v) {
+	      ;(self.parent ? self.parent.selectedWidget : [self]).forEach(function (v) {
 	        // v.jsonData() is like {attrs:{}, style:{}, children:{}}
 	        // v.Prop is like { key:key, className:..., style:{} }
 	        // so we lookup _path[0] for which part of jsonData changed and update
@@ -2963,7 +2965,6 @@
 	        if (_path[0] == 'style') Global.objectPath(v.Prop, _path, val);else if (_path[0] == 'attrs') {
 	          Global.objectPath(v.Prop, _path.slice(1), val);
 	        }
-	        v.key(Global.NewID());
 	      });
 
 	      _mithril2.default.redraw();
@@ -3092,6 +3093,7 @@
 					});
 				}
 				// only callback when it's not update the template
+				shouldCallback = true;
 				if (shouldCallback) {
 					if (temp.attrs) temp.attrs.key = +new Date();
 					callback();
