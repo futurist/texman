@@ -620,13 +620,14 @@ export function renderJsonEditor(){
             // v.jsonData() is like {attrs:{}, style:{}, children:{}}
             // v.Prop is like { key:key, className:..., style:{} }
             // so we lookup _path[0] for which part of jsonData changed and update
-            if(_path[0]=='style') Global.objectPath( v.Prop , _path, Global.objectPath( data, _path ) );
+            var val = Global.objectPath( data, _path );
+          	Global.objectPath( v.jsonData() , _path, val );
+
+            if(_path[0]=='style') Global.objectPath( v.Prop , _path, val );
             else if(_path[0]=='attrs'){
-              Global.objectPath( v.Prop , _path.slice(1), Global.objectPath( data, _path ) );
-              Global.objectPath( v.jsonData() , _path, Global.objectPath( data, _path ) );
+              Global.objectPath( v.Prop , _path.slice(1), val );
             }
-            else if(_path[0]=='children') Global.objectPath( v.jsonData(), _path, Global.objectPath( data, _path ) );
-            v.getChildren()
+            v.key( Global.NewID() )
           })
         }
         m.redraw()

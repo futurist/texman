@@ -7,6 +7,7 @@ export default class WidgetDiv extends LayerBaseClass {
 	constructor(parent, prop) {
 		super(parent, prop);
 		this.parent = parent;
+    this.key = m.prop( Global.NewID() );
 	}
   onRectChange(){
     super.onRectChange()
@@ -20,6 +21,7 @@ export default class WidgetDiv extends LayerBaseClass {
   }
 
   getChildren(){
+    var self = this;
     var data = this.jsonData();
     var isRadio = data.type=='radio';
     var isCheckbox = data.type=='checkbox';
@@ -56,7 +58,7 @@ export default class WidgetDiv extends LayerBaseClass {
       dom = data.children;
     }
 
-    return m('.content', Global._extend( {key:Global.NewID(), config: function(el,isInit,context){context.retain=false} }, contentProp ), [dom] );
+    return m('.content', Global._extend( { config: function(el,isInit,context){context.retain=false} }, contentProp ), [dom] );
 
   }
 
@@ -69,7 +71,7 @@ export default class WidgetDiv extends LayerBaseClass {
 	view (ctrl) {
     var self = this;
     var Prop = Global.applyProp(this.Prop)
-    var dom = m('div.layer', Prop, [
+    var dom = m('div.layer', Global._extend({}, Prop, { key: self.key(), 'data-key': self.key()} ), [
         this.getChildren(),
         m('.bbox', {config: function(el,isInit,context){context.retain=true} } ),
         this.buildControlPoint()

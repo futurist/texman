@@ -1870,6 +1870,7 @@
 	    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(WidgetDiv).call(this, parent, prop));
 
 	    _this.parent = parent;
+	    _this.key = _mithril2.default.prop(Global.NewID());
 	    return _this;
 	  }
 
@@ -1892,6 +1893,7 @@
 	  }, {
 	    key: 'getChildren',
 	    value: function getChildren() {
+	      var self = this;
 	      var data = this.jsonData();
 	      var isRadio = data.type == 'radio';
 	      var isCheckbox = data.type == 'checkbox';
@@ -1931,7 +1933,7 @@
 	        dom = data.children;
 	      }
 
-	      return (0, _mithril2.default)('.content', Global._extend({ key: Global.NewID(), config: function config(el, isInit, context) {
+	      return (0, _mithril2.default)('.content', Global._extend({ config: function config(el, isInit, context) {
 	          context.retain = false;
 	        } }, contentProp), [dom]);
 	    }
@@ -1945,7 +1947,7 @@
 	    value: function view(ctrl) {
 	      var self = this;
 	      var Prop = Global.applyProp(this.Prop);
-	      var dom = (0, _mithril2.default)('div.layer', Prop, [this.getChildren(), (0, _mithril2.default)('.bbox', { config: function config(el, isInit, context) {
+	      var dom = (0, _mithril2.default)('div.layer', Global._extend({}, Prop, { key: self.key(), 'data-key': self.key() }), [this.getChildren(), (0, _mithril2.default)('.bbox', { config: function config(el, isInit, context) {
 	          context.retain = true;
 	        } }), this.buildControlPoint()]);
 	      return this.isValidRect() ? dom : [];
@@ -2938,11 +2940,13 @@
 	          // v.jsonData() is like {attrs:{}, style:{}, children:{}}
 	          // v.Prop is like { key:key, className:..., style:{} }
 	          // so we lookup _path[0] for which part of jsonData changed and update
-	          if (_path[0] == 'style') Global.objectPath(v.Prop, _path, Global.objectPath(data, _path));else if (_path[0] == 'attrs') {
-	            Global.objectPath(v.Prop, _path.slice(1), Global.objectPath(data, _path));
-	            Global.objectPath(v.jsonData(), _path, Global.objectPath(data, _path));
-	          } else if (_path[0] == 'children') Global.objectPath(v.jsonData(), _path, Global.objectPath(data, _path));
-	          v.getChildren();
+	          var val = Global.objectPath(data, _path);
+	          Global.objectPath(v.jsonData(), _path, val);
+
+	          if (_path[0] == 'style') Global.objectPath(v.Prop, _path, val);else if (_path[0] == 'attrs') {
+	            Global.objectPath(v.Prop, _path.slice(1), val);
+	          }
+	          v.key(Global.NewID());
 	        });
 	      }
 	      _mithril2.default.redraw();
