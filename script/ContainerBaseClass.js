@@ -395,6 +395,7 @@ export default class ContainerBaseClass extends LayerBaseClass {
 		this.getRoot().editingContainer = this;
 		this.setupContainerMode()
 		editing.setupContainerMode()
+		Global.curTool='plain'
 	}
 
 	setupContainerMode (){

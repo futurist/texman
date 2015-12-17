@@ -5,14 +5,14 @@ import addEditorToLayerBase from './addEditorToLayerBase'
 import * as DataTemplate from './DataTemplate'
 
 export default class LayerBaseClass {
-	constructor(parent, prop){
+	constructor(parent, prop, tool){
 		this.parent = parent;
 		this.ID = Global.NewID()
 		this.Prop = {}
     this.Prop.key = this.ID
     this.Prop.className = ''
     // var curTool = parent&&parent.children.length%2 ? 'select' : 'inputText'
-    DataTemplate.initDataTemplate.call(this, Global.curTool, prop)
+    DataTemplate.initDataTemplate.call(this, tool||Global.curTool, prop)
 
 		// this.Prop = Global._deepCopy( this.Prop, prop||{} );
 

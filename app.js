@@ -103,6 +103,18 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+	var editData = { "classType": "canvas", "jsonData": { "attrs": { "title": "坏布类别", "name": "Canvas1", "required": false, "key": 1450347155315 }, "children": {}, "style": { "fontFamily": "宋体", "fontSize": 12, "color": "#000000", "left": 100, "top": 100, "width": 800, "height": 500, "padding": 0, "paddingTop": 0, "paddingBottom": 0, "paddingRight": 0, "paddingLeft": 0, "borderWidth": 0, "borderTopWidth": 0, "borderRightWidth": 0, "borderBottomWidth": 0, "borderLeftWidth": 0, "borderStyle": "solid", "borderTopStyle": "solid", "borderRightStyle": "solid", "borderBottomStyle": "solid", "borderLeftStyle": "solid", "borderColor": "#666666", "borderTopColor": "#666666", "borderRightColor": "#666666", "borderBottomColor": "#666666", "borderLeftColor": "#666666", "backgroundType": "color", "backgroundColor": "#eeeeee", "background": "#eeeeee" }, "type": "stage" }, "included": [{ "classType": "layer", "jsonData": { "attrs": { "title": "plain text", "name": "plain1", "required": false, "key": 1450346260684 }, "children": { "tag": "span", "html": false, "children": "文字", "attrs": { "style": { "fontFamily": "\"宋体\"", "fontSize": "12px", "color": "#000000" } } }, "style": { "fontFamily": "宋体", "fontSize": 12, "color": "#000000", "left": 65, "top": 50, "width": 55, "height": 45, "padding": 0, "paddingTop": 0, "paddingBottom": 0, "paddingRight": 0, "paddingLeft": 0, "borderWidth": 0, "borderTopWidth": 0, "borderRightWidth": 0, "borderBottomWidth": 0, "borderLeftWidth": 0, "borderStyle": "solid", "borderTopStyle": "solid", "borderRightStyle": "solid", "borderBottomStyle": "solid", "borderLeftStyle": "solid", "borderColor": "#666666", "borderTopColor": "#666666", "borderRightColor": "#666666", "borderBottomColor": "#666666", "borderLeftColor": "#666666", "backgroundType": "none", "backgroundColor": "#aaaaaa", "background": "none" }, "type": "plain" }, "included": [] }, { "classType": "layer", "jsonData": { "attrs": { "title": "plain text", "name": "plain2", "required": false, "key": 1450346262342 }, "children": { "tag": "span", "html": false, "children": "文字", "attrs": { "style": { "fontFamily": "\"宋体\"", "fontSize": "12px", "color": "#000000" } } }, "style": { "fontFamily": "宋体", "fontSize": 12, "color": "#000000", "left": 140, "top": 65, "width": 30, "height": 35, "padding": 0, "paddingTop": 0, "paddingBottom": 0, "paddingRight": 0, "paddingLeft": 0, "borderWidth": 0, "borderTopWidth": 0, "borderRightWidth": 0, "borderBottomWidth": 0, "borderLeftWidth": 0, "borderStyle": "solid", "borderTopStyle": "solid", "borderRightStyle": "solid", "borderBottomStyle": "solid", "borderLeftStyle": "solid", "borderColor": "#666666", "borderTopColor": "#666666", "borderRightColor": "#666666", "borderBottomColor": "#666666", "borderLeftColor": "#666666", "backgroundType": "none", "backgroundColor": "#aaaaaa", "background": "none" }, "type": "plain" }, "included": [] }, { "classType": "layer", "jsonData": { "attrs": { "title": "input text", "name": "inputText4", "required": false, "key": 1450347127350 }, "children": { "tag": "input", "attrs": { "value": "输入文字", "type": "text", "style": { "fontFamily": "\"宋体\"", "fontSize": "12px", "color": "#000000" } } }, "style": { "fontFamily": "宋体", "fontSize": 12, "color": "#000000", "left": 220, "top": 100, "width": 110, "height": 30, "padding": 2, "paddingTop": 2, "paddingBottom": 2, "paddingRight": 2, "paddingLeft": 2, "borderWidth": 1, "borderTopWidth": 1, "borderRightWidth": 1, "borderBottomWidth": 1, "borderLeftWidth": 1, "borderStyle": "solid", "borderTopStyle": "solid", "borderRightStyle": "solid", "borderBottomStyle": "solid", "borderLeftStyle": "solid", "borderColor": "#666666", "borderTopColor": "#666666", "borderRightColor": "#666666", "borderBottomColor": "#666666", "borderLeftColor": "#666666", "backgroundType": "none", "backgroundColor": "#aaaaaa", "background": "none" }, "type": "inputText" }, "included": [] }, { "classType": "layer", "jsonData": { "attrs": { "title": "input text", "name": "inputText3", "required": false, "key": 1450347127915 }, "children": { "tag": "input", "attrs": { "value": "输入文字", "type": "text", "style": { "fontFamily": "\"宋体\"", "fontSize": "12px", "color": "#000000" } } }, "style": { "fontFamily": "宋体", "fontSize": 12, "color": "#000000", "left": 215, "top": 45, "width": 75, "height": 30, "padding": 2, "paddingTop": 2, "paddingBottom": 2, "paddingRight": 2, "paddingLeft": 2, "borderWidth": 1, "borderTopWidth": 1, "borderRightWidth": 1, "borderBottomWidth": 1, "borderLeftWidth": 1, "borderStyle": "solid", "borderTopStyle": "solid", "borderRightStyle": "solid", "borderBottomStyle": "solid", "borderLeftStyle": "solid", "borderColor": "#666666", "borderTopColor": "#666666", "borderRightColor": "#666666", "borderBottomColor": "#666666", "borderLeftColor": "#666666", "backgroundType": "none", "backgroundColor": "#aaaaaa", "background": "none" }, "type": "inputText" }, "included": [] }, { "classType": "canvas", "jsonData": { "attrs": { "title": "", "name": "stage5", "required": false, "key": 1450347137574 }, "children": {}, "style": { "fontFamily": "宋体", "fontSize": 12, "color": "#000000", "left": 405, "top": 65, "width": 175, "height": 75, "padding": 0, "paddingTop": 0, "paddingBottom": 0, "paddingRight": 0, "paddingLeft": 0, "borderWidth": 0, "borderTopWidth": 0, "borderRightWidth": 0, "borderBottomWidth": 0, "borderLeftWidth": 0, "borderStyle": "solid", "borderTopStyle": "solid", "borderRightStyle": "solid", "borderBottomStyle": "solid", "borderLeftStyle": "solid", "borderColor": "#666666", "borderTopColor": "#666666", "borderRightColor": "#666666", "borderBottomColor": "#666666", "borderLeftColor": "#666666", "backgroundType": "none", "backgroundColor": "#aaaaaa", "background": "none" }, "type": "stage" }, "included": [{ "classType": "layer", "jsonData": { "attrs": { "title": "plain text", "name": "plain1", "required": false, "key": 1450347131550 }, "children": { "tag": "span", "html": false, "children": "文字", "attrs": { "style": { "fontFamily": "\"宋体\"", "fontSize": "12px", "color": "#000000" } } }, "style": { "fontFamily": "宋体", "fontSize": 12, "color": "#000000", "left": 15, "top": 10, "width": 30, "height": 15, "padding": 0, "paddingTop": 0, "paddingBottom": 0, "paddingRight": 0, "paddingLeft": 0, "borderWidth": 0, "borderTopWidth": 0, "borderRightWidth": 0, "borderBottomWidth": 0, "borderLeftWidth": 0, "borderStyle": "solid", "borderTopStyle": "solid", "borderRightStyle": "solid", "borderBottomStyle": "solid", "borderLeftStyle": "solid", "borderColor": "#666666", "borderTopColor": "#666666", "borderRightColor": "#666666", "borderBottomColor": "#666666", "borderLeftColor": "#666666", "backgroundType": "none", "backgroundColor": "#aaaaaa", "background": "none" }, "type": "plain" }, "included": [] }, { "classType": "layer", "jsonData": { "attrs": { "title": "", "name": "checkbox2", "required": false, "key": 1450347135545 }, "children": { "tag": "span", "attrs": { "type": "checkbox", "value": "下拉", "style": { "fontFamily": "\"宋体\"", "fontSize": "12px", "color": "#000000" } }, "children": ["下拉", "下拉2", "下拉3"] }, "style": { "fontFamily": "宋体", "fontSize": 12, "color": "#000000", "left": 95, "top": 15, "width": 40, "height": 15, "padding": 0, "paddingTop": 0, "paddingBottom": 0, "paddingRight": 0, "paddingLeft": 0, "borderWidth": 0, "borderTopWidth": 0, "borderRightWidth": 0, "borderBottomWidth": 0, "borderLeftWidth": 0, "borderStyle": "solid", "borderTopStyle": "solid", "borderRightStyle": "solid", "borderBottomStyle": "solid", "borderLeftStyle": "solid", "borderColor": "#666666", "borderTopColor": "#666666", "borderRightColor": "#666666", "borderBottomColor": "#666666", "borderLeftColor": "#666666", "backgroundType": "none", "backgroundColor": "#aaaaaa", "background": "none" }, "type": "checkbox" }, "included": [] }] }] };
+
+	function buildStageFromData(data) {
+	  var parent = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
+
+	  var widget = data.classType == 'canvas' ? new _WidgetCanvas2.default(parent, data.jsonData) : new _WidgetDiv2.default(parent, data.jsonData, data.jsonData.type);
+	  widget.children = data.included.map(function (v) {
+	    return buildStageFromData(v, widget);
+	  });
+	  return widget;
+	}
+
 	var Canvas = function Canvas() {
 	  _classCallCheck(this, Canvas);
 
@@ -110,10 +122,14 @@
 	   * Main Code below
 	   */
 	  var container = document.querySelector('#container');
+
 	  var Canvas1 = new _WidgetCanvas2.default(null, {
-	    attrs: { title: 'StageName' },
+	    attrs: { title: 'StageName', name: 'Canvas1' },
 	    style: { left: 100, top: 100, width: 800, height: 500, backgroundType: 'color', backgroundColor: '#eeeeee', background: '#eeeeee' }
 	  });
+
+	  Canvas1 = buildStageFromData(editData);
+
 	  _mithril2.default.mount(container, {
 	    view: function view() {
 	      return (0, _mithril2.default)('.mainCanvas', { config: function config(el, isInit, context) {
@@ -2016,7 +2032,7 @@
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var LayerBaseClass = (function () {
-		function LayerBaseClass(parent, prop) {
+		function LayerBaseClass(parent, prop, tool) {
 			_classCallCheck(this, LayerBaseClass);
 
 			this.parent = parent;
@@ -2025,7 +2041,7 @@
 			this.Prop.key = this.ID;
 			this.Prop.className = '';
 			// var curTool = parent&&parent.children.length%2 ? 'select' : 'inputText'
-			DataTemplate.initDataTemplate.call(this, Global.curTool, prop);
+			DataTemplate.initDataTemplate.call(this, tool || Global.curTool, prop);
 
 			// this.Prop = Global._deepCopy( this.Prop, prop||{} );
 
@@ -3606,17 +3622,21 @@
 				}
 
 				var index = 0,
-				    self = this;
+				    template = {};
 				function getJsonData(widget) {
 					index++;
-					var obj = { data: [{ type: widget.constructor == WidgetCanvas ? 'canvas' : 'layer', id: String(index) }] };
-					obj.data[0].attributes = widget.jsonData();
+					var obj = { classType: widget.constructor == WidgetCanvas ? 'canvas' : 'layer' };
+					var jsonData = widget.jsonData();
+					obj.jsonData = jsonData;
+					if (!/stage|plain/i.test(jsonData.type) && jsonData.attrs && jsonData.attrs.name) {
+						template[jsonData.attrs.name] = jsonData.children;
+					}
 					obj.included = (widget.children || []).map(function (v, i) {
 						return getJsonData(v);
 					});
 					return obj;
 				}
-				return getJsonData(self);
+				return { template: template, dom: getJsonData(this) };
 			}
 		}, {
 			key: 'view',
@@ -4092,6 +4112,7 @@
 				this.getRoot().editingContainer = this;
 				this.setupContainerMode();
 				editing.setupContainerMode();
+				Global.curTool = 'plain';
 			}
 		}, {
 			key: 'setupContainerMode',
