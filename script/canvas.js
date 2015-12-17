@@ -11,11 +11,14 @@ constructor(){
  * Main Code below
  */
   var container = document.querySelector('#container');
-  var Canvas1 = new WidgetCanvas(null, { style:{left:100, top:100, width:800, height:500, backgroundColor:'#eeeeee'} } );
+  var Canvas1 = new WidgetCanvas(null, {
+      attrs:{title:'StageName'},
+      style:{left:100, top:100, width:800, height:500, backgroundType:'color', backgroundColor:'#eeeeee', background:'#eeeeee'} 
+    } );
   m.mount(container,
   {
     view: function(){
-      return m('.mainCanvas', {}, [
+      return m('.mainCanvas', { config:function(el, isInit, context){ context.retain=true } }, [
         m('h2', Canvas1.Prop.title),
         Canvas1.getView()
       ])

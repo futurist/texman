@@ -251,7 +251,7 @@ export default class ContainerBaseClass extends LayerBaseClass {
 				}
 
 				if(index==undefined){
-					widget = !evt.shiftKey? new WidgetDiv( self ) : new WidgetCanvas( self );
+					widget = Global.curTool=='stage'? new WidgetCanvas( self ) : new WidgetDiv( self );
 					// Global._extend( widget.Prop.style, { backgroundColor:Global.RandomColor() } )
 					PropLayer = widget.Prop
 					PropLayer.style.left = offsetX-(Global.BORDER_BOX? 0 : PropLayer.style.borderLeftWidth||0)
@@ -385,6 +385,17 @@ export default class ContainerBaseClass extends LayerBaseClass {
 
 	}
 
+	enterContainerMode() {
+		// we are already in container mode, don't enter again
+		// console.log('after', this.Prop.key, this.getRoot().editingContainer.Prop.key )
+		if( this.isContainerMode() ) return;
+		var editing = this.getRoot().editingContainer;
+		editing.onExitEditing();
+		this.Prop.className = Global.addClass( this.Prop.className, Global.EDITING_CLASSNAME);
+		this.getRoot().editingContainer = this;
+		this.setupContainerMode()
+		editing.setupContainerMode()
+	}
 
 	setupContainerMode (){
 		var self=this;
@@ -396,17 +407,7 @@ export default class ContainerBaseClass extends LayerBaseClass {
 		 * enter Container Mode
 		 */
 		if( !self.isContainerMode() ){
-			self.Prop['ondblclick'] = function enterContainerMode(evt) {
-				// we are already in container mode, don't enter again
-				console.log('after', self.Prop.key, self.getRoot().editingContainer.Prop.key )
-				if( self.isContainerMode() ) return;
-				var editing = self.getRoot().editingContainer;
-				editing.onExitEditing();
-				self.Prop.className = Global.addClass( self.Prop.className, Global.EDITING_CLASSNAME);
-				self.getRoot().editingContainer = self;
-				self.setupContainerMode()
-				editing.setupContainerMode()
-			}
+			self.Prop['ondblclick'] = function(){ self.enterContainerMode() }
 		} else {
 			self.Prop['ondblclick'] = null;
 		}

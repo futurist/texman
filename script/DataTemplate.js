@@ -2,9 +2,8 @@ import * as Global from './global'
 import m from 'mithril'
 import JsonEditor from './JsonEditor'
 
-export var StageProp = { type:'stage', attrs: {title:'Stage Name', name:''} }
-
 export var jsonType = {
+  stage:{ type:'stage', attrs: {title:'', name:''} },
   plain:{type:'plain', attrs: {title:'plain text'}, children:{tag:'span', html:false, children:"文字"}, style:{} },
   inputText:{type:'inputText', attrs: {title:'input text'}, children:{ tag:'input', attrs:{ value:'输入文字', type:'text' } },
             style:{
@@ -653,9 +652,9 @@ export function renderJsonEditor(){
  * @param  {String} curTool toolset of jsonType, like 'plain', 'inputText' etc.
  * Usage: initDataTemplate.call(this, 'plain')
  */
-export function initDataTemplate(curTool='') {
-    var newJsonData = Global._deepCopy( {}, jsonData, curTool=='stage'? StageProp: jsonType[curTool] )
-    var newJsonSchema = Global._deepCopy( {}, jsonSchema, jsonTypeSchema[curTool] )
+export function initDataTemplate(curTool='', prop={}, schema={}) {
+    var newJsonData = Global._deepCopy( {}, jsonData, jsonType[curTool], prop )
+    var newJsonSchema = Global._deepCopy( {}, jsonSchema, jsonTypeSchema[curTool], schema )
     this.Prop = Global._deepCopy( this.Prop, newJsonData.attrs )
     this.Prop.style = Global._excludeJsonStyle( Global._deepCopy( {},  newJsonData.style ) )
     this.jsonSchema = m.prop(newJsonSchema)

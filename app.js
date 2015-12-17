@@ -110,10 +110,15 @@
 	   * Main Code below
 	   */
 	  var container = document.querySelector('#container');
-	  var Canvas1 = new _WidgetCanvas2.default(null, { style: { left: 100, top: 100, width: 800, height: 500, backgroundColor: '#eeeeee' } });
+	  var Canvas1 = new _WidgetCanvas2.default(null, {
+	    attrs: { title: 'StageName' },
+	    style: { left: 100, top: 100, width: 800, height: 500, backgroundType: 'color', backgroundColor: '#eeeeee', background: '#eeeeee' }
+	  });
 	  _mithril2.default.mount(container, {
 	    view: function view() {
-	      return (0, _mithril2.default)('.mainCanvas', {}, [(0, _mithril2.default)('h2', Canvas1.Prop.title), Canvas1.getView()]);
+	      return (0, _mithril2.default)('.mainCanvas', { config: function config(el, isInit, context) {
+	          context.retain = true;
+	        } }, [(0, _mithril2.default)('h2', Canvas1.Prop.title), Canvas1.getView()]);
 	    }
 	  });
 
@@ -2020,16 +2025,16 @@
 			this.Prop.key = this.ID;
 			this.Prop.className = '';
 			// var curTool = parent&&parent.children.length%2 ? 'select' : 'inputText'
-			DataTemplate.initDataTemplate.call(this, Global.curTool);
+			DataTemplate.initDataTemplate.call(this, Global.curTool, prop);
 
-			this.Prop = Global._deepCopy(this.Prop, prop || {});
+			// this.Prop = Global._deepCopy( this.Prop, prop||{} );
 
 			this.Prop.config = function (el, isInit, context) {
 				/**
 	    * below will trigger a BUG that background color cannot removed!!!!
 	   **/
 				// Global.applyStyle(el, this.Prop.style);
-				// context.retain=false;
+				context.retain = true;
 			};
 			this.Prop.onkeypress = function (e) {
 				console.log(e, this);
@@ -2386,7 +2391,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.jsonSchema = exports.jsonData = exports.jsonTypeSchema = exports.jsonType = exports.StageProp = undefined;
+	exports.jsonSchema = exports.jsonData = exports.jsonTypeSchema = exports.jsonType = undefined;
 	exports.renderJsonEditor = renderJsonEditor;
 	exports.initDataTemplate = initDataTemplate;
 
@@ -2406,9 +2411,8 @@
 
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-	var StageProp = exports.StageProp = { type: 'stage', attrs: { title: 'Stage Name', name: '' } };
-
 	var jsonType = exports.jsonType = {
+	  stage: { type: 'stage', attrs: { title: '', name: '' } },
 	  plain: { type: 'plain', attrs: { title: 'plain text' }, children: { tag: 'span', html: false, children: "文字" }, style: {} },
 	  inputText: { type: 'inputText', attrs: { title: 'input text' }, children: { tag: 'input', attrs: { value: '输入文字', type: 'text' } },
 	    style: {
@@ -2990,9 +2994,11 @@
 	 */
 	function initDataTemplate() {
 	  var curTool = arguments.length <= 0 || arguments[0] === undefined ? '' : arguments[0];
+	  var prop = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+	  var schema = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
-	  var newJsonData = Global._deepCopy({}, jsonData, curTool == 'stage' ? StageProp : jsonType[curTool]);
-	  var newJsonSchema = Global._deepCopy({}, jsonSchema, jsonTypeSchema[curTool]);
+	  var newJsonData = Global._deepCopy({}, jsonData, jsonType[curTool], prop);
+	  var newJsonSchema = Global._deepCopy({}, jsonSchema, jsonTypeSchema[curTool], schema);
 	  this.Prop = Global._deepCopy(this.Prop, newJsonData.attrs);
 	  this.Prop.style = Global._excludeJsonStyle(Global._deepCopy({}, newJsonData.style));
 	  this.jsonSchema = _mithril2.default.prop(newJsonSchema);
@@ -3590,24 +3596,41 @@
 			key: 'controller',
 			value: function controller() {}
 		}, {
+			key: 'getDomTree',
+			value: function getDomTree() {
+				function interDom(v) {
+					for (var i in v.attrs) {
+						if (/^on|^config$|^key$|^data-key$/.test(i)) delete v.attrs[i];
+					};
+					v.children && v.children.forEach(interDom);
+				}
+
+				var index = 0,
+				    self = this;
+				function getJsonData(widget) {
+					index++;
+					var obj = { data: [{ type: widget.constructor == WidgetCanvas ? 'canvas' : 'layer', id: String(index) }] };
+					obj.data[0].attributes = widget.jsonData();
+					obj.included = (widget.children || []).map(function (v, i) {
+						return getJsonData(v);
+					});
+					return obj;
+				}
+				return getJsonData(self);
+			}
+		}, {
 			key: 'view',
 			value: function view(ctrl) {
 				var self = this;
-				var Prop = Global.applyProp(this.Prop);
+				var Prop = Global.applyProp(self.Prop);
 				var dom = (0, _mithril2.default)('.canvas', Global._extend({}, Prop, { key: self.key(), 'data-key': self.key() }), [(0, _mithril2.default)('.content', { config: function config(el, isInit, context) {
 						context.retain = true;
 					} }, [(function () {
 					return self.children.map(function (v) {
 						return v.getView();
 					});
-				})()]), this.buildControlPoint()]);
-
-				return this.isValidRect() ? dom : [];
-			}
-		}, {
-			key: 'getView',
-			value: function getView() {
-				return this.view(new this.controller());
+				})()]), self.buildControlPoint()]);
+				return self.isValidRect() ? dom : [];
 			}
 		}]);
 
@@ -3930,7 +3953,7 @@
 					}
 
 					if (index == undefined) {
-						widget = !evt.shiftKey ? new _WidgetDiv2.default(self) : new _WidgetCanvas2.default(self);
+						widget = Global.curTool == 'stage' ? new _WidgetCanvas2.default(self) : new _WidgetDiv2.default(self);
 						// Global._extend( widget.Prop.style, { backgroundColor:Global.RandomColor() } )
 						PropLayer = widget.Prop;
 						PropLayer.style.left = offsetX - (Global.BORDER_BOX ? 0 : PropLayer.style.borderLeftWidth || 0);
@@ -4058,6 +4081,19 @@
 				if (self.isContainerMode()) self.Prop.className = Global.addClass(self.Prop.className, Global.EDITING_CLASSNAME);
 			}
 		}, {
+			key: 'enterContainerMode',
+			value: function enterContainerMode() {
+				// we are already in container mode, don't enter again
+				// console.log('after', this.Prop.key, this.getRoot().editingContainer.Prop.key )
+				if (this.isContainerMode()) return;
+				var editing = this.getRoot().editingContainer;
+				editing.onExitEditing();
+				this.Prop.className = Global.addClass(this.Prop.className, Global.EDITING_CLASSNAME);
+				this.getRoot().editingContainer = this;
+				this.setupContainerMode();
+				editing.setupContainerMode();
+			}
+		}, {
 			key: 'setupContainerMode',
 			value: function setupContainerMode() {
 				var self = this;
@@ -4069,16 +4105,8 @@
 	    * enter Container Mode
 	    */
 				if (!self.isContainerMode()) {
-					self.Prop['ondblclick'] = function enterContainerMode(evt) {
-						// we are already in container mode, don't enter again
-						console.log('after', self.Prop.key, self.getRoot().editingContainer.Prop.key);
-						if (self.isContainerMode()) return;
-						var editing = self.getRoot().editingContainer;
-						editing.onExitEditing();
-						self.Prop.className = Global.addClass(self.Prop.className, Global.EDITING_CLASSNAME);
-						self.getRoot().editingContainer = self;
-						self.setupContainerMode();
-						editing.setupContainerMode();
+					self.Prop['ondblclick'] = function () {
+						self.enterContainerMode();
 					};
 				} else {
 					self.Prop['ondblclick'] = null;
@@ -4378,7 +4406,9 @@
 							Global.curTool = v;
 						}
 					}, v);
-				})]);
+				}), (0, _mithril2.default)('.save', [(0, _mithril2.default)('input[type=button][value="保存"]', { onclick: function onclick() {
+						alert(1234);
+					} })])]);
 			} });
 	};
 

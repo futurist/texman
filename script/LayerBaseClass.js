@@ -12,16 +12,16 @@ export default class LayerBaseClass {
     this.Prop.key = this.ID
     this.Prop.className = ''
     // var curTool = parent&&parent.children.length%2 ? 'select' : 'inputText'
-    DataTemplate.initDataTemplate.call(this, Global.curTool)
+    DataTemplate.initDataTemplate.call(this, Global.curTool, prop)
 
-		this.Prop = Global._deepCopy( this.Prop, prop||{} );
+		// this.Prop = Global._deepCopy( this.Prop, prop||{} );
 
 		this.Prop.config = (el, isInit, context)=> { 
 			/**
 			 * below will trigger a BUG that background color cannot removed!!!!
 			**/
 			// Global.applyStyle(el, this.Prop.style); 
-			// context.retain=false; 
+			context.retain=true; 
 		}
 		this.Prop.onkeypress = function(e){ console.log(e,this)  }
 		this.ControlPoints = []

@@ -13,9 +13,28 @@ export default class WidgetCanvas extends ContainerBaseClass {
 
 	}
 
+	getDomTree(){
+		function interDom(v){  
+			for(var i in v.attrs){ if(/^on|^config$|^key$|^data-key$/.test(i))delete v.attrs[i] }; 
+			v.children && v.children.forEach(interDom)
+		}
+
+		var index=0, self = this;
+		function getJsonData( widget ) {
+			index++;
+			var obj = { data:[ {type: widget.constructor==WidgetCanvas?'canvas':'layer', id: String(index)  } ] }
+			obj.data[0].attributes = widget.jsonData();
+			obj.included = (widget.children||[]).map(function(v, i){
+				return getJsonData(v)
+			})
+			return obj;
+		}
+		return getJsonData(self)
+	}
+
 	view (ctrl) {
 		var self = this;
-		var Prop = Global.applyProp(this.Prop)
+		var Prop = Global.applyProp(self.Prop)
 		var dom = m('.canvas', Global._extend({}, Prop, { key: self.key(), 'data-key': self.key()} ) ,
 			[
 					m('.content', {config: function(el,isInit,context){context.retain=true} }, [
@@ -23,15 +42,9 @@ export default class WidgetCanvas extends ContainerBaseClass {
 				            return self.children.map((v)=>{ return v.getView() })
 						}()
 					]),
-					this.buildControlPoint(),
+					self.buildControlPoint(),
 			]
 		);
-
-		return this.isValidRect() ? dom : []
+		return self.isValidRect() ? dom : []
 	}
-
-	getView(){
-		return this.view( new this.controller() );
-	}
-
 }

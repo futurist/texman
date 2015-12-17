@@ -33,7 +33,10 @@ export default function(){
 								Global.curTool=v
 							}
 						}, v)
-					)
+				),
+				m('.save', [
+					m('input[type=button][value="保存"]', {onclick:function(){ alert(1234) }})
+				])
 			] )
 	} }
 	)
