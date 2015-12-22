@@ -13,7 +13,6 @@ if (!String.prototype.trim) {
  * Helper functions
  */
 
-
 // html {
 //   box-sizing: border-box;
 // }

@@ -4,6 +4,7 @@ import LayerBaseClass from './LayerBaseClass'
 import WidgetDiv from './WidgetDiv'
 import WidgetCanvas from './WidgetCanvas'
 import EE from './Events'
+import UndoManager from './UndoManager'
 
 export default class ContainerBaseClass extends LayerBaseClass {
 	constructor(parent, prop) {
@@ -142,6 +143,10 @@ export default class ContainerBaseClass extends LayerBaseClass {
 	}
 
 
+	onSelectionChange () {
+
+	}
+
 	onUnSelected () {
 		this.selectedWidget.forEach((v)=>{
 			v.onUnSelected()
@@ -161,20 +166,45 @@ export default class ContainerBaseClass extends LayerBaseClass {
 
 		// this.Prop['on'+Global.moveE] = this.Prop['on'+Global.upE] = null;
 
-		delete this.Prop.eventData
+		var self = this;
+		if( !self.selectedWidget.length ) return;
 
-		if( !this.selectedWidget.length ) return;
+		var changedData = self.Prop.eventData && self.Prop.eventData.changed && Global.clone( self.Prop.eventData.changed );
+		var selectedWidget = [].concat(self.selectedWidget)
+		if(changedData ){
+			UndoManager.add({
+				redo: function() {
+					if(!changedData) return;
+					self.selectedWidget.forEach( v=>v.onUnSelected() )
+					self.selectedWidget = selectedWidget;
+					self.selectedWidget.forEach( v=>v.onSelected() )
+				    self.moveSelectedBy(changedData.left, changedData.top)
+				    self.resizeSelectedBy(changedData.width, changedData.height)
+				},
+				undo: function() {
+					// console.log('changedData', changedData, selectedWidget)
+					if(!changedData) return;
+					self.selectedWidget.forEach( v=>v.onUnSelected() )
+					self.selectedWidget = selectedWidget;
+					self.selectedWidget.forEach( v=>v.onSelected() )
+				    self.moveSelectedBy(-changedData.left, -changedData.top)
+				    self.resizeSelectedBy(-changedData.width, -changedData.height)
+				}
+			})
+		}
 
-		this.selectedWidget.forEach(function(widget) {
+		self.selectedWidget.forEach(function(widget) {
 			if( widget.Prop.isNew && widget.Prop.style.width<Math.max(20,Global.MIN_WIDTH*2) && 
 					widget.Prop.style.height<Math.max(20,Global.MIN_WIDTH*2)  ){
-				widget.remove();
+				return widget.remove();
 			}
 			delete widget.Prop.eventData
 			if( widget.Prop.isNew){
 				delete widget.Prop.isNew
 			}
 		})
+
+		delete this.Prop.eventData
 
 	}
 
@@ -188,7 +218,6 @@ export default class ContainerBaseClass extends LayerBaseClass {
 		 */
 
 			var PropCanvas = self.Prop;
-
 			var checkChildMoveOut = function checkChildMoveOut(evt) {
 				var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
 				var offsetX = e.pageX - self.getPageOffset().left
@@ -373,7 +402,17 @@ export default class ContainerBaseClass extends LayerBaseClass {
 						PropLayer.style.top = PropLayer.eventData.prevY + height
 					}
 
-					widget.onRectChange()
+					var changedData = {
+						left: PropLayer.style.left - PropLayer.eventData.prevX,
+						top: PropLayer.style.top - PropLayer.eventData.prevY,
+						width: PropLayer.style.width - PropLayer.eventData.prevW,
+						height: PropLayer.style.height - PropLayer.eventData.prevH,
+					}
+
+					if( changedData.left||changedData.top||changedData.width||changedData.height ){
+						self.Prop.eventData.changed = changedData
+						widget.onRectChange(changedData)
+					}
 
 				})
 

@@ -1,4 +1,5 @@
 
 import EventEmitter from 'event-keeper'
-
-export default new EventEmitter
+var singleton;
+if(!singleton) singleton = new EventEmitter
+export default singleton;

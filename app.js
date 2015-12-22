@@ -50,7 +50,7 @@
 
 	var _canvas2 = _interopRequireDefault(_canvas);
 
-	var _addEditorDom = __webpack_require__(17);
+	var _addEditorDom = __webpack_require__(19);
 
 	var _addEditorDom2 = _interopRequireDefault(_addEditorDom);
 
@@ -97,19 +97,23 @@
 
 	var _Events2 = _interopRequireDefault(_Events);
 
+	var _UndoManager = __webpack_require__(17);
+
+	var _UndoManager2 = _interopRequireDefault(_UndoManager);
+
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var editData = { "classType": "canvas", "jsonData": { "attrs": { "title": "坏布类别", "name": "Canvas1", "required": false, "key": 1450347155315 }, "children": {}, "style": { "fontFamily": "宋体", "fontSize": 12, "color": "#000000", "left": 100, "top": 100, "width": 800, "height": 500, "padding": 0, "paddingTop": 0, "paddingBottom": 0, "paddingRight": 0, "paddingLeft": 0, "borderWidth": 0, "borderTopWidth": 0, "borderRightWidth": 0, "borderBottomWidth": 0, "borderLeftWidth": 0, "borderStyle": "solid", "borderTopStyle": "solid", "borderRightStyle": "solid", "borderBottomStyle": "solid", "borderLeftStyle": "solid", "borderColor": "#666666", "borderTopColor": "#666666", "borderRightColor": "#666666", "borderBottomColor": "#666666", "borderLeftColor": "#666666", "backgroundType": "color", "backgroundColor": "#eeeeee", "background": "#eeeeee" }, "type": "stage" }, "included": [{ "classType": "layer", "jsonData": { "attrs": { "title": "plain text", "name": "plain1", "required": false, "key": 1450346260684 }, "children": { "tag": "span", "html": false, "children": "文字", "attrs": { "style": { "fontFamily": "\"宋体\"", "fontSize": "12px", "color": "#000000" } } }, "style": { "fontFamily": "宋体", "fontSize": 12, "color": "#000000", "left": 65, "top": 50, "width": 55, "height": 45, "padding": 0, "paddingTop": 0, "paddingBottom": 0, "paddingRight": 0, "paddingLeft": 0, "borderWidth": 0, "borderTopWidth": 0, "borderRightWidth": 0, "borderBottomWidth": 0, "borderLeftWidth": 0, "borderStyle": "solid", "borderTopStyle": "solid", "borderRightStyle": "solid", "borderBottomStyle": "solid", "borderLeftStyle": "solid", "borderColor": "#666666", "borderTopColor": "#666666", "borderRightColor": "#666666", "borderBottomColor": "#666666", "borderLeftColor": "#666666", "backgroundType": "none", "backgroundColor": "#aaaaaa", "background": "none" }, "type": "plain" }, "included": [] }, { "classType": "layer", "jsonData": { "attrs": { "title": "plain text", "name": "plain2", "required": false, "key": 1450346262342 }, "children": { "tag": "span", "html": false, "children": "文字", "attrs": { "style": { "fontFamily": "\"宋体\"", "fontSize": "12px", "color": "#000000" } } }, "style": { "fontFamily": "宋体", "fontSize": 12, "color": "#000000", "left": 140, "top": 65, "width": 30, "height": 35, "padding": 0, "paddingTop": 0, "paddingBottom": 0, "paddingRight": 0, "paddingLeft": 0, "borderWidth": 0, "borderTopWidth": 0, "borderRightWidth": 0, "borderBottomWidth": 0, "borderLeftWidth": 0, "borderStyle": "solid", "borderTopStyle": "solid", "borderRightStyle": "solid", "borderBottomStyle": "solid", "borderLeftStyle": "solid", "borderColor": "#666666", "borderTopColor": "#666666", "borderRightColor": "#666666", "borderBottomColor": "#666666", "borderLeftColor": "#666666", "backgroundType": "none", "backgroundColor": "#aaaaaa", "background": "none" }, "type": "plain" }, "included": [] }, { "classType": "layer", "jsonData": { "attrs": { "title": "input text", "name": "inputText4", "required": false, "key": 1450347127350 }, "children": { "tag": "input", "attrs": { "value": "输入文字", "type": "text", "style": { "fontFamily": "\"宋体\"", "fontSize": "12px", "color": "#000000" } } }, "style": { "fontFamily": "宋体", "fontSize": 12, "color": "#000000", "left": 220, "top": 100, "width": 110, "height": 30, "padding": 2, "paddingTop": 2, "paddingBottom": 2, "paddingRight": 2, "paddingLeft": 2, "borderWidth": 1, "borderTopWidth": 1, "borderRightWidth": 1, "borderBottomWidth": 1, "borderLeftWidth": 1, "borderStyle": "solid", "borderTopStyle": "solid", "borderRightStyle": "solid", "borderBottomStyle": "solid", "borderLeftStyle": "solid", "borderColor": "#666666", "borderTopColor": "#666666", "borderRightColor": "#666666", "borderBottomColor": "#666666", "borderLeftColor": "#666666", "backgroundType": "none", "backgroundColor": "#aaaaaa", "background": "none" }, "type": "inputText" }, "included": [] }, { "classType": "layer", "jsonData": { "attrs": { "title": "input text", "name": "inputText3", "required": false, "key": 1450347127915 }, "children": { "tag": "input", "attrs": { "value": "输入文字", "type": "text", "style": { "fontFamily": "\"宋体\"", "fontSize": "12px", "color": "#000000" } } }, "style": { "fontFamily": "宋体", "fontSize": 12, "color": "#000000", "left": 215, "top": 45, "width": 75, "height": 30, "padding": 2, "paddingTop": 2, "paddingBottom": 2, "paddingRight": 2, "paddingLeft": 2, "borderWidth": 1, "borderTopWidth": 1, "borderRightWidth": 1, "borderBottomWidth": 1, "borderLeftWidth": 1, "borderStyle": "solid", "borderTopStyle": "solid", "borderRightStyle": "solid", "borderBottomStyle": "solid", "borderLeftStyle": "solid", "borderColor": "#666666", "borderTopColor": "#666666", "borderRightColor": "#666666", "borderBottomColor": "#666666", "borderLeftColor": "#666666", "backgroundType": "none", "backgroundColor": "#aaaaaa", "background": "none" }, "type": "inputText" }, "included": [] }, { "classType": "canvas", "jsonData": { "attrs": { "title": "", "name": "stage5", "required": false, "key": 1450347137574 }, "children": {}, "style": { "fontFamily": "宋体", "fontSize": 12, "color": "#000000", "left": 405, "top": 65, "width": 175, "height": 75, "padding": 0, "paddingTop": 0, "paddingBottom": 0, "paddingRight": 0, "paddingLeft": 0, "borderWidth": 0, "borderTopWidth": 0, "borderRightWidth": 0, "borderBottomWidth": 0, "borderLeftWidth": 0, "borderStyle": "solid", "borderTopStyle": "solid", "borderRightStyle": "solid", "borderBottomStyle": "solid", "borderLeftStyle": "solid", "borderColor": "#666666", "borderTopColor": "#666666", "borderRightColor": "#666666", "borderBottomColor": "#666666", "borderLeftColor": "#666666", "backgroundType": "none", "backgroundColor": "#aaaaaa", "background": "none" }, "type": "stage" }, "included": [{ "classType": "layer", "jsonData": { "attrs": { "title": "plain text", "name": "plain1", "required": false, "key": 1450347131550 }, "children": { "tag": "span", "html": false, "children": "文字", "attrs": { "style": { "fontFamily": "\"宋体\"", "fontSize": "12px", "color": "#000000" } } }, "style": { "fontFamily": "宋体", "fontSize": 12, "color": "#000000", "left": 15, "top": 10, "width": 30, "height": 15, "padding": 0, "paddingTop": 0, "paddingBottom": 0, "paddingRight": 0, "paddingLeft": 0, "borderWidth": 0, "borderTopWidth": 0, "borderRightWidth": 0, "borderBottomWidth": 0, "borderLeftWidth": 0, "borderStyle": "solid", "borderTopStyle": "solid", "borderRightStyle": "solid", "borderBottomStyle": "solid", "borderLeftStyle": "solid", "borderColor": "#666666", "borderTopColor": "#666666", "borderRightColor": "#666666", "borderBottomColor": "#666666", "borderLeftColor": "#666666", "backgroundType": "none", "backgroundColor": "#aaaaaa", "background": "none" }, "type": "plain" }, "included": [] }, { "classType": "layer", "jsonData": { "attrs": { "title": "", "name": "checkbox2", "required": false, "key": 1450347135545 }, "children": { "tag": "span", "attrs": { "type": "checkbox", "value": "下拉", "style": { "fontFamily": "\"宋体\"", "fontSize": "12px", "color": "#000000" } }, "children": ["下拉", "下拉2", "下拉3"] }, "style": { "fontFamily": "宋体", "fontSize": 12, "color": "#000000", "left": 95, "top": 15, "width": 40, "height": 15, "padding": 0, "paddingTop": 0, "paddingBottom": 0, "paddingRight": 0, "paddingLeft": 0, "borderWidth": 0, "borderTopWidth": 0, "borderRightWidth": 0, "borderBottomWidth": 0, "borderLeftWidth": 0, "borderStyle": "solid", "borderTopStyle": "solid", "borderRightStyle": "solid", "borderBottomStyle": "solid", "borderLeftStyle": "solid", "borderColor": "#666666", "borderTopColor": "#666666", "borderRightColor": "#666666", "borderBottomColor": "#666666", "borderLeftColor": "#666666", "backgroundType": "none", "backgroundColor": "#aaaaaa", "background": "none" }, "type": "checkbox" }, "included": [] }] }] };
+	var savedData = { "classType": "canvas", "jsonData": { "attrs": { "title": "StageName", "name": "Canvas1", "required": false }, "children": {}, "style": { "fontFamily": "宋体", "fontSize": 12, "color": "#000000", "left": 100, "top": 100, "width": 800, "height": 500, "padding": 0, "paddingTop": 0, "paddingBottom": 0, "paddingRight": 0, "paddingLeft": 0, "borderWidth": 0, "borderTopWidth": 0, "borderRightWidth": 0, "borderBottomWidth": 0, "borderLeftWidth": 0, "borderStyle": "solid", "borderTopStyle": "solid", "borderRightStyle": "solid", "borderBottomStyle": "solid", "borderLeftStyle": "solid", "borderColor": "#666666", "borderTopColor": "#666666", "borderRightColor": "#666666", "borderBottomColor": "#666666", "borderLeftColor": "#666666", "backgroundType": "color", "backgroundColor": "#eeeeee", "background": "#eeeeee" }, "type": "stage" }, "childWidget": [{ "classType": "layer", "jsonData": { "attrs": { "title": "plain text", "name": "plain1", "required": false, "key": 1450354885576 }, "children": { "tag": "span", "html": false, "children": "文字", "attrs": { "style": { "fontFamily": "\"宋体\"", "fontSize": "12px", "color": "#000000" } } }, "style": { "fontFamily": "宋体", "fontSize": 12, "color": "#000000", "left": 85, "top": 60, "width": 100, "height": 35, "padding": 0, "paddingTop": 0, "paddingBottom": 0, "paddingRight": 0, "paddingLeft": 0, "borderWidth": 0, "borderTopWidth": 0, "borderRightWidth": 0, "borderBottomWidth": 0, "borderLeftWidth": 0, "borderStyle": "solid", "borderTopStyle": "solid", "borderRightStyle": "solid", "borderBottomStyle": "solid", "borderLeftStyle": "solid", "borderColor": "#666666", "borderTopColor": "#666666", "borderRightColor": "#666666", "borderBottomColor": "#666666", "borderLeftColor": "#666666", "backgroundType": "none", "backgroundColor": "#aaaaaa", "background": "none" }, "type": "plain" }, "childWidget": [] }, { "classType": "layer", "jsonData": { "attrs": { "title": "input text", "name": "inputText2", "required": false, "key": 1450354886389 }, "children": { "tag": "input", "attrs": { "value": "输入文字", "type": "text", "style": { "fontFamily": "\"宋体\"", "fontSize": "12px", "color": "#000000" } } }, "style": { "fontFamily": "宋体", "fontSize": 12, "color": "#000000", "left": 200, "top": 55, "width": 60, "height": 25, "padding": 2, "paddingTop": 2, "paddingBottom": 2, "paddingRight": 2, "paddingLeft": 2, "borderWidth": 1, "borderTopWidth": 1, "borderRightWidth": 1, "borderBottomWidth": 1, "borderLeftWidth": 1, "borderStyle": "solid", "borderTopStyle": "solid", "borderRightStyle": "solid", "borderBottomStyle": "solid", "borderLeftStyle": "solid", "borderColor": "#666666", "borderTopColor": "#666666", "borderRightColor": "#666666", "borderBottomColor": "#666666", "borderLeftColor": "#666666", "backgroundType": "none", "backgroundColor": "#aaaaaa", "background": "none" }, "type": "inputText" }, "childWidget": [] }, { "classType": "layer", "jsonData": { "attrs": { "title": "input text", "name": "inputText3", "required": false, "key": 1450354890663 }, "children": { "tag": "input", "attrs": { "value": "输入文字", "type": "text", "style": { "fontFamily": "\"宋体\"", "fontSize": "12px", "color": "#000000" } } }, "style": { "fontFamily": "宋体", "fontSize": 12, "color": "#000000", "left": 200, "top": 90, "width": 80, "height": 15, "padding": 2, "paddingTop": 2, "paddingBottom": 2, "paddingRight": 2, "paddingLeft": 2, "borderWidth": 1, "borderTopWidth": 1, "borderRightWidth": 1, "borderBottomWidth": 1, "borderLeftWidth": 1, "borderStyle": "solid", "borderTopStyle": "solid", "borderRightStyle": "solid", "borderBottomStyle": "solid", "borderLeftStyle": "solid", "borderColor": "#666666", "borderTopColor": "#666666", "borderRightColor": "#666666", "borderBottomColor": "#666666", "borderLeftColor": "#666666", "backgroundType": "none", "backgroundColor": "#aaaaaa", "background": "none" }, "type": "inputText" }, "childWidget": [] }, { "classType": "layer", "jsonData": { "attrs": { "title": "input text", "name": "inputText4", "required": false, "key": 1450354892100 }, "children": { "tag": "input", "attrs": { "value": "输入文字", "type": "text", "style": { "fontFamily": "\"宋体\"", "fontSize": "12px", "color": "#000000" } } }, "style": { "fontFamily": "宋体", "fontSize": 12, "color": "#000000", "left": 200, "top": 110, "width": 75, "height": 30, "padding": 2, "paddingTop": 2, "paddingBottom": 2, "paddingRight": 2, "paddingLeft": 2, "borderWidth": 1, "borderTopWidth": 1, "borderRightWidth": 1, "borderBottomWidth": 1, "borderLeftWidth": 1, "borderStyle": "solid", "borderTopStyle": "solid", "borderRightStyle": "solid", "borderBottomStyle": "solid", "borderLeftStyle": "solid", "borderColor": "#666666", "borderTopColor": "#666666", "borderRightColor": "#666666", "borderBottomColor": "#666666", "borderLeftColor": "#666666", "backgroundType": "none", "backgroundColor": "#aaaaaa", "background": "none" }, "type": "inputText" }, "childWidget": [] }, { "classType": "layer", "jsonData": { "attrs": { "title": "", "name": "checkbox5", "required": false, "key": 1450354898285 }, "children": { "tag": "span", "attrs": { "type": "checkbox", "value": "下拉", "style": { "fontFamily": "\"宋体\"", "fontSize": "12px", "color": "#000000" } }, "children": ["下拉", "下拉2", "下拉3"] }, "style": { "fontFamily": "宋体", "fontSize": 12, "color": "#000000", "left": 130, "top": 165, "width": 90, "height": 75, "padding": 0, "paddingTop": 0, "paddingBottom": 0, "paddingRight": 0, "paddingLeft": 0, "borderWidth": 0, "borderTopWidth": 0, "borderRightWidth": 0, "borderBottomWidth": 0, "borderLeftWidth": 0, "borderStyle": "solid", "borderTopStyle": "solid", "borderRightStyle": "solid", "borderBottomStyle": "solid", "borderLeftStyle": "solid", "borderColor": "#666666", "borderTopColor": "#666666", "borderRightColor": "#666666", "borderBottomColor": "#666666", "borderLeftColor": "#666666", "backgroundType": "none", "backgroundColor": "#aaaaaa", "background": "none" }, "type": "checkbox" }, "childWidget": [] }, { "classType": "layer", "jsonData": { "attrs": { "title": "", "name": "select6", "required": false, "key": 1450354903875 }, "children": { "tag": "select", "attrs": { "placeholder": "select client...", "value": "", "required": true, "multiple": false, "style": { "fontFamily": "\"宋体\"", "fontSize": "12px", "color": "#000000" } }, "children": [] }, "style": { "fontFamily": "宋体", "fontSize": 12, "color": "#000000", "left": 320, "top": 55, "width": 120, "height": 35, "padding": 2, "paddingTop": 2, "paddingBottom": 2, "paddingRight": 2, "paddingLeft": 2, "borderWidth": 1, "borderTopWidth": 1, "borderRightWidth": 1, "borderBottomWidth": 1, "borderLeftWidth": 1, "borderStyle": "solid", "borderTopStyle": "solid", "borderRightStyle": "solid", "borderBottomStyle": "solid", "borderLeftStyle": "solid", "borderColor": "#666666", "borderTopColor": "#666666", "borderRightColor": "#666666", "borderBottomColor": "#666666", "borderLeftColor": "#666666", "backgroundType": "none", "backgroundColor": "#aaaaaa", "background": "none" }, "type": "select" }, "childWidget": [] }, { "classType": "canvas", "jsonData": { "attrs": { "title": "", "name": "stage7", "required": false, "key": 1450354905207 }, "children": {}, "style": { "fontFamily": "宋体", "fontSize": 12, "color": "#000000", "left": 340, "top": 140, "width": 160, "height": 130, "padding": 0, "paddingTop": 0, "paddingBottom": 0, "paddingRight": 0, "paddingLeft": 0, "borderWidth": 0, "borderTopWidth": 0, "borderRightWidth": 0, "borderBottomWidth": 0, "borderLeftWidth": 0, "borderStyle": "solid", "borderTopStyle": "solid", "borderRightStyle": "solid", "borderBottomStyle": "solid", "borderLeftStyle": "solid", "borderColor": "#666666", "borderTopColor": "#666666", "borderRightColor": "#666666", "borderBottomColor": "#666666", "borderLeftColor": "#666666", "backgroundType": "none", "backgroundColor": "#aaaaaa", "background": "none" }, "type": "stage" }, "childWidget": [{ "classType": "layer", "jsonData": { "attrs": { "title": "", "name": "radio1", "required": false, "key": 1450354909153 }, "children": { "tag": "span", "attrs": { "type": "radio", "value": "下拉", "style": { "fontFamily": "\"宋体\"", "fontSize": "12px", "color": "#000000" } }, "children": ["下拉", "下拉2", "下拉3"] }, "style": { "fontFamily": "宋体", "fontSize": 12, "color": "#000000", "left": 25, "top": 15, "width": 60, "height": 60, "padding": 0, "paddingTop": 0, "paddingBottom": 0, "paddingRight": 0, "paddingLeft": 0, "borderWidth": 0, "borderTopWidth": 0, "borderRightWidth": 0, "borderBottomWidth": 0, "borderLeftWidth": 0, "borderStyle": "solid", "borderTopStyle": "solid", "borderRightStyle": "solid", "borderBottomStyle": "solid", "borderLeftStyle": "solid", "borderColor": "#666666", "borderTopColor": "#666666", "borderRightColor": "#666666", "borderBottomColor": "#666666", "borderLeftColor": "#666666", "backgroundType": "none", "backgroundColor": "#aaaaaa", "background": "none" }, "type": "radio" }, "childWidget": [] }] }] };
 
 	function buildStageFromData(data) {
 	  var parent = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
 
 	  var widget = data.classType == 'canvas' ? new _WidgetCanvas2.default(parent, data.jsonData) : new _WidgetDiv2.default(parent, data.jsonData, data.jsonData.type);
-	  widget.children = data.included.map(function (v) {
+	  widget.children = data.childWidget.map(function (v) {
 	    return buildStageFromData(v, widget);
 	  });
 	  return widget;
@@ -128,7 +132,7 @@
 	    style: { left: 100, top: 100, width: 800, height: 500, backgroundType: 'color', backgroundColor: '#eeeeee', background: '#eeeeee' }
 	  });
 
-	  Canvas1 = buildStageFromData(editData);
+	  Canvas1 = buildStageFromData(savedData);
 
 	  _mithril2.default.mount(container, {
 	    view: function view() {
@@ -246,6 +250,12 @@
 	      CTRL_KEY_DOWN = 1;
 	      switch (evt.keyCode) {
 
+	        case 90:
+	          //Ctrl+Z
+	          _UndoManager2.default.undo();
+	          handled = true;
+	          break;
+
 	        case 68:
 	          //Ctrl+D
 	          _Events2.default.emit('duplicate', evt);
@@ -321,6 +331,11 @@
 	      CTRL_KEY_DOWN = 1;
 
 	      switch (evt.keyCode) {
+	        case 90:
+	          //Ctrl+Shift+Z
+	          _UndoManager2.default.redo();
+	          handled = true;
+	          break;
 
 	        case 37:
 	          // left
@@ -3631,7 +3646,7 @@
 					if (!/stage|plain/i.test(jsonData.type) && jsonData.attrs && jsonData.attrs.name) {
 						template[jsonData.attrs.name] = jsonData.children;
 					}
-					obj.included = (widget.children || []).map(function (v, i) {
+					obj.childWidget = (widget.children || []).map(function (v, i) {
 						return getJsonData(v);
 					});
 					return obj;
@@ -3696,6 +3711,10 @@
 	var _Events = __webpack_require__(15);
 
 	var _Events2 = _interopRequireDefault(_Events);
+
+	var _UndoManager = __webpack_require__(17);
+
+	var _UndoManager2 = _interopRequireDefault(_UndoManager);
 
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
@@ -3864,6 +3883,9 @@
 				this.selectedWidget = [];
 			}
 		}, {
+			key: 'onSelectionChange',
+			value: function onSelectionChange() {}
+		}, {
 			key: 'onUnSelected',
 			value: function onUnSelected() {
 				this.selectedWidget.forEach(function (v) {
@@ -3886,19 +3908,52 @@
 
 				// this.Prop['on'+Global.moveE] = this.Prop['on'+Global.upE] = null;
 
-				delete this.Prop.eventData;
+				var self = this;
+				if (!self.selectedWidget.length) return;
 
-				if (!this.selectedWidget.length) return;
+				var changedData = self.Prop.eventData && self.Prop.eventData.changed && Global.clone(self.Prop.eventData.changed);
+				var selectedWidget = [].concat(self.selectedWidget);
+				if (changedData) {
+					_UndoManager2.default.add({
+						redo: function redo() {
+							if (!changedData) return;
+							self.selectedWidget.forEach(function (v) {
+								return v.onUnSelected();
+							});
+							self.selectedWidget = selectedWidget;
+							self.selectedWidget.forEach(function (v) {
+								return v.onSelected();
+							});
+							self.moveSelectedBy(changedData.left, changedData.top);
+							self.resizeSelectedBy(changedData.width, changedData.height);
+						},
+						undo: function undo() {
+							// console.log('changedData', changedData, selectedWidget)
+							if (!changedData) return;
+							self.selectedWidget.forEach(function (v) {
+								return v.onUnSelected();
+							});
+							self.selectedWidget = selectedWidget;
+							self.selectedWidget.forEach(function (v) {
+								return v.onSelected();
+							});
+							self.moveSelectedBy(-changedData.left, -changedData.top);
+							self.resizeSelectedBy(-changedData.width, -changedData.height);
+						}
+					});
+				}
 
-				this.selectedWidget.forEach(function (widget) {
+				self.selectedWidget.forEach(function (widget) {
 					if (widget.Prop.isNew && widget.Prop.style.width < Math.max(20, Global.MIN_WIDTH * 2) && widget.Prop.style.height < Math.max(20, Global.MIN_WIDTH * 2)) {
-						widget.remove();
+						return widget.remove();
 					}
 					delete widget.Prop.eventData;
 					if (widget.Prop.isNew) {
 						delete widget.Prop.isNew;
 					}
 				});
+
+				delete this.Prop.eventData;
 			}
 		}, {
 			key: 'setupContainerEvent',
@@ -3912,7 +3967,6 @@
 	    */
 
 				var PropCanvas = self.Prop;
-
 				var checkChildMoveOut = function checkChildMoveOut(evt) {
 					var e = /touch/.test(evt.type) ? evt.touches[0] : evt;
 					var offsetX = e.pageX - self.getPageOffset().left;
@@ -4090,7 +4144,17 @@
 							PropLayer.style.top = PropLayer.eventData.prevY + height;
 						}
 
-						widget.onRectChange();
+						var changedData = {
+							left: PropLayer.style.left - PropLayer.eventData.prevX,
+							top: PropLayer.style.top - PropLayer.eventData.prevY,
+							width: PropLayer.style.width - PropLayer.eventData.prevW,
+							height: PropLayer.style.height - PropLayer.eventData.prevH
+						};
+
+						if (changedData.left || changedData.top || changedData.width || changedData.height) {
+							self.Prop.eventData.changed = changedData;
+							widget.onRectChange(changedData);
+						}
 					});
 				};
 
@@ -4156,7 +4220,9 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	exports.default = new _eventKeeper2.default();
+	var singleton;
+	if (!singleton) singleton = new _eventKeeper2.default();
+	exports.default = singleton;
 
 /***/ },
 /* 16 */
@@ -4393,6 +4459,184 @@
 
 /***/ },
 /* 17 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _undoManager = __webpack_require__(18);
+
+	var _undoManager2 = _interopRequireDefault(_undoManager);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	exports.default = new _undoManager2.default();
+
+/***/ },
+/* 18 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_RESULT__;/*
+	Simple Javascript undo and redo.
+	https://github.com/ArthurClemens/Javascript-Undo-Manager
+	*/
+
+	;(function() {
+
+		'use strict';
+
+	    function removeFromTo(array, from, to) {
+	        array.splice(from,
+	            !to ||
+	            1 + to - from + (!(to < 0 ^ from >= 0) && (to < 0 || -1) * array.length));
+	        return array.length;
+	    }
+
+	    var UndoManager = function() {
+
+	        var commands = [],
+	            index = -1,
+	            limit = 0,
+	            isExecuting = false,
+	            callback,
+	            
+	            // functions
+	            execute;
+
+	        execute = function(command, action) {
+	            if (!command || typeof command[action] !== "function") {
+	                return this;
+	            }
+	            isExecuting = true;
+
+	            command[action]();
+
+	            isExecuting = false;
+	            return this;
+	        };
+
+	        return {
+
+	            /*
+	            Add a command to the queue.
+	            */
+	            add: function (command) {
+	                if (isExecuting) {
+	                    return this;
+	                }
+	                // if we are here after having called undo,
+	                // invalidate items higher on the stack
+	                commands.splice(index + 1, commands.length - index);
+
+	                commands.push(command);
+	                
+	                // if limit is set, remove items from the start
+	                if (limit && commands.length > limit) {
+	                    removeFromTo(commands, 0, -(limit+1));
+	                }
+	                
+	                // set the current index to the end
+	                index = commands.length - 1;
+	                if (callback) {
+	                    callback();
+	                }
+	                return this;
+	            },
+
+	            /*
+	            Pass a function to be called on undo and redo actions.
+	            */
+	            setCallback: function (callbackFunc) {
+	                callback = callbackFunc;
+	            },
+
+	            /*
+	            Perform undo: call the undo function at the current index and decrease the index by 1.
+	            */
+	            undo: function () {
+	                var command = commands[index];
+	                if (!command) {
+	                    return this;
+	                }
+	                execute(command, "undo");
+	                index -= 1;
+	                if (callback) {
+	                    callback();
+	                }
+	                return this;
+	            },
+
+	            /*
+	            Perform redo: call the redo function at the next index and increase the index by 1.
+	            */
+	            redo: function () {
+	                var command = commands[index + 1];
+	                if (!command) {
+	                    return this;
+	                }
+	                execute(command, "redo");
+	                index += 1;
+	                if (callback) {
+	                    callback();
+	                }
+	                return this;
+	            },
+
+	            /*
+	            Clears the memory, losing all stored states. Reset the index.
+	            */
+	            clear: function () {
+	                var prev_size = commands.length;
+
+	                commands = [];
+	                index = -1;
+
+	                if (callback && (prev_size > 0)) {
+	                    callback();
+	                }
+	            },
+
+	            hasUndo: function () {
+	                return index !== -1;
+	            },
+
+	            hasRedo: function () {
+	                return index < (commands.length - 1);
+	            },
+
+	            getCommands: function () {
+	                return commands;
+	            },
+
+	            getIndex: function() {
+	                return index;
+	            },
+	            
+	            setLimit: function (l) {
+	                limit = l;
+	            }
+	        };
+	    };
+
+		if (true) {
+			// AMD. Register as an anonymous module.
+			!(__WEBPACK_AMD_DEFINE_RESULT__ = function() {
+				return UndoManager;
+			}.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+		} else if (typeof module !== 'undefined' && module.exports) {
+			module.exports = UndoManager;
+		} else {
+			window.UndoManager = UndoManager;
+		}
+
+	}());
+
+
+/***/ },
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';

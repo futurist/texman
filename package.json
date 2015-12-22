@@ -15,7 +15,8 @@
     "lodash": "^3.10.1",
     "mustache": "^2.2.0",
     "pinyin": "^2.6.2",
-    "sprint-js": "^0.1.0"
+    "sprint-js": "^0.1.0",
+    "undo-manager": "^1.0.4"
   },
   "devDependencies": {
     "babel-core": "^6.2.1",

@@ -14,8 +14,8 @@ export default class WidgetCanvas extends ContainerBaseClass {
 	}
 
 	getDomTree(){
-		function interDom(v){  
-			for(var i in v.attrs){ if(/^on|^config$|^key$|^data-key$/.test(i))delete v.attrs[i] }; 
+		function interDom(v){
+			for(var i in v.attrs){ if(/^on|^config$|^key$|^data-key$/.test(i))delete v.attrs[i] };
 			v.children && v.children.forEach(interDom)
 		}
 
@@ -28,7 +28,7 @@ export default class WidgetCanvas extends ContainerBaseClass {
 			if( !/stage|plain/i.test(jsonData.type) && jsonData.attrs && jsonData.attrs.name ) {
 				template[jsonData.attrs.name] = jsonData.children;
 			}
-			obj.included = (widget.children||[]).map(function(v, i){
+			obj.childWidget = (widget.children||[]).map(function(v, i){
 				return getJsonData(v)
 			})
 			return obj;
