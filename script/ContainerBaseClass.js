@@ -17,6 +17,7 @@ export default class ContainerBaseClass extends LayerBaseClass {
 		this.setupContainerMode()
 		this.setupContainerEvent()
 		this.setupShortKeyEvent()
+		window.m = m;
 	}
 
 	setupShortKeyEvent (){
@@ -73,7 +74,7 @@ export default class ContainerBaseClass extends LayerBaseClass {
 			this.duplicateChild( child, newChild )
 		})
 	}
-	
+
 	duplicateSelected ( ){
 		var editing = this.getRoot().editingContainer;
 		var newWidget = []
@@ -96,13 +97,29 @@ export default class ContainerBaseClass extends LayerBaseClass {
 
 	removeSelectedItem ( ){
 		var editing = this.getRoot().editingContainer;
-		for(var i=0,v; v=editing.selectedWidget[i]; i++ ){
-			var index = editing.children.indexOf(v);
-			if(index>=0) v.onUnSelected(), editing.children.splice( index , 1 );
-			// if( v.isSelected() ) v.remove();
+		var prevSel = [].concat(editing.selectedWidget)
+
+		var redo = function(){
+			for(var i=0,v; v=editing.selectedWidget[i]; i++ ){
+				var index = editing.children.indexOf(v);
+				if(index>=0) v.onUnSelected(), editing.children.splice( index , 1 );
+				// if( v.isSelected() ) v.remove();
+			}
+			editing.selectedWidget = [];
+			m.redraw()
 		}
-		editing.selectedWidget = [];
-		m.redraw()
+		redo()
+
+		if(prevSel.length)
+		UndoManager.add({
+			redo: redo,
+			undo:function(){
+				console.log(prevSel)
+				editing.selectedWidget = prevSel;
+				editing.selectedWidget.forEach( v=>{v.onSelected();editing.children.push(v)} )
+				m.redraw()
+			}
+		})
 	}
 
 	checkSelectElement ( rect ){
@@ -170,31 +187,37 @@ export default class ContainerBaseClass extends LayerBaseClass {
 		if( !self.selectedWidget.length ) return;
 
 		var changedData = self.Prop.eventData && self.Prop.eventData.changed && Global.clone( self.Prop.eventData.changed );
-		var selectedWidget = [].concat(self.selectedWidget)
+		var selectedWidgetIsNew = self.selectedWidget.map( v=>v.Prop.isNew )
+		var selectedWidget = [].concat( self.selectedWidget )
 		if(changedData ){
 			UndoManager.add({
 				redo: function() {
 					if(!changedData) return;
 					self.selectedWidget.forEach( v=>v.onUnSelected() )
 					self.selectedWidget = selectedWidget;
-					self.selectedWidget.forEach( v=>v.onSelected() )
 				    self.moveSelectedBy(changedData.left, changedData.top)
 				    self.resizeSelectedBy(changedData.width, changedData.height)
+					self.selectedWidget.forEach( v=>{v.onSelected(); v.onRectChange(); } )
+					self.selectedWidget = self.selectedWidget.filter( v=>v.isValidRect() )
 				},
 				undo: function() {
 					// console.log('changedData', changedData, selectedWidget)
 					if(!changedData) return;
 					self.selectedWidget.forEach( v=>v.onUnSelected() )
 					self.selectedWidget = selectedWidget;
-					self.selectedWidget.forEach( v=>v.onSelected() )
 				    self.moveSelectedBy(-changedData.left, -changedData.top)
 				    self.resizeSelectedBy(-changedData.width, -changedData.height)
+					self.selectedWidget.forEach( (v,i)=>{
+						if(selectedWidgetIsNew[i]) ;//v.remove()
+						else v.onSelected(), v.onRectChange();
+					} )
+					self.selectedWidget = self.selectedWidget.filter( v=>v.isValidRect() )
 				}
 			})
 		}
 
 		self.selectedWidget.forEach(function(widget) {
-			if( widget.Prop.isNew && widget.Prop.style.width<Math.max(20,Global.MIN_WIDTH*2) && 
+			if( widget.Prop.isNew && widget.Prop.style.width<Math.max(20,Global.MIN_WIDTH*2) &&
 					widget.Prop.style.height<Math.max(20,Global.MIN_WIDTH*2)  ){
 				return widget.remove();
 			}
@@ -409,7 +432,7 @@ export default class ContainerBaseClass extends LayerBaseClass {
 						height: PropLayer.style.height - PropLayer.eventData.prevH,
 					}
 
-					if( changedData.left||changedData.top||changedData.width||changedData.height ){
+					if( (changedData.left||changedData.top||changedData.width||changedData.height) && widget.isValidRect() ){
 						self.Prop.eventData.changed = changedData
 						widget.onRectChange(changedData)
 					}

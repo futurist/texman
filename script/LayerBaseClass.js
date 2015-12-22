@@ -16,12 +16,12 @@ export default class LayerBaseClass {
 
 		// this.Prop = Global._deepCopy( this.Prop, prop||{} );
 
-		this.Prop.config = (el, isInit, context)=> { 
+		this.Prop.config = (el, isInit, context)=> {
 			/**
 			 * below will trigger a BUG that background color cannot removed!!!!
 			**/
-			// Global.applyStyle(el, this.Prop.style); 
-			context.retain=true; 
+			// Global.applyStyle(el, this.Prop.style);
+			context.retain=true;
 		}
 		this.Prop.onkeypress = function(e){ console.log(e,this)  }
 		this.ControlPoints = []
@@ -109,7 +109,7 @@ export default class LayerBaseClass {
 	}
 
 	onRectChange(){
-		
+
 	}
 	onSelected (){
 		this.Prop.className = Global.addClass( this.Prop.className, Global.SELECTED_CLASSNAME);

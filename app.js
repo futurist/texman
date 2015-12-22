@@ -85,7 +85,7 @@
 
 	var _WidgetDiv2 = _interopRequireDefault(_WidgetDiv);
 
-	var _WidgetCanvas = __webpack_require__(13);
+	var _WidgetCanvas = __webpack_require__(15);
 
 	var _WidgetCanvas2 = _interopRequireDefault(_WidgetCanvas);
 
@@ -93,11 +93,11 @@
 
 	var _JsonEditor2 = _interopRequireDefault(_JsonEditor);
 
-	var _Events = __webpack_require__(15);
+	var _Events = __webpack_require__(17);
 
 	var _Events2 = _interopRequireDefault(_Events);
 
-	var _UndoManager = __webpack_require__(17);
+	var _UndoManager = __webpack_require__(13);
 
 	var _UndoManager2 = _interopRequireDefault(_UndoManager);
 
@@ -2438,6 +2438,10 @@
 
 	var _JsonEditor2 = _interopRequireDefault(_JsonEditor);
 
+	var _UndoManager = __webpack_require__(13);
+
+	var _UndoManager2 = _interopRequireDefault(_UndoManager);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
@@ -2962,6 +2966,17 @@
 	  }
 	};
 
+	/**
+	 * Check for one-one or one-many relation of prop
+	 * @return {[type]} [description]
+	 */
+	function checkPropRelation(data, path, value) {
+	  // if borderStyle is none/'', set width to 0
+	  if (/(border\w+)Style$/i.test(path) && (value == 'none' || !value) || /(border\w+)Width$/i.test(path) && /^$|none/.test(Global.objectPath(data, path.replace(/Width$/, 'Style')))) {
+	    Global.objectPath(data, path.replace(/Style$/, 'Width'), 0);
+	  }
+	}
+
 	function renderJsonEditor() {
 	  var _this = this;
 
@@ -2996,12 +3011,8 @@
 	      } }, function (path, value, getData, data) {
 	      path = path.replace(/^root\./, '');
 	      var _path = path.split('.');
-	      // if borderStyle is none/'', set width to 0
-	      if (/(border\w+)Style$/i.test(path) && (value == 'none' || !value) || /(border\w+)Width$/i.test(path) && /^$|none/.test(Global.objectPath(data, path.replace(/Width$/, 'Style')))) {
-	        Global.objectPath(data, path.replace(/Style$/, 'Width'), 0);
-	      }
 
-	      ;(self.parent ? self.parent.selectedWidget : [self]).forEach(function (v) {
+	      checkPropRelation(data, path, value);(self.parent ? self.parent.selectedWidget : [self]).forEach(function (v) {
 	        // v.jsonData() is like {attrs:{}, style:{}, children:{}}
 	        // v.Prop is like { key:key, className:..., style:{} }
 	        // so we lookup _path[0] for which part of jsonData changed and update
@@ -3116,10 +3127,14 @@
 				return val === undefined ? schemaPathValue(path) || '' : val;
 			} else {
 				var temp = DATA();
-				_dotPathValue(temp, path, value === null ? schemaObjects[path.join('.')].empty || '' : value);
+				var _value = value === null ? schemaObjects[path.join('.')].empty || '' : value;
+				var oldValue = _dotPathValue(temp, path);
+				if (oldValue == _value) return;
+				_dotPathValue(temp, path, _value);
 				DATA(temp);
 				var callback = function callback(p, v) {
-					CALLBACK(p || path.join('.'), v || value, getOriginalKeyVal(temp, orgData), temp, templateFieldValue, inheritFieldValue, schemaObjects);
+					var _path = p || path.join('.');
+					CALLBACK(_path, _value, getOriginalKeyVal(temp, orgData), temp, templateFieldValue, inheritFieldValue, schemaObjects);
 				};
 				// below line will update the key for force update view
 				var shouldCallback = true;
@@ -3582,6 +3597,184 @@
 
 	'use strict';
 
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _undoManager = __webpack_require__(14);
+
+	var _undoManager2 = _interopRequireDefault(_undoManager);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	exports.default = new _undoManager2.default();
+
+/***/ },
+/* 14 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_RESULT__;/*
+	Simple Javascript undo and redo.
+	https://github.com/ArthurClemens/Javascript-Undo-Manager
+	*/
+
+	;(function() {
+
+		'use strict';
+
+	    function removeFromTo(array, from, to) {
+	        array.splice(from,
+	            !to ||
+	            1 + to - from + (!(to < 0 ^ from >= 0) && (to < 0 || -1) * array.length));
+	        return array.length;
+	    }
+
+	    var UndoManager = function() {
+
+	        var commands = [],
+	            index = -1,
+	            limit = 0,
+	            isExecuting = false,
+	            callback,
+	            
+	            // functions
+	            execute;
+
+	        execute = function(command, action) {
+	            if (!command || typeof command[action] !== "function") {
+	                return this;
+	            }
+	            isExecuting = true;
+
+	            command[action]();
+
+	            isExecuting = false;
+	            return this;
+	        };
+
+	        return {
+
+	            /*
+	            Add a command to the queue.
+	            */
+	            add: function (command) {
+	                if (isExecuting) {
+	                    return this;
+	                }
+	                // if we are here after having called undo,
+	                // invalidate items higher on the stack
+	                commands.splice(index + 1, commands.length - index);
+
+	                commands.push(command);
+	                
+	                // if limit is set, remove items from the start
+	                if (limit && commands.length > limit) {
+	                    removeFromTo(commands, 0, -(limit+1));
+	                }
+	                
+	                // set the current index to the end
+	                index = commands.length - 1;
+	                if (callback) {
+	                    callback();
+	                }
+	                return this;
+	            },
+
+	            /*
+	            Pass a function to be called on undo and redo actions.
+	            */
+	            setCallback: function (callbackFunc) {
+	                callback = callbackFunc;
+	            },
+
+	            /*
+	            Perform undo: call the undo function at the current index and decrease the index by 1.
+	            */
+	            undo: function () {
+	                var command = commands[index];
+	                if (!command) {
+	                    return this;
+	                }
+	                execute(command, "undo");
+	                index -= 1;
+	                if (callback) {
+	                    callback();
+	                }
+	                return this;
+	            },
+
+	            /*
+	            Perform redo: call the redo function at the next index and increase the index by 1.
+	            */
+	            redo: function () {
+	                var command = commands[index + 1];
+	                if (!command) {
+	                    return this;
+	                }
+	                execute(command, "redo");
+	                index += 1;
+	                if (callback) {
+	                    callback();
+	                }
+	                return this;
+	            },
+
+	            /*
+	            Clears the memory, losing all stored states. Reset the index.
+	            */
+	            clear: function () {
+	                var prev_size = commands.length;
+
+	                commands = [];
+	                index = -1;
+
+	                if (callback && (prev_size > 0)) {
+	                    callback();
+	                }
+	            },
+
+	            hasUndo: function () {
+	                return index !== -1;
+	            },
+
+	            hasRedo: function () {
+	                return index < (commands.length - 1);
+	            },
+
+	            getCommands: function () {
+	                return commands;
+	            },
+
+	            getIndex: function() {
+	                return index;
+	            },
+	            
+	            setLimit: function (l) {
+	                limit = l;
+	            }
+	        };
+	    };
+
+		if (true) {
+			// AMD. Register as an anonymous module.
+			!(__WEBPACK_AMD_DEFINE_RESULT__ = function() {
+				return UndoManager;
+			}.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+		} else if (typeof module !== 'undefined' && module.exports) {
+			module.exports = UndoManager;
+		} else {
+			window.UndoManager = UndoManager;
+		}
+
+	}());
+
+
+/***/ },
+/* 15 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
 	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 	Object.defineProperty(exports, "__esModule", {
@@ -3596,7 +3789,7 @@
 
 	var Global = _interopRequireWildcard(_global);
 
-	var _ContainerBaseClass2 = __webpack_require__(14);
+	var _ContainerBaseClass2 = __webpack_require__(16);
 
 	var _ContainerBaseClass3 = _interopRequireDefault(_ContainerBaseClass2);
 
@@ -3675,7 +3868,7 @@
 	exports.default = WidgetCanvas;
 
 /***/ },
-/* 14 */
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -3704,15 +3897,15 @@
 
 	var _WidgetDiv2 = _interopRequireDefault(_WidgetDiv);
 
-	var _WidgetCanvas = __webpack_require__(13);
+	var _WidgetCanvas = __webpack_require__(15);
 
 	var _WidgetCanvas2 = _interopRequireDefault(_WidgetCanvas);
 
-	var _Events = __webpack_require__(15);
+	var _Events = __webpack_require__(17);
 
 	var _Events2 = _interopRequireDefault(_Events);
 
-	var _UndoManager = __webpack_require__(17);
+	var _UndoManager = __webpack_require__(13);
 
 	var _UndoManager2 = _interopRequireDefault(_UndoManager);
 
@@ -3742,6 +3935,7 @@
 			_this.setupContainerMode();
 			_this.setupContainerEvent();
 			_this.setupShortKeyEvent();
+			window.m = _mithril2.default;
 			return _this;
 		}
 
@@ -3834,13 +4028,30 @@
 			key: 'removeSelectedItem',
 			value: function removeSelectedItem() {
 				var editing = this.getRoot().editingContainer;
-				for (var i = 0, v; v = editing.selectedWidget[i]; i++) {
-					var index = editing.children.indexOf(v);
-					if (index >= 0) v.onUnSelected(), editing.children.splice(index, 1);
-					// if( v.isSelected() ) v.remove();
-				}
-				editing.selectedWidget = [];
-				_mithril2.default.redraw();
+				var prevSel = [].concat(editing.selectedWidget);
+
+				var redo = function redo() {
+					for (var i = 0, v; v = editing.selectedWidget[i]; i++) {
+						var index = editing.children.indexOf(v);
+						if (index >= 0) v.onUnSelected(), editing.children.splice(index, 1);
+						// if( v.isSelected() ) v.remove();
+					}
+					editing.selectedWidget = [];
+					_mithril2.default.redraw();
+				};
+				redo();
+
+				if (prevSel.length) _UndoManager2.default.add({
+					redo: redo,
+					undo: function undo() {
+						console.log(prevSel);
+						editing.selectedWidget = prevSel;
+						editing.selectedWidget.forEach(function (v) {
+							v.onSelected();editing.children.push(v);
+						});
+						_mithril2.default.redraw();
+					}
+				});
 			}
 		}, {
 			key: 'checkSelectElement',
@@ -3912,6 +4123,9 @@
 				if (!self.selectedWidget.length) return;
 
 				var changedData = self.Prop.eventData && self.Prop.eventData.changed && Global.clone(self.Prop.eventData.changed);
+				var selectedWidgetIsNew = self.selectedWidget.map(function (v) {
+					return v.Prop.isNew;
+				});
 				var selectedWidget = [].concat(self.selectedWidget);
 				if (changedData) {
 					_UndoManager2.default.add({
@@ -3921,11 +4135,14 @@
 								return v.onUnSelected();
 							});
 							self.selectedWidget = selectedWidget;
-							self.selectedWidget.forEach(function (v) {
-								return v.onSelected();
-							});
 							self.moveSelectedBy(changedData.left, changedData.top);
 							self.resizeSelectedBy(changedData.width, changedData.height);
+							self.selectedWidget.forEach(function (v) {
+								v.onSelected();v.onRectChange();
+							});
+							self.selectedWidget = self.selectedWidget.filter(function (v) {
+								return v.isValidRect();
+							});
 						},
 						undo: function undo() {
 							// console.log('changedData', changedData, selectedWidget)
@@ -3934,11 +4151,15 @@
 								return v.onUnSelected();
 							});
 							self.selectedWidget = selectedWidget;
-							self.selectedWidget.forEach(function (v) {
-								return v.onSelected();
-							});
 							self.moveSelectedBy(-changedData.left, -changedData.top);
 							self.resizeSelectedBy(-changedData.width, -changedData.height);
+							self.selectedWidget.forEach(function (v, i) {
+								if (selectedWidgetIsNew[i]) ; //v.remove()
+								else v.onSelected(), v.onRectChange();
+							});
+							self.selectedWidget = self.selectedWidget.filter(function (v) {
+								return v.isValidRect();
+							});
 						}
 					});
 				}
@@ -4151,7 +4372,7 @@
 							height: PropLayer.style.height - PropLayer.eventData.prevH
 						};
 
-						if (changedData.left || changedData.top || changedData.width || changedData.height) {
+						if ((changedData.left || changedData.top || changedData.width || changedData.height) && widget.isValidRect()) {
 							self.Prop.eventData.changed = changedData;
 							widget.onRectChange(changedData);
 						}
@@ -4205,7 +4426,7 @@
 	exports.default = ContainerBaseClass;
 
 /***/ },
-/* 15 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -4214,7 +4435,7 @@
 	  value: true
 	});
 
-	var _eventKeeper = __webpack_require__(16);
+	var _eventKeeper = __webpack_require__(18);
 
 	var _eventKeeper2 = _interopRequireDefault(_eventKeeper);
 
@@ -4225,7 +4446,7 @@
 	exports.default = singleton;
 
 /***/ },
-/* 16 */
+/* 18 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -4456,184 +4677,6 @@
 	})();
 
 	module.exports = EventEmitter;
-
-/***/ },
-/* 17 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-
-	var _undoManager = __webpack_require__(18);
-
-	var _undoManager2 = _interopRequireDefault(_undoManager);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	exports.default = new _undoManager2.default();
-
-/***/ },
-/* 18 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var __WEBPACK_AMD_DEFINE_RESULT__;/*
-	Simple Javascript undo and redo.
-	https://github.com/ArthurClemens/Javascript-Undo-Manager
-	*/
-
-	;(function() {
-
-		'use strict';
-
-	    function removeFromTo(array, from, to) {
-	        array.splice(from,
-	            !to ||
-	            1 + to - from + (!(to < 0 ^ from >= 0) && (to < 0 || -1) * array.length));
-	        return array.length;
-	    }
-
-	    var UndoManager = function() {
-
-	        var commands = [],
-	            index = -1,
-	            limit = 0,
-	            isExecuting = false,
-	            callback,
-	            
-	            // functions
-	            execute;
-
-	        execute = function(command, action) {
-	            if (!command || typeof command[action] !== "function") {
-	                return this;
-	            }
-	            isExecuting = true;
-
-	            command[action]();
-
-	            isExecuting = false;
-	            return this;
-	        };
-
-	        return {
-
-	            /*
-	            Add a command to the queue.
-	            */
-	            add: function (command) {
-	                if (isExecuting) {
-	                    return this;
-	                }
-	                // if we are here after having called undo,
-	                // invalidate items higher on the stack
-	                commands.splice(index + 1, commands.length - index);
-
-	                commands.push(command);
-	                
-	                // if limit is set, remove items from the start
-	                if (limit && commands.length > limit) {
-	                    removeFromTo(commands, 0, -(limit+1));
-	                }
-	                
-	                // set the current index to the end
-	                index = commands.length - 1;
-	                if (callback) {
-	                    callback();
-	                }
-	                return this;
-	            },
-
-	            /*
-	            Pass a function to be called on undo and redo actions.
-	            */
-	            setCallback: function (callbackFunc) {
-	                callback = callbackFunc;
-	            },
-
-	            /*
-	            Perform undo: call the undo function at the current index and decrease the index by 1.
-	            */
-	            undo: function () {
-	                var command = commands[index];
-	                if (!command) {
-	                    return this;
-	                }
-	                execute(command, "undo");
-	                index -= 1;
-	                if (callback) {
-	                    callback();
-	                }
-	                return this;
-	            },
-
-	            /*
-	            Perform redo: call the redo function at the next index and increase the index by 1.
-	            */
-	            redo: function () {
-	                var command = commands[index + 1];
-	                if (!command) {
-	                    return this;
-	                }
-	                execute(command, "redo");
-	                index += 1;
-	                if (callback) {
-	                    callback();
-	                }
-	                return this;
-	            },
-
-	            /*
-	            Clears the memory, losing all stored states. Reset the index.
-	            */
-	            clear: function () {
-	                var prev_size = commands.length;
-
-	                commands = [];
-	                index = -1;
-
-	                if (callback && (prev_size > 0)) {
-	                    callback();
-	                }
-	            },
-
-	            hasUndo: function () {
-	                return index !== -1;
-	            },
-
-	            hasRedo: function () {
-	                return index < (commands.length - 1);
-	            },
-
-	            getCommands: function () {
-	                return commands;
-	            },
-
-	            getIndex: function() {
-	                return index;
-	            },
-	            
-	            setLimit: function (l) {
-	                limit = l;
-	            }
-	        };
-	    };
-
-		if (true) {
-			// AMD. Register as an anonymous module.
-			!(__WEBPACK_AMD_DEFINE_RESULT__ = function() {
-				return UndoManager;
-			}.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-		} else if (typeof module !== 'undefined' && module.exports) {
-			module.exports = UndoManager;
-		} else {
-			window.UndoManager = UndoManager;
-		}
-
-	}());
-
 
 /***/ },
 /* 19 */

@@ -1,6 +1,7 @@
 import * as Global from './global'
 import m from 'mithril'
 import JsonEditor from './JsonEditor'
+import UndoManager from './UndoManager'
 
 export var jsonType = {
   stage:{ type:'stage', attrs: {title:'', name:''} },
@@ -588,6 +589,18 @@ export var jsonSchema = {
   }
 }
 
+/**
+ * Check for one-one or one-many relation of prop
+ * @return {[type]} [description]
+ */
+function checkPropRelation(data, path, value){
+  // if borderStyle is none/'', set width to 0
+  if( /(border\w+)Style$/i.test(path) && (value=='none'|| !value)
+    || /(border\w+)Width$/i.test(path) && /^$|none/.test( Global.objectPath( data, path.replace(/Width$/, 'Style') ) )
+  ) {
+    Global.objectPath( data, path.replace(/Style$/, 'Width'), 0 );
+  }
+}
 
 export function renderJsonEditor(){
   var self = this;
@@ -622,25 +635,21 @@ export function renderJsonEditor(){
       } }, function(path,value, getData, data ){
         path = path.replace(/^root\./,'')
         var _path = path.split('.')
-        // if borderStyle is none/'', set width to 0
-        if( /(border\w+)Style$/i.test(path) && (value=='none'|| !value)
-          || /(border\w+)Width$/i.test(path) && /^$|none/.test( Global.objectPath( data, path.replace(/Width$/, 'Style') ) )
-        ) {
-          Global.objectPath( data, path.replace(/Style$/, 'Width'), 0 );
-        }
 
-      ;(self.parent?self.parent.selectedWidget:[self]).forEach(v=>{
-        // v.jsonData() is like {attrs:{}, style:{}, children:{}}
-        // v.Prop is like { key:key, className:..., style:{} }
-        // so we lookup _path[0] for which part of jsonData changed and update
-        var val = Global.objectPath( data, _path );
-      	Global.objectPath( v.jsonData() , _path, val );
+        checkPropRelation(data, path, value)
 
-        if(_path[0]=='style') Global.objectPath( v.Prop , _path, val );
-        else if(_path[0]=='attrs'){
-          Global.objectPath( v.Prop , _path.slice(1), val );
-        }
-      })
+        ;(self.parent?self.parent.selectedWidget:[self]).forEach(v=>{
+          // v.jsonData() is like {attrs:{}, style:{}, children:{}}
+          // v.Prop is like { key:key, className:..., style:{} }
+          // so we lookup _path[0] for which part of jsonData changed and update
+          var val = Global.objectPath( data, _path );
+        	Global.objectPath( v.jsonData() , _path, val );
+
+          if(_path[0]=='style') Global.objectPath( v.Prop , _path, val );
+          else if(_path[0]=='attrs'){
+            Global.objectPath( v.Prop , _path.slice(1), val );
+          }
+        })
 
         m.redraw()
       }) )

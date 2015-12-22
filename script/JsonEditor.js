@@ -50,10 +50,14 @@ export default class JsonEditor {
 				return val===undefined? (schemaPathValue(path)||'' ) : val;
 			} else {
 				var temp = DATA()
-				_dotPathValue(temp, path, value===null? schemaObjects[path.join('.')].empty||'' :value)
+				var _value = value===null? schemaObjects[path.join('.')].empty||'' :value;
+				var oldValue = _dotPathValue(temp, path );
+				if( oldValue==_value) return;
+				_dotPathValue(temp, path, _value);
 				DATA(temp)
 				var callback = function(p, v){
-					CALLBACK(p||path.join('.'), v||value, getOriginalKeyVal( temp, orgData ), temp, templateFieldValue, inheritFieldValue, schemaObjects );
+					var _path = p||path.join('.')
+					CALLBACK(_path, _value, getOriginalKeyVal( temp, orgData ), temp, templateFieldValue, inheritFieldValue, schemaObjects );
 				}
 				// below line will update the key for force update view
 				var shouldCallback = true;
@@ -252,8 +256,8 @@ export default class JsonEditor {
 		    case 'array':
 		      schemaPathValue(path, schema.default||[]);
 		      return m('div.array', Global._extend(initAttrs, getAttrs() ), [
-		          m('h2.arrayTitle', {onclick:function(e){ 
-		          	addArrayItem(); 
+		          m('h2.arrayTitle', {onclick:function(e){
+		          	addArrayItem();
 		          	setTimeout(function(){
 			          	var f=$(e.target).closest('.array').find('.arrayItem').eq( dataPathValue( path ).length-1 ).find('input,select,textarea').get(0)
 			          	if(f) f.focus()
