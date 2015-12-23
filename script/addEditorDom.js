@@ -17,10 +17,10 @@ export default function(){
 	var con = document.querySelector('.editorContainer');
 	con.style.width = initEditorWidth+'px'
 
-	
+
 	// add toolbox
 	m.mount( document.querySelector('.toolbarContainer'), {view: ()=>{
-		return m('.toolSet', 
+		return m('.toolSet',
 			[
 				m('.stageProp.tool', {onclick:function(){
 					DataTemplate.renderJsonEditor.apply(Canvas1)
@@ -35,7 +35,22 @@ export default function(){
 						}, v)
 				),
 				m('.save', [
-					m('input[type=button][value="保存"]', {onclick:function(){ alert(1234) }})
+					m('input[type=button][value="保存"]', {onclick:function(){
+						var formtype = {
+							"data":{
+								"type":"formtype",
+								"attributes":window.Canvas1.getDomTree()
+							}
+						}
+						var xhrConfig = function(xhr) {
+						    xhr.setRequestHeader("Content-Type", "application/vnd.api+json");
+						}
+						m.request({method: "POST", url: "http://1111hui.com:3000/formtype", data:formtype, serialize:function(data){ return JSON.stringify(data) }, config: xhrConfig}).then(function(data){
+							console.log(data)
+						})
+
+					}}),
+					m('input[type=button][value="取消"]', {onclick:function(){ alert(1234) }}),
 				])
 			] )
 	} }

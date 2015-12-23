@@ -33,7 +33,13 @@ export default class WidgetCanvas extends ContainerBaseClass {
 			})
 			return obj;
 		}
-		return {template:template, dom: getJsonData(this)}
+		return {
+			name: this.Prop.name,
+			title: this.Prop.title,
+			desc: this.Prop.desc||'',
+			template:template,
+			dom: getJsonData(this)
+		}
 	}
 
 	view (ctrl) {

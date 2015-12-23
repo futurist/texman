@@ -2766,10 +2766,16 @@
 	        "name": {
 	          "title": "name",
 	          "type": "string"
+	        },
+	        // "template":"{{=3245}}"
+	        "desc": {
+	          "title": "description",
+	          "type": "string",
+	          "format": "textarea",
+	          "default": ""
 	        }
 	      }
 	    },
-	    // "template":"{{=3245}}"
 	    "children": {},
 	    "style": {
 	      "title": "style",
@@ -3844,7 +3850,13 @@
 					});
 					return obj;
 				}
-				return { template: template, dom: getJsonData(this) };
+				return {
+					name: this.Prop.name,
+					title: this.Prop.title,
+					desc: this.Prop.desc || '',
+					template: template,
+					dom: getJsonData(this)
+				};
 			}
 		}, {
 			key: 'view',
@@ -4715,6 +4727,21 @@
 						}
 					}, v);
 				}), (0, _mithril2.default)('.save', [(0, _mithril2.default)('input[type=button][value="保存"]', { onclick: function onclick() {
+						var formtype = {
+							"data": {
+								"type": "formtype",
+								"attributes": window.Canvas1.getDomTree()
+							}
+						};
+						var xhrConfig = function xhrConfig(xhr) {
+							xhr.setRequestHeader("Content-Type", "application/vnd.api+json");
+						};
+						_mithril2.default.request({ method: "POST", url: "http://1111hui.com:3000/formtype", data: formtype, serialize: function serialize(data) {
+								return JSON.stringify(data);
+							}, config: xhrConfig }).then(function (data) {
+							console.log(data);
+						});
+					} }), (0, _mithril2.default)('input[type=button][value="取消"]', { onclick: function onclick() {
 						alert(1234);
 					} })])]);
 			} });

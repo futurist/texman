@@ -354,6 +354,12 @@ export var jsonSchema = {
           "type": "string",
           // "template":"{{=3245}}"
         },
+        "desc": {
+          "title": "description",
+          "type": "string",
+          "format":"textarea",
+          "default":""
+        },
       }
     },
     "children": {},
