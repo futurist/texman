@@ -1,10 +1,13 @@
 var path = require('path');
 
 module.exports = {
-    entry: './script/app.js',
+    entry: {
+        app: './script/app.js',
+        formlist: './script/formlist.js',
+    },
     output: {
         path: __dirname,
-        filename: 'app.js'
+        filename: '[name].js'
     },
     module: {
         loaders: [

@@ -1,3 +1,4 @@
+import m from 'mithril'
 
 /**
  * Polyfill functions
@@ -6,6 +7,24 @@ if (!String.prototype.trim) {
   String.prototype.trim = function () {
     return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
   };
+}
+
+/**
+ * Server config
+ */
+export var APIHOST = 'http://1111hui.com:3000'
+/**
+ * below request a json-api using proper content-type and plain payload
+ * @param  {[type]} method [description]
+ * @param  {[type]} url    [description]
+ * @param  {[type]} data   [description]
+ * @return {[type]}        [description]
+ */
+export var mRequestApi = function(method, url, data) {
+    var xhrConfig = function(xhr) {
+        xhr.setRequestHeader("Content-Type", "application/vnd.api+json");
+    }
+    return m.request({method: method, url: url, data:data, serialize:function(data){ return JSON.stringify(data) }, config: xhrConfig})
 }
 
 
