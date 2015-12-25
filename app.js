@@ -46,6 +46,14 @@
 
 	'use strict';
 
+	var _global = __webpack_require__(4);
+
+	var Global = _interopRequireWildcard(_global);
+
+	var _mithril = __webpack_require__(2);
+
+	var _mithril2 = _interopRequireDefault(_mithril);
+
 	var _canvas = __webpack_require__(1);
 
 	var _canvas2 = _interopRequireDefault(_canvas);
@@ -56,12 +64,23 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	new _canvas2.default();
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 	// import editor from './editor'
 	// new editor()
 
-	(0, _addEditorDom2.default)();
+	var PARAM = _mithril2.default.route.parseQueryString(location.hash.slice(1));
+	// Object {id: "567a078c03b3e16c150ddb40", ret: "http://1111hui.com:4000/formtype/567a078c03b3e16c150ddb40"}
+
+	if (PARAM.id) {
+		_mithril2.default.request({ method: 'GET', url: Global.APIHOST + '/formtype/' + PARAM.id }).then(function (savedData) {
+			new _canvas2.default(savedData);
+			(0, _addEditorDom2.default)(savedData);
+		});
+	} else {
+		new _canvas2.default();
+		(0, _addEditorDom2.default)();
+	}
 
 /***/ },
 /* 1 */
@@ -117,7 +136,7 @@
 	  return widget;
 	}
 
-	var Canvas = function Canvas() {
+	var Canvas = function Canvas(savedData) {
 	  _classCallCheck(this, Canvas);
 
 	  /**
@@ -125,12 +144,15 @@
 	   */
 	  var container = document.querySelector('#container');
 
-	  var Canvas1 = new _WidgetCanvas2.default(null, {
-	    attrs: { title: 'StageName', name: 'Canvas1' },
-	    style: { left: 100, top: 100, width: 800, height: 500, backgroundType: 'color', backgroundColor: '#eeeeee', background: '#eeeeee' }
-	  });
-
-	  // Canvas1 = buildStageFromData(savedData)
+	  var Canvas1;
+	  if (savedData && savedData.data && savedData.data.attributes && savedData.data.attributes.dom) {
+	    Canvas1 = buildStageFromData(savedData.data.attributes.dom);
+	  } else {
+	    Canvas1 = new _WidgetCanvas2.default(null, {
+	      attrs: { title: 'StageName', name: 'Canvas1' },
+	      style: { left: 100, top: 100, width: 800, height: 500, backgroundType: 'color', backgroundColor: '#eeeeee', background: '#eeeeee' }
+	    });
+	  }
 
 	  _mithril2.default.mount(container, {
 	    view: function view() {
@@ -1598,7 +1620,7 @@
 	/**
 	 * Server config
 	 */
-	var APIHOST = exports.APIHOST = 'http://1111hui.com:3000';
+	var APIHOST = exports.APIHOST = 'http://1111hui.com/json-api';
 	/**
 	 * below request a json-api using proper content-type and plain payload
 	 * @param  {[type]} method [description]
@@ -4725,7 +4747,10 @@
 		value: true
 	});
 
-	exports.default = function () {
+	exports.default = function (savedData) {
+		var ID = savedData && savedData.data && savedData.data.id;
+		var PARAM = _mithril2.default.route.parseQueryString(location.hash.slice(1));
+
 		// editor container & resize bar
 		var dragFunc = DragFactory();
 		var initEditorWidth = 400;
@@ -4752,22 +4777,38 @@
 						}
 					}, v);
 				}), (0, _mithril2.default)('.save', [(0, _mithril2.default)('input[type=button][value="保存"]', { onclick: function onclick() {
-						var formtype = {
-							"data": {
-								"type": "formtype",
-								"attributes": window.Canvas1.getDomTree()
-							}
-						};
 						var xhrConfig = function xhrConfig(xhr) {
 							xhr.setRequestHeader("Content-Type", "application/vnd.api+json");
 						};
-						_mithril2.default.request({ method: "POST", url: "http://1111hui.com:3000/formtype", data: formtype, serialize: function serialize(data) {
-								return JSON.stringify(data);
-							}, config: xhrConfig }).then(function (data) {
-							console.log(data);
-						});
+
+						if (ID) {
+							var formtype = {
+								"data": {
+									"type": "formtype",
+									"id": ID,
+									"attributes": window.Canvas1.getDomTree()
+								}
+							};
+							_mithril2.default.request({ method: "PATCH", url: Global.APIHOST + "/formtype/" + ID, data: formtype, serialize: function serialize(data) {
+									return JSON.stringify(data);
+								}, config: xhrConfig }).then(function (data) {
+								console.log(data);
+							});
+						} else {
+							var formtype = {
+								"data": {
+									"type": "formtype",
+									"attributes": window.Canvas1.getDomTree()
+								}
+							};
+							_mithril2.default.request({ method: "POST", url: Global.APIHOST + "/formtype", data: formtype, serialize: function serialize(data) {
+									return JSON.stringify(data);
+								}, config: xhrConfig }).then(function (data) {
+								console.log(data);
+							});
+						}
 					} }), (0, _mithril2.default)('input[type=button][value="取消"]', { onclick: function onclick() {
-						alert(1234);
+						alert(PARAM.ret);
 					} })])]);
 			} });
 	};

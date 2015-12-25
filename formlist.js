@@ -72,17 +72,20 @@
 			_classCallCheck(this, formList);
 
 			var self = this;
+
 			this.controller = function (args) {
 				var forms = self.getList();
+				console.log();
 				return {
-					forms: forms.data
+					forms: forms
 				};
 			};
 
 			this.view = function (ctrl) {
-
-				return (0, _mithril2.default)('div', ctrl.forms.map(function (v, i) {
+				var data = ctrl.forms().data || [];
+				return (0, _mithril2.default)('ul', data.map(function (v, i) {
 					console.log(v, i);
+					return (0, _mithril2.default)('li', [(0, _mithril2.default)('.name', v.attributes.name), (0, _mithril2.default)('.title', v.attributes.title), (0, _mithril2.default)('.createAt', v.attributes.createAt), (0, _mithril2.default)('a.action[href="cane.html#id=' + v.id + '&ret=' + window.location.href + '"][target=_blank]', '编辑'), (0, _mithril2.default)('a.action[href="#"]', { onclick: self.deleteItem(v.id) }, '删除')]);
 				}));
 			};
 		}
@@ -90,8 +93,13 @@
 		_createClass(formList, [{
 			key: 'getList',
 			value: function getList() {
-				console.log(Global.APIHOST);
-				return Global.mRequestApi('GET', Global.APIHOST);
+				var field = '?fields[formtype]=name,title,createAt';
+				return Global.mRequestApi('GET', Global.APIHOST + '/formtype' + field);
+			}
+		}, {
+			key: 'deleteItem',
+			value: function deleteItem(id) {
+				Global.mRequestApi('DELETE', Global.APIHOST + '/formtype/' + id);
 			}
 		}]);
 
@@ -1328,7 +1336,7 @@
 	/**
 	 * Server config
 	 */
-	var APIHOST = exports.APIHOST = 'http://1111hui.com:3000';
+	var APIHOST = exports.APIHOST = 'http://1111hui.com/json-api';
 	/**
 	 * below request a json-api using proper content-type and plain payload
 	 * @param  {[type]} method [description]

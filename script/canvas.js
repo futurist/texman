@@ -18,19 +18,22 @@ function buildStageFromData(data, parent=null) {
 
 
 export default class Canvas {
-constructor() {
+constructor(savedData) {
   /**
    * Main Code below
    */
     var container = document.querySelector('#container');
 
 
-    var Canvas1 = new WidgetCanvas(null, {
-        attrs:{title:'StageName', name:'Canvas1'},
-        style:{left:100, top:100, width:800, height:500, backgroundType:'color', backgroundColor:'#eeeeee', background:'#eeeeee'}
-      } );
-
-    // Canvas1 = buildStageFromData(savedData)
+    var Canvas1;
+    if(savedData && savedData.data && savedData.data.attributes && savedData.data.attributes.dom){
+      Canvas1 = buildStageFromData(savedData.data.attributes.dom)
+    }else{
+      Canvas1 = new WidgetCanvas(null, {
+          attrs:{title:'StageName', name:'Canvas1'},
+          style:{left:100, top:100, width:800, height:500, backgroundType:'color', backgroundColor:'#eeeeee', background:'#eeeeee'}
+        } );
+    }
 
     m.mount(container,
     {

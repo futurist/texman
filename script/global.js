@@ -12,7 +12,7 @@ if (!String.prototype.trim) {
 /**
  * Server config
  */
-export var APIHOST = 'http://1111hui.com:3000'
+export var APIHOST = 'http://1111hui.com/json-api'
 /**
  * below request a json-api using proper content-type and plain payload
  * @param  {[type]} method [description]
