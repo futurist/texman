@@ -24,7 +24,16 @@ export var mRequestApi = function(method, url, data) {
     var xhrConfig = function(xhr) {
         xhr.setRequestHeader("Content-Type", "application/vnd.api+json");
     }
-    return m.request({method: method, url: url, data:data, serialize:function(data){ return JSON.stringify(data) }, config: xhrConfig})
+    var extract = function(xhr, xhrOptions) {
+        try{
+            JSON.parse(xhr.responseText)
+            return xhr.responseText
+        }catch(e){
+            var errorMsg = `{ errors:{status:${xhr.status}, title:${xhr.status}, detail:${xhr.responseText} } }`
+            return JSON.stringify(errorMsg)
+        }
+    }
+    return m.request({method: method, url: url, data:data, extract:extract, serialize:function(data){ return JSON.stringify(data) }, config: xhrConfig})
 }
 
 

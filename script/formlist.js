@@ -6,28 +6,35 @@ export class formList {
 		var self = this;
 
 		this.controller=function (args) {
-			var forms = self.getList()
-			console.log(  )
-			return {
-				forms:forms
+			this.updateList = function(){
+				this.forms = self.getList()
 			}
+			this.updateList()
 		}
 
 		this.view = function(ctrl){
-			var data = ctrl.forms().data || [];
-			return m('ul',
-					data.map((v,i)=>{
-						console.log(v,i)
-						return m('li',
-							[
-								m('.name', v.attributes.name),
-								m('.title', v.attributes.title),
-								m('.createAt', v.attributes.createAt),
-								m('a.action[href="cane.html#id='+v.id+'&ret='+window.location.href+'"][target=_blank]', '编辑'),
-								m('a.action[href="#"]', { onclick: self.deleteItem(v.id) }, '删除'),
-							]
+			var forms = ctrl.forms();
+			var data = forms&&forms.data || [];
+			return m('.list',
+					[
+						m('.operat', m('a[href="cane.html"][target=_blank]','添加')),
+						m('ul',
+							data.map((v,i)=>{
+								console.log(v,i)
+								return m('li',
+									[
+										m('.name', v.attributes.name),
+										m('.title', v.attributes.title),
+										m('.createAt', v.attributes.createAt),
+										m('a.action[href="cane.html#id='+v.id+'&ret='+window.location.href+'"][target=_blank]', '编辑'),
+										m(`a.action[href="#${v.id}"]`, { onclick: function(){
+											self.deleteItem(v.id, ctrl)
+										} }, '删除'),
+									]
+								)
+							})
 						)
-					})
+					]
 				)
 		}
 	}
@@ -37,8 +44,10 @@ export class formList {
 		return Global.mRequestApi('GET', Global.APIHOST+'/formtype'+field)
 	}
 
-	deleteItem(id){
-		Global.mRequestApi('DELETE', Global.APIHOST+'/formtype/'+id)
+	deleteItem(id, ctrl){
+		Global.mRequestApi('DELETE', Global.APIHOST+'/formtype/'+id).then(function(ret){
+			if(ctrl) ctrl.updateList()
+		})
 	}
 	
 }

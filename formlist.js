@@ -57,7 +57,7 @@
 
 	var _mithril2 = _interopRequireDefault(_mithril);
 
-	var _global = __webpack_require__(4);
+	var _global = __webpack_require__(1);
 
 	var Global = _interopRequireWildcard(_global);
 
@@ -74,19 +74,21 @@
 			var self = this;
 
 			this.controller = function (args) {
-				var forms = self.getList();
-				console.log();
-				return {
-					forms: forms
+				this.updateList = function () {
+					this.forms = self.getList();
 				};
+				this.updateList();
 			};
 
 			this.view = function (ctrl) {
-				var data = ctrl.forms().data || [];
-				return (0, _mithril2.default)('ul', data.map(function (v, i) {
+				var forms = ctrl.forms();
+				var data = forms && forms.data || [];
+				return (0, _mithril2.default)('.list', [(0, _mithril2.default)('.operat', (0, _mithril2.default)('a[href="cane.html"][target=_blank]', '添加')), (0, _mithril2.default)('ul', data.map(function (v, i) {
 					console.log(v, i);
-					return (0, _mithril2.default)('li', [(0, _mithril2.default)('.name', v.attributes.name), (0, _mithril2.default)('.title', v.attributes.title), (0, _mithril2.default)('.createAt', v.attributes.createAt), (0, _mithril2.default)('a.action[href="cane.html#id=' + v.id + '&ret=' + window.location.href + '"][target=_blank]', '编辑'), (0, _mithril2.default)('a.action[href="#"]', { onclick: self.deleteItem(v.id) }, '删除')]);
-				}));
+					return (0, _mithril2.default)('li', [(0, _mithril2.default)('.name', v.attributes.name), (0, _mithril2.default)('.title', v.attributes.title), (0, _mithril2.default)('.createAt', v.attributes.createAt), (0, _mithril2.default)('a.action[href="cane.html#id=' + v.id + '&ret=' + window.location.href + '"][target=_blank]', '编辑'), (0, _mithril2.default)('a.action[href="#' + v.id + '"]', { onclick: function onclick() {
+							self.deleteItem(v.id, ctrl);
+						} }, '删除')]);
+				}))]);
 			};
 		}
 
@@ -98,8 +100,10 @@
 			}
 		}, {
 			key: 'deleteItem',
-			value: function deleteItem(id) {
-				Global.mRequestApi('DELETE', Global.APIHOST + '/formtype/' + id);
+			value: function deleteItem(id, ctrl) {
+				Global.mRequestApi('DELETE', Global.APIHOST + '/formtype/' + id).then(function (ret) {
+					if (ctrl) ctrl.updateList();
+				});
 			}
 		}]);
 
@@ -109,7 +113,353 @@
 	_mithril2.default.mount($('#container').get(0), new formList());
 
 /***/ },
-/* 1 */,
+/* 1 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.curTool = exports.getOuterRect = exports.applyProp = exports._excludeJsonStyle = exports.debug = exports.rectsIntersect = exports.addToObject = exports.clickE = exports.leaveE = exports.upE = exports.moveE = exports.downE = exports.isTouch = exports.isMobile = exports.isiOS = exports.isWeiXin = exports.isAndroid = exports.EDITING_CLASSNAME = exports.SELECTED_CLASSNAME = exports.POINT_HEIGHT = exports.POINT_WIDTH = exports.GRID_SIZE = exports.MIN_WIDTH = exports.BORDER_BOX = exports.mRequestApi = exports.APIHOST = undefined;
+	exports.isNumeric = isNumeric;
+	exports.clone = clone;
+	exports._deepCopy = _deepCopy;
+	exports._extend = _extend;
+	exports._iterate = _iterate;
+	exports._pluck = _pluck;
+	exports._exclude = _exclude;
+	exports._addToSet = _addToSet;
+	exports.objectPath = objectPath;
+	exports.removeClass = removeClass;
+	exports.addClass = addClass;
+	exports.RandomColor = RandomColor;
+	exports.NewID = NewID;
+	exports.applyStyle = applyStyle;
+
+	var _mithril = __webpack_require__(2);
+
+	var _mithril2 = _interopRequireDefault(_mithril);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _typeof(obj) { return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj; }
+
+	/**
+	 * Polyfill functions
+	 */
+	if (!String.prototype.trim) {
+	    String.prototype.trim = function () {
+	        return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+	    };
+	}
+
+	/**
+	 * Server config
+	 */
+	var APIHOST = exports.APIHOST = 'http://1111hui.com/json-api';
+	/**
+	 * below request a json-api using proper content-type and plain payload
+	 * @param  {[type]} method [description]
+	 * @param  {[type]} url    [description]
+	 * @param  {[type]} data   [description]
+	 * @return {[type]}        [description]
+	 */
+	var mRequestApi = exports.mRequestApi = function mRequestApi(method, url, data) {
+	    var xhrConfig = function xhrConfig(xhr) {
+	        xhr.setRequestHeader("Content-Type", "application/vnd.api+json");
+	    };
+	    var extract = function extract(xhr, xhrOptions) {
+	        try {
+	            JSON.parse(xhr.responseText);
+	            return xhr.responseText;
+	        } catch (e) {
+	            var errorMsg = '{ errors:{status:' + xhr.status + ', title:' + xhr.status + ', detail:' + xhr.responseText + ' } }';
+	            return JSON.stringify(errorMsg);
+	        }
+	    };
+	    return _mithril2.default.request({ method: method, url: url, data: data, extract: extract, serialize: function serialize(data) {
+	            return JSON.stringify(data);
+	        }, config: xhrConfig });
+	};
+
+	/**
+	 * Helper functions
+	 */
+
+	// html {
+	//   box-sizing: border-box;
+	// }
+	// *, *:before, *:after {
+	//   box-sizing: inherit;
+	// }
+	// add above css code in HTML page to enable BORDER_BOX mode
+	var BORDER_BOX = exports.BORDER_BOX = window.getComputedStyle(document.body).boxSizing === "border-box";
+	var MIN_WIDTH = exports.MIN_WIDTH = 2;
+	var GRID_SIZE = exports.GRID_SIZE = 5;
+	var POINT_WIDTH = exports.POINT_WIDTH = 10;
+	var POINT_HEIGHT = exports.POINT_HEIGHT = 10;
+
+	var SELECTED_CLASSNAME = exports.SELECTED_CLASSNAME = 'selected';
+	var EDITING_CLASSNAME = exports.EDITING_CLASSNAME = 'editing';
+
+	var isAndroid = exports.isAndroid = /(android)/i.test(navigator.userAgent);
+	var isWeiXin = exports.isWeiXin = navigator.userAgent.match(/MicroMessenger\/([\d.]+)/i);
+	var isiOS = exports.isiOS = /iPhone/i.test(navigator.userAgent) || /iPod/i.test(navigator.userAgent) || /iPad/i.test(navigator.userAgent);
+	var isMobile = exports.isMobile = isAndroid || isWeiXin || isiOS;
+
+	// whether it's touch screen
+	var isTouch = exports.isTouch = 'ontouchstart' in window || 'DocumentTouch' in window && document instanceof DocumentTouch;
+
+	// touch event uniform to touchscreen & PC
+	var downE = exports.downE = isMobile ? 'touchstart' : 'mousedown';
+	var moveE = exports.moveE = isMobile ? 'touchmove' : 'mousemove';
+	var upE = exports.upE = isMobile ? 'touchend' : 'mouseup';
+	var leaveE = exports.leaveE = isMobile ? 'touchcancel' : 'mouseleave';
+	var clickE = exports.clickE = isMobile ? 'touchstart' : 'click';
+
+	// http://stackoverflow.com/questions/18082/validate-decimal-numbers-in-javascript-isnumeric?rq=1
+	function isNumeric(n) {
+	    return !isNaN(parseFloat(n)) && isFinite(n);
+	}
+
+	function clone(item) {
+	    if (!item) {
+	        return item;
+	    } // null, undefined values check
+
+	    var types = [Number, String, Boolean],
+	        result;
+
+	    // normalizing primitives if someone did new String('aaa'), or new Number('444');
+	    types.forEach(function (type) {
+	        if (item instanceof type) {
+	            result = type(item);
+	        }
+	    });
+
+	    if (typeof result == "undefined") {
+	        if (Object.prototype.toString.call(item) === "[object Array]") {
+	            result = [];
+	            item.forEach(function (child, index, array) {
+	                result[index] = clone(child);
+	            });
+	        } else if ((typeof item === 'undefined' ? 'undefined' : _typeof(item)) == "object") {
+	            // testing that this is DOM
+	            if (item.nodeType && typeof item.cloneNode == "function") {
+	                var result = item.cloneNode(true);
+	            } else if (!item.prototype) {
+	                // check that this is a literal
+	                if (item instanceof Date) {
+	                    result = new Date(item);
+	                } else {
+	                    // it is an object literal
+	                    result = {};
+	                    for (var i in item) {
+	                        result[i] = clone(item[i]);
+	                    }
+	                }
+	            } else {
+	                // depending what you would like here,
+	                // just keep the reference, or create new object
+	                if (item.constructor) {
+	                    result = new item.constructor();
+	                } else {
+	                    result = item;
+	                }
+	            }
+	        } else {
+	            result = item;
+	        }
+	    }
+	    return result;
+	}
+
+	/**
+	 * COPY First Layer, and Reference sub child
+	 * @param  {obj:obj}, ...args
+	 * @return {obj}
+	 */
+	function _deepCopy(obj) {
+	    obj = obj || {};
+	    if (arguments.length < 2) return obj;
+	    for (var i = 1; i < arguments.length; i++) {
+	        var dest = arguments[i];
+	        for (var prop in dest) {
+	            if (dest.hasOwnProperty(prop)) {
+	                var type = Object.prototype.toString.call(dest[prop]);
+	                if (type === '[object Object]') {
+	                    obj[prop] = obj[prop] || {};
+	                    _deepCopy(obj[prop], dest[prop]);
+	                } else if (type === '[object Array]') {
+	                    obj[prop] = obj[prop] || [];
+	                    _deepCopy(obj[prop], dest[prop]);
+	                } else {
+	                    obj[prop] = clone(dest[prop]);
+	                }
+	            }
+	        }
+	    }
+	    return obj;
+	}
+
+	function _extend(obj) {
+	    obj = obj || {};
+	    if (arguments.length < 2) return obj;
+	    for (var i = 1; i < arguments.length; i++) {
+	        var dest = arguments[i];
+	        for (var prop in dest) {
+	            if (dest.hasOwnProperty(prop)) {
+	                var type = Object.prototype.toString.call(dest[prop]);
+	                if (type === '[object Object]') {
+	                    obj[prop] = obj[prop] || {};
+	                    _extend(obj[prop], dest[prop]);
+	                } else if (type === '[object Array]') {
+	                    obj[prop] = obj[prop] || [];
+	                    _extend(obj[prop], dest[prop]);
+	                } else {
+	                    obj[prop] = dest[prop];
+	                }
+	            }
+	        }
+	    }
+	    return obj;
+	}
+
+	function _iterate(obj, condition, valueCallback) {
+	    var list = {};
+	    for (var name in obj) {
+	        if (obj.hasOwnProperty(name) && condition ? condition(name) : true) {
+	            list[name] = valueCallback ? valueCallback(obj[name]) : obj[name];
+	        }
+	    }
+	    return list;
+	}
+	function _pluck(obj, propArr) {
+	    if (!propArr || propArr.constructor != Array) return obj;
+	    return _iterate(obj, function (name) {
+	        return propArr.indexOf(name) >= 0;
+	    });
+	}
+	function _exclude(obj, propArr) {
+	    if (!propArr || propArr.constructor != Array) return obj;
+	    return _iterate(obj, function (name) {
+	        return propArr.indexOf(name) < 0;
+	    });
+	}
+	function _addToSet() {
+	    var i,
+	        isFirst,
+	        args = Array.prototype.slice.call(arguments, 0);
+	    if (typeof args[0] == 'boolean') isFirst = args.shift();
+	    var arr = args.shift();
+	    if (arr === null || (typeof arr === 'undefined' ? 'undefined' : _typeof(arr)) !== 'object') arr = [];
+	    for (i in args) {
+	        if (arr.indexOf(args[i]) < 0) {
+	            isFirst ? arr.unshift(args[i]) : arr.push(args[i]);
+	        }
+	    }
+	    return arr;
+	}
+
+	function objectPath(obj, is, value) {
+	    if (typeof is == 'string') return objectPath(obj, is.split('.'), value);else if (is.length == 1 && value !== undefined) return obj[is[0]] = value;else if (is.length == 0) return obj;else return objectPath(obj[is[0]], is.slice(1), value);
+	}
+
+	var addToObject = exports.addToObject = function addToObject(obj, key, value) {
+	    if (Object.prototype.toString.call(obj) == "[object Array]") {
+	        if (obj.indexOf(key) < 0) obj.push(key);
+	    } else {
+	        if (!(key in obj)) {
+	            obj[key] = value;
+	        }
+	    }
+	};
+
+	function removeClass(classProp, class1, class2, etc) {
+	    var list = classProp.split(/\s+/);
+	    var args = Array.prototype.slice.call(arguments, 1);
+	    return list.filter(function (v) {
+	        return args.indexOf(v) == -1;
+	    }).join(' ');
+	}
+
+	function addClass(classProp, class1, class2, etc) {
+	    var args = Array.prototype.slice.call(arguments, 0);
+	    args[0] = args[0].split(/\s+/);
+	    _addToSet.apply(null, args);
+	    return args[0].join(' ');
+	}
+
+	function RandomColor() {
+	    return '#' + Math.random().toString(16).slice(-6);
+	}
+
+	function NewID() {
+	    return +new Date() + "_" + Math.round(Math.random() * 1e6).toString(36);
+	}
+
+	function applyStyle(el, styleObj) {
+	    var pxReg = /^padding|^margin|size$|width$|height$|radius$|left$|top$|right$|bottom$/i;
+	    var quoteReg = /family$/i;
+	    // try{ el.style = el.style||{} } catch(e){}
+	    for (var i in styleObj) {
+	        var attr = styleObj[i];
+	        attr = pxReg.test(i) ? attr + 'px' : attr;
+	        attr = quoteReg.test(i) ? '"' + attr + '"' : attr;
+	        el.style[i] = attr;
+	    }
+	}
+	var rectsIntersect = exports.rectsIntersect = function rectsIntersect(r1, r2) {
+	    return r2.left <= r1.left + r1.width && r2.left + r2.width >= r1.left && r2.top <= r1.top + r1.height && r2.top + r2.height >= r1.top;
+	};
+
+	var debug = exports.debug = function debug(msg) {
+	    document.querySelector('#debug').innerHTML = msg;
+	};
+
+	var _excludeJsonStyle = exports._excludeJsonStyle = function _excludeJsonStyle(propStyle) {
+	    return _exclude(propStyle, ['borderWidth', 'borderStyle', 'borderColor', 'backgroundColor', 'padding']);
+	};
+	/**
+	 * applyProp from this.Prop, remove unused props, and apply style to int width/height etc.
+	 * @param  {[type]} thisProp [description]
+	 * @return {[type]}          [description]
+	 */
+	var applyProp = exports.applyProp = function applyProp(thisProp) {
+	    var Prop = _exclude(thisProp, ['eventData', 'isNew']);
+	    Prop.style = clone(thisProp.style);
+	    if (thisProp.style.borderWidth && thisProp.style.borderStyle && thisProp.style.borderColor) {
+	        Prop.style.border = thisProp.style.borderWidth + 'px ' + thisProp.style.borderStyle + ' ' + thisProp.style.borderColor;
+	    }
+	    applyStyle(Prop, thisProp.style);
+	    Prop.style = _excludeJsonStyle(Prop.style);
+	    if (Prop.class) Prop.class = Prop.class.replace(/\s+/, ' ').trim();
+	    if (Prop.className) Prop.className = Prop.className.replace(/\s+/, ' ').trim();
+	    return Prop;
+	};
+
+	/**
+	 * get outer rect of div/container that had a border style
+	 * @param  {[type]} style [description]
+	 * @return {[type]}       [description]
+	 */
+	var getOuterRect = exports.getOuterRect = function getOuterRect(style) {
+	    return {
+	        left: style.left,
+	        top: style.top,
+	        width: BORDER_BOX ? style.width : style.width + (style.borderLeftWidth || 0) + (style.borderRightWidth || 0),
+	        height: BORDER_BOX ? style.height : style.height + (style.borderTopWidth || 0) + (style.borderBottomWidth || 0)
+	    };
+	};
+
+	/**
+	 * curTool for canvas & layer to determine type
+	 * @type {String}
+	 */
+	var curTool = exports.curTool = 'stage';
+
+/***/ },
 /* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -1290,344 +1640,6 @@
 		return module;
 	}
 
-
-/***/ },
-/* 4 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	exports.curTool = exports.getOuterRect = exports.applyProp = exports._excludeJsonStyle = exports.debug = exports.rectsIntersect = exports.addToObject = exports.clickE = exports.leaveE = exports.upE = exports.moveE = exports.downE = exports.isTouch = exports.isMobile = exports.isiOS = exports.isWeiXin = exports.isAndroid = exports.EDITING_CLASSNAME = exports.SELECTED_CLASSNAME = exports.POINT_HEIGHT = exports.POINT_WIDTH = exports.GRID_SIZE = exports.MIN_WIDTH = exports.BORDER_BOX = exports.mRequestApi = exports.APIHOST = undefined;
-	exports.isNumeric = isNumeric;
-	exports.clone = clone;
-	exports._deepCopy = _deepCopy;
-	exports._extend = _extend;
-	exports._iterate = _iterate;
-	exports._pluck = _pluck;
-	exports._exclude = _exclude;
-	exports._addToSet = _addToSet;
-	exports.objectPath = objectPath;
-	exports.removeClass = removeClass;
-	exports.addClass = addClass;
-	exports.RandomColor = RandomColor;
-	exports.NewID = NewID;
-	exports.applyStyle = applyStyle;
-
-	var _mithril = __webpack_require__(2);
-
-	var _mithril2 = _interopRequireDefault(_mithril);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function _typeof(obj) { return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj; }
-
-	/**
-	 * Polyfill functions
-	 */
-	if (!String.prototype.trim) {
-	    String.prototype.trim = function () {
-	        return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
-	    };
-	}
-
-	/**
-	 * Server config
-	 */
-	var APIHOST = exports.APIHOST = 'http://1111hui.com/json-api';
-	/**
-	 * below request a json-api using proper content-type and plain payload
-	 * @param  {[type]} method [description]
-	 * @param  {[type]} url    [description]
-	 * @param  {[type]} data   [description]
-	 * @return {[type]}        [description]
-	 */
-	var mRequestApi = exports.mRequestApi = function mRequestApi(method, url, data) {
-	    var xhrConfig = function xhrConfig(xhr) {
-	        xhr.setRequestHeader("Content-Type", "application/vnd.api+json");
-	    };
-	    return _mithril2.default.request({ method: method, url: url, data: data, serialize: function serialize(data) {
-	            return JSON.stringify(data);
-	        }, config: xhrConfig });
-	};
-
-	/**
-	 * Helper functions
-	 */
-
-	// html {
-	//   box-sizing: border-box;
-	// }
-	// *, *:before, *:after {
-	//   box-sizing: inherit;
-	// }
-	// add above css code in HTML page to enable BORDER_BOX mode
-	var BORDER_BOX = exports.BORDER_BOX = window.getComputedStyle(document.body).boxSizing === "border-box";
-	var MIN_WIDTH = exports.MIN_WIDTH = 2;
-	var GRID_SIZE = exports.GRID_SIZE = 5;
-	var POINT_WIDTH = exports.POINT_WIDTH = 10;
-	var POINT_HEIGHT = exports.POINT_HEIGHT = 10;
-
-	var SELECTED_CLASSNAME = exports.SELECTED_CLASSNAME = 'selected';
-	var EDITING_CLASSNAME = exports.EDITING_CLASSNAME = 'editing';
-
-	var isAndroid = exports.isAndroid = /(android)/i.test(navigator.userAgent);
-	var isWeiXin = exports.isWeiXin = navigator.userAgent.match(/MicroMessenger\/([\d.]+)/i);
-	var isiOS = exports.isiOS = /iPhone/i.test(navigator.userAgent) || /iPod/i.test(navigator.userAgent) || /iPad/i.test(navigator.userAgent);
-	var isMobile = exports.isMobile = isAndroid || isWeiXin || isiOS;
-
-	// whether it's touch screen
-	var isTouch = exports.isTouch = 'ontouchstart' in window || 'DocumentTouch' in window && document instanceof DocumentTouch;
-
-	// touch event uniform to touchscreen & PC
-	var downE = exports.downE = isMobile ? 'touchstart' : 'mousedown';
-	var moveE = exports.moveE = isMobile ? 'touchmove' : 'mousemove';
-	var upE = exports.upE = isMobile ? 'touchend' : 'mouseup';
-	var leaveE = exports.leaveE = isMobile ? 'touchcancel' : 'mouseleave';
-	var clickE = exports.clickE = isMobile ? 'touchstart' : 'click';
-
-	// http://stackoverflow.com/questions/18082/validate-decimal-numbers-in-javascript-isnumeric?rq=1
-	function isNumeric(n) {
-	    return !isNaN(parseFloat(n)) && isFinite(n);
-	}
-
-	function clone(item) {
-	    if (!item) {
-	        return item;
-	    } // null, undefined values check
-
-	    var types = [Number, String, Boolean],
-	        result;
-
-	    // normalizing primitives if someone did new String('aaa'), or new Number('444');
-	    types.forEach(function (type) {
-	        if (item instanceof type) {
-	            result = type(item);
-	        }
-	    });
-
-	    if (typeof result == "undefined") {
-	        if (Object.prototype.toString.call(item) === "[object Array]") {
-	            result = [];
-	            item.forEach(function (child, index, array) {
-	                result[index] = clone(child);
-	            });
-	        } else if ((typeof item === 'undefined' ? 'undefined' : _typeof(item)) == "object") {
-	            // testing that this is DOM
-	            if (item.nodeType && typeof item.cloneNode == "function") {
-	                var result = item.cloneNode(true);
-	            } else if (!item.prototype) {
-	                // check that this is a literal
-	                if (item instanceof Date) {
-	                    result = new Date(item);
-	                } else {
-	                    // it is an object literal
-	                    result = {};
-	                    for (var i in item) {
-	                        result[i] = clone(item[i]);
-	                    }
-	                }
-	            } else {
-	                // depending what you would like here,
-	                // just keep the reference, or create new object
-	                if (item.constructor) {
-	                    result = new item.constructor();
-	                } else {
-	                    result = item;
-	                }
-	            }
-	        } else {
-	            result = item;
-	        }
-	    }
-	    return result;
-	}
-
-	/**
-	 * COPY First Layer, and Reference sub child
-	 * @param  {obj:obj}, ...args
-	 * @return {obj}
-	 */
-	function _deepCopy(obj) {
-	    obj = obj || {};
-	    if (arguments.length < 2) return obj;
-	    for (var i = 1; i < arguments.length; i++) {
-	        var dest = arguments[i];
-	        for (var prop in dest) {
-	            if (dest.hasOwnProperty(prop)) {
-	                var type = Object.prototype.toString.call(dest[prop]);
-	                if (type === '[object Object]') {
-	                    obj[prop] = obj[prop] || {};
-	                    _deepCopy(obj[prop], dest[prop]);
-	                } else if (type === '[object Array]') {
-	                    obj[prop] = obj[prop] || [];
-	                    _deepCopy(obj[prop], dest[prop]);
-	                } else {
-	                    obj[prop] = clone(dest[prop]);
-	                }
-	            }
-	        }
-	    }
-	    return obj;
-	}
-
-	function _extend(obj) {
-	    obj = obj || {};
-	    if (arguments.length < 2) return obj;
-	    for (var i = 1; i < arguments.length; i++) {
-	        var dest = arguments[i];
-	        for (var prop in dest) {
-	            if (dest.hasOwnProperty(prop)) {
-	                var type = Object.prototype.toString.call(dest[prop]);
-	                if (type === '[object Object]') {
-	                    obj[prop] = obj[prop] || {};
-	                    _extend(obj[prop], dest[prop]);
-	                } else if (type === '[object Array]') {
-	                    obj[prop] = obj[prop] || [];
-	                    _extend(obj[prop], dest[prop]);
-	                } else {
-	                    obj[prop] = dest[prop];
-	                }
-	            }
-	        }
-	    }
-	    return obj;
-	}
-
-	function _iterate(obj, condition, valueCallback) {
-	    var list = {};
-	    for (var name in obj) {
-	        if (obj.hasOwnProperty(name) && condition ? condition(name) : true) {
-	            list[name] = valueCallback ? valueCallback(obj[name]) : obj[name];
-	        }
-	    }
-	    return list;
-	}
-	function _pluck(obj, propArr) {
-	    if (!propArr || propArr.constructor != Array) return obj;
-	    return _iterate(obj, function (name) {
-	        return propArr.indexOf(name) >= 0;
-	    });
-	}
-	function _exclude(obj, propArr) {
-	    if (!propArr || propArr.constructor != Array) return obj;
-	    return _iterate(obj, function (name) {
-	        return propArr.indexOf(name) < 0;
-	    });
-	}
-	function _addToSet() {
-	    var i,
-	        isFirst,
-	        args = Array.prototype.slice.call(arguments, 0);
-	    if (typeof args[0] == 'boolean') isFirst = args.shift();
-	    var arr = args.shift();
-	    if (arr === null || (typeof arr === 'undefined' ? 'undefined' : _typeof(arr)) !== 'object') arr = [];
-	    for (i in args) {
-	        if (arr.indexOf(args[i]) < 0) {
-	            isFirst ? arr.unshift(args[i]) : arr.push(args[i]);
-	        }
-	    }
-	    return arr;
-	}
-
-	function objectPath(obj, is, value) {
-	    if (typeof is == 'string') return objectPath(obj, is.split('.'), value);else if (is.length == 1 && value !== undefined) return obj[is[0]] = value;else if (is.length == 0) return obj;else return objectPath(obj[is[0]], is.slice(1), value);
-	}
-
-	var addToObject = exports.addToObject = function addToObject(obj, key, value) {
-	    if (Object.prototype.toString.call(obj) == "[object Array]") {
-	        if (obj.indexOf(key) < 0) obj.push(key);
-	    } else {
-	        if (!(key in obj)) {
-	            obj[key] = value;
-	        }
-	    }
-	};
-
-	function removeClass(classProp, class1, class2, etc) {
-	    var list = classProp.split(/\s+/);
-	    var args = Array.prototype.slice.call(arguments, 1);
-	    return list.filter(function (v) {
-	        return args.indexOf(v) == -1;
-	    }).join(' ');
-	}
-
-	function addClass(classProp, class1, class2, etc) {
-	    var args = Array.prototype.slice.call(arguments, 0);
-	    args[0] = args[0].split(/\s+/);
-	    _addToSet.apply(null, args);
-	    return args[0].join(' ');
-	}
-
-	function RandomColor() {
-	    return '#' + Math.random().toString(16).slice(-6);
-	}
-
-	function NewID() {
-	    return +new Date() + "_" + Math.round(Math.random() * 1e6).toString(36);
-	}
-
-	function applyStyle(el, styleObj) {
-	    var pxReg = /^padding|^margin|size$|width$|height$|radius$|left$|top$|right$|bottom$/i;
-	    var quoteReg = /family$/i;
-	    // try{ el.style = el.style||{} } catch(e){}
-	    for (var i in styleObj) {
-	        var attr = styleObj[i];
-	        attr = pxReg.test(i) ? attr + 'px' : attr;
-	        attr = quoteReg.test(i) ? '"' + attr + '"' : attr;
-	        el.style[i] = attr;
-	    }
-	}
-	var rectsIntersect = exports.rectsIntersect = function rectsIntersect(r1, r2) {
-	    return r2.left <= r1.left + r1.width && r2.left + r2.width >= r1.left && r2.top <= r1.top + r1.height && r2.top + r2.height >= r1.top;
-	};
-
-	var debug = exports.debug = function debug(msg) {
-	    document.querySelector('#debug').innerHTML = msg;
-	};
-
-	var _excludeJsonStyle = exports._excludeJsonStyle = function _excludeJsonStyle(propStyle) {
-	    return _exclude(propStyle, ['borderWidth', 'borderStyle', 'borderColor', 'backgroundColor', 'padding']);
-	};
-	/**
-	 * applyProp from this.Prop, remove unused props, and apply style to int width/height etc.
-	 * @param  {[type]} thisProp [description]
-	 * @return {[type]}          [description]
-	 */
-	var applyProp = exports.applyProp = function applyProp(thisProp) {
-	    var Prop = _exclude(thisProp, ['eventData', 'isNew']);
-	    Prop.style = clone(thisProp.style);
-	    if (thisProp.style.borderWidth && thisProp.style.borderStyle && thisProp.style.borderColor) {
-	        Prop.style.border = thisProp.style.borderWidth + 'px ' + thisProp.style.borderStyle + ' ' + thisProp.style.borderColor;
-	    }
-	    applyStyle(Prop, thisProp.style);
-	    Prop.style = _excludeJsonStyle(Prop.style);
-	    if (Prop.class) Prop.class = Prop.class.replace(/\s+/, ' ').trim();
-	    if (Prop.className) Prop.className = Prop.className.replace(/\s+/, ' ').trim();
-	    return Prop;
-	};
-
-	/**
-	 * get outer rect of div/container that had a border style
-	 * @param  {[type]} style [description]
-	 * @return {[type]}       [description]
-	 */
-	var getOuterRect = exports.getOuterRect = function getOuterRect(style) {
-	    return {
-	        left: style.left,
-	        top: style.top,
-	        width: BORDER_BOX ? style.width : style.width + (style.borderLeftWidth || 0) + (style.borderRightWidth || 0),
-	        height: BORDER_BOX ? style.height : style.height + (style.borderTopWidth || 0) + (style.borderBottomWidth || 0)
-	    };
-	};
-
-	/**
-	 * curTool for canvas & layer to determine type
-	 * @type {String}
-	 */
-	var curTool = exports.curTool = 'stage';
 
 /***/ }
 /******/ ]);

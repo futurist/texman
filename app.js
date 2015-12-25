@@ -46,7 +46,7 @@
 
 	'use strict';
 
-	var _global = __webpack_require__(4);
+	var _global = __webpack_require__(1);
 
 	var Global = _interopRequireWildcard(_global);
 
@@ -54,7 +54,7 @@
 
 	var _mithril2 = _interopRequireDefault(_mithril);
 
-	var _canvas = __webpack_require__(1);
+	var _canvas = __webpack_require__(4);
 
 	var _canvas2 = _interopRequireDefault(_canvas);
 
@@ -89,309 +89,345 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	  value: true
+	    value: true
 	});
+	exports.curTool = exports.getOuterRect = exports.applyProp = exports._excludeJsonStyle = exports.debug = exports.rectsIntersect = exports.addToObject = exports.clickE = exports.leaveE = exports.upE = exports.moveE = exports.downE = exports.isTouch = exports.isMobile = exports.isiOS = exports.isWeiXin = exports.isAndroid = exports.EDITING_CLASSNAME = exports.SELECTED_CLASSNAME = exports.POINT_HEIGHT = exports.POINT_WIDTH = exports.GRID_SIZE = exports.MIN_WIDTH = exports.BORDER_BOX = exports.mRequestApi = exports.APIHOST = undefined;
+	exports.isNumeric = isNumeric;
+	exports.clone = clone;
+	exports._deepCopy = _deepCopy;
+	exports._extend = _extend;
+	exports._iterate = _iterate;
+	exports._pluck = _pluck;
+	exports._exclude = _exclude;
+	exports._addToSet = _addToSet;
+	exports.objectPath = objectPath;
+	exports.removeClass = removeClass;
+	exports.addClass = addClass;
+	exports.RandomColor = RandomColor;
+	exports.NewID = NewID;
+	exports.applyStyle = applyStyle;
 
 	var _mithril = __webpack_require__(2);
 
 	var _mithril2 = _interopRequireDefault(_mithril);
 
-	var _global = __webpack_require__(4);
-
-	var Global = _interopRequireWildcard(_global);
-
-	var _WidgetDiv = __webpack_require__(5);
-
-	var _WidgetDiv2 = _interopRequireDefault(_WidgetDiv);
-
-	var _WidgetCanvas = __webpack_require__(15);
-
-	var _WidgetCanvas2 = _interopRequireDefault(_WidgetCanvas);
-
-	var _JsonEditor = __webpack_require__(11);
-
-	var _JsonEditor2 = _interopRequireDefault(_JsonEditor);
-
-	var _Events = __webpack_require__(17);
-
-	var _Events2 = _interopRequireDefault(_Events);
-
-	var _UndoManager = __webpack_require__(13);
-
-	var _UndoManager2 = _interopRequireDefault(_UndoManager);
-
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	function _typeof(obj) { return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj; }
 
-	function buildStageFromData(data) {
-	  var parent = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
-
-	  var widget = data.classType == 'canvas' ? new _WidgetCanvas2.default(parent, data.jsonData) : new _WidgetDiv2.default(parent, data.jsonData, data.jsonData.type);
-	  widget.children = data.childWidget.map(function (v) {
-	    return buildStageFromData(v, widget);
-	  });
-	  return widget;
+	/**
+	 * Polyfill functions
+	 */
+	if (!String.prototype.trim) {
+	    String.prototype.trim = function () {
+	        return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+	    };
 	}
 
-	var Canvas = function Canvas(savedData) {
-	  _classCallCheck(this, Canvas);
-
-	  /**
-	   * Main Code below
-	   */
-	  var container = document.querySelector('#container');
-
-	  var Canvas1;
-	  if (savedData && savedData.data && savedData.data.attributes && savedData.data.attributes.dom) {
-	    Canvas1 = buildStageFromData(savedData.data.attributes.dom);
-	  } else {
-	    Canvas1 = new _WidgetCanvas2.default(null, {
-	      attrs: { title: 'StageName', name: 'Canvas1' },
-	      style: { left: 100, top: 100, width: 800, height: 500, backgroundType: 'color', backgroundColor: '#eeeeee', background: '#eeeeee' }
-	    });
-	  }
-
-	  _mithril2.default.mount(container, {
-	    view: function view() {
-	      return (0, _mithril2.default)('.mainCanvas', { config: function config(el, isInit, context) {
-	          context.retain = true;
-	        } }, [(0, _mithril2.default)('h2', Canvas1.Prop.title), Canvas1.getView()]);
-	    }
-	  });
-
-	  window.Canvas1 = Canvas1;
-	  Global.curTool = 'plain';
-
-	  /**
-	   * DOM EVENT BELOW
-	   */
-	  // check mouse out of Main Canvas, to prevent mouse out problem
-	  container.onmouseover = function (e) {
-	    if (e.target.id == 'container') Canvas1.mouseUpFunc(e);
-	  };
-
-	  // short key event
-	  window.addEventListener('keydown', handleShortKeyDown);
-	  window.addEventListener('keyup', handleShortKeyUp);
-
-	  var SHIFT_KEY_DOWN = 0;
-	  var CTRL_KEY_DOWN = 0;
-	  var META_KEY_DOWN = 0;
-
-	  function isInputElementActive() {
-	    var isInput = false;
-	    // Some shortcuts should not get handled if a control/input element
-	    // is selected.
-	    var curElement = document.activeElement || document.querySelector(':focus');
-	    var curElementTagName = curElement && curElement.tagName.toUpperCase();
-	    if (curElementTagName === 'INPUT' || curElementTagName === 'TEXTAREA' || curElementTagName === 'SELECT') {
-
-	      isInput = true;
-	    }
-	    return isInput;
-	  }
-
-	  function handleShortKeyUp(evt) {
-	    var isInput = isInputElementActive();
-	    if (isInput) return;
-	    var cmd = (evt.ctrlKey ? 1 : 0) | (evt.altKey ? 2 : 0) | (evt.shiftKey ? 4 : 0) | (evt.metaKey ? 8 : 0);
-
-	    if (/control/i.test(evt.keyIdentifier)) {
-	      //ctrl key
-	      CTRL_KEY_DOWN = 0;
-	    }
-	    if (/shift/i.test(evt.keyIdentifier)) {
-	      //ctrl key
-	      SHIFT_KEY_DOWN = 0;
-	    }
-
-	    if (/meta/i.test(evt.keyIdentifier)) {
-	      //ctrl key
-	      META_KEY_DOWN = 0;
-	    }
-	  }
-
-	  function handleShortKeyDown(evt) {
-	    var handled = false;
-	    var isInput = isInputElementActive();
-	    if (isInput) return;
-
-	    var cmd = (evt.ctrlKey ? 1 : 0) | (evt.altKey ? 2 : 0) | (evt.shiftKey ? 4 : 0) | (evt.metaKey ? 8 : 0);
-
-	    if (cmd === 8) {
-	      // meta
-	      META_KEY_DOWN = 1;
-	    }
-	    if (cmd === 0) {
-	      // no control key pressed at all.
-
-	      // console.log(evt, evt.keyCode);
-	      switch (evt.keyCode) {
-	        case 8: //backspace key : Delete the shape
-	        case 46:
-	          //delete key : Delete the shape
-
-	          _Events2.default.emit('remove', evt);
-	          handled = true;
-	          break;
-
-	        case 37:
-	          // left
-	          _Events2.default.emit('moveBy', { x: -Global.GRID_SIZE, y: 0 });
-	          handled = true;
-	          break;
-
-	        case 38:
-	          // up
-	          _Events2.default.emit('moveBy', { x: 0, y: -Global.GRID_SIZE });
-	          handled = true;
-	          break;
-
-	        case 39:
-	          // right
-	          _Events2.default.emit('moveBy', { x: Global.GRID_SIZE, y: 0 });
-	          handled = true;
-	          break;
-
-	        case 40:
-	          // down
-	          _Events2.default.emit('moveBy', { x: 0, y: Global.GRID_SIZE });
-	          handled = true;
-	          break;
-
-	      }
-	    }
-
-	    if (cmd === 1 || cmd === 8) {
-	      //ctrl key
-	      CTRL_KEY_DOWN = 1;
-	      switch (evt.keyCode) {
-
-	        case 90:
-	          //Ctrl+Z
-	          _UndoManager2.default.undo();
-	          handled = true;
-	          break;
-
-	        case 68:
-	          //Ctrl+D
-	          _Events2.default.emit('duplicate', evt);
-	          handled = true;
-	          break;
-
-	        case 37:
-	          // left
-	          _Events2.default.emit('moveBy', { x: -1, y: 0 });
-	          handled = true;
-	          break;
-
-	        case 38:
-	          // up
-	          _Events2.default.emit('moveBy', { x: 0, y: -1 });
-	          handled = true;
-	          break;
-
-	        case 39:
-	          // right
-	          _Events2.default.emit('moveBy', { x: 1, y: 0 });
-	          handled = true;
-	          break;
-
-	        case 40:
-	          // down
-	          _Events2.default.emit('moveBy', { x: 0, y: 1 });
-	          handled = true;
-	          break;
-
-	        case 90:
-	          //Ctrl+Z
-	          handled = true;
-	          break;
-	      }
-	    }
-
-	    if (cmd === 4) {
-	      // shift
-	      SHIFT_KEY_DOWN = 1;
-	      switch (evt.keyCode) {
-
-	        case 37:
-	          // left
-	          _Events2.default.emit('resizeBy', { w: -Global.GRID_SIZE, h: 0 });
-	          handled = true;
-	          break;
-
-	        case 38:
-	          // up
-	          _Events2.default.emit('resizeBy', { w: 0, h: -Global.GRID_SIZE });
-	          handled = true;
-	          break;
-
-	        case 39:
-	          // right
-	          _Events2.default.emit('resizeBy', { w: Global.GRID_SIZE, h: 0 });
-	          handled = true;
-	          break;
-
-	        case 40:
-	          // down
-	          _Events2.default.emit('resizeBy', { w: 0, h: Global.GRID_SIZE });
-	          handled = true;
-	          break;
-
-	      }
-	    }
-
-	    if (cmd === 5 || cmd === 12) {
-	      // ctrl+shift
-	      SHIFT_KEY_DOWN = 1;
-	      CTRL_KEY_DOWN = 1;
-
-	      switch (evt.keyCode) {
-	        case 90:
-	          //Ctrl+Shift+Z
-	          _UndoManager2.default.redo();
-	          handled = true;
-	          break;
-
-	        case 37:
-	          // left
-	          _Events2.default.emit('resizeBy', { w: -1, h: 0 });
-	          handled = true;
-	          break;
-
-	        case 38:
-	          // up
-	          _Events2.default.emit('resizeBy', { w: 0, h: -1 });
-	          handled = true;
-	          break;
-
-	        case 39:
-	          // right
-	          _Events2.default.emit('resizeBy', { w: 1, h: 0 });
-	          handled = true;
-	          break;
-
-	        case 40:
-	          // down
-	          _Events2.default.emit('resizeBy', { w: 0, h: 1 });
-	          handled = true;
-	          break;
-
-	      }
-	    }
-
-	    if (handled) {
-	      evt.preventDefault();
-	      return;
-	    }
-	  }
+	/**
+	 * Server config
+	 */
+	var APIHOST = exports.APIHOST = 'http://1111hui.com/json-api';
+	/**
+	 * below request a json-api using proper content-type and plain payload
+	 * @param  {[type]} method [description]
+	 * @param  {[type]} url    [description]
+	 * @param  {[type]} data   [description]
+	 * @return {[type]}        [description]
+	 */
+	var mRequestApi = exports.mRequestApi = function mRequestApi(method, url, data) {
+	    var xhrConfig = function xhrConfig(xhr) {
+	        xhr.setRequestHeader("Content-Type", "application/vnd.api+json");
+	    };
+	    var extract = function extract(xhr, xhrOptions) {
+	        try {
+	            JSON.parse(xhr.responseText);
+	            return xhr.responseText;
+	        } catch (e) {
+	            var errorMsg = '{ errors:{status:' + xhr.status + ', title:' + xhr.status + ', detail:' + xhr.responseText + ' } }';
+	            return JSON.stringify(errorMsg);
+	        }
+	    };
+	    return _mithril2.default.request({ method: method, url: url, data: data, extract: extract, serialize: function serialize(data) {
+	            return JSON.stringify(data);
+	        }, config: xhrConfig });
 	};
 
-	exports.default = Canvas;
+	/**
+	 * Helper functions
+	 */
+
+	// html {
+	//   box-sizing: border-box;
+	// }
+	// *, *:before, *:after {
+	//   box-sizing: inherit;
+	// }
+	// add above css code in HTML page to enable BORDER_BOX mode
+	var BORDER_BOX = exports.BORDER_BOX = window.getComputedStyle(document.body).boxSizing === "border-box";
+	var MIN_WIDTH = exports.MIN_WIDTH = 2;
+	var GRID_SIZE = exports.GRID_SIZE = 5;
+	var POINT_WIDTH = exports.POINT_WIDTH = 10;
+	var POINT_HEIGHT = exports.POINT_HEIGHT = 10;
+
+	var SELECTED_CLASSNAME = exports.SELECTED_CLASSNAME = 'selected';
+	var EDITING_CLASSNAME = exports.EDITING_CLASSNAME = 'editing';
+
+	var isAndroid = exports.isAndroid = /(android)/i.test(navigator.userAgent);
+	var isWeiXin = exports.isWeiXin = navigator.userAgent.match(/MicroMessenger\/([\d.]+)/i);
+	var isiOS = exports.isiOS = /iPhone/i.test(navigator.userAgent) || /iPod/i.test(navigator.userAgent) || /iPad/i.test(navigator.userAgent);
+	var isMobile = exports.isMobile = isAndroid || isWeiXin || isiOS;
+
+	// whether it's touch screen
+	var isTouch = exports.isTouch = 'ontouchstart' in window || 'DocumentTouch' in window && document instanceof DocumentTouch;
+
+	// touch event uniform to touchscreen & PC
+	var downE = exports.downE = isMobile ? 'touchstart' : 'mousedown';
+	var moveE = exports.moveE = isMobile ? 'touchmove' : 'mousemove';
+	var upE = exports.upE = isMobile ? 'touchend' : 'mouseup';
+	var leaveE = exports.leaveE = isMobile ? 'touchcancel' : 'mouseleave';
+	var clickE = exports.clickE = isMobile ? 'touchstart' : 'click';
+
+	// http://stackoverflow.com/questions/18082/validate-decimal-numbers-in-javascript-isnumeric?rq=1
+	function isNumeric(n) {
+	    return !isNaN(parseFloat(n)) && isFinite(n);
+	}
+
+	function clone(item) {
+	    if (!item) {
+	        return item;
+	    } // null, undefined values check
+
+	    var types = [Number, String, Boolean],
+	        result;
+
+	    // normalizing primitives if someone did new String('aaa'), or new Number('444');
+	    types.forEach(function (type) {
+	        if (item instanceof type) {
+	            result = type(item);
+	        }
+	    });
+
+	    if (typeof result == "undefined") {
+	        if (Object.prototype.toString.call(item) === "[object Array]") {
+	            result = [];
+	            item.forEach(function (child, index, array) {
+	                result[index] = clone(child);
+	            });
+	        } else if ((typeof item === 'undefined' ? 'undefined' : _typeof(item)) == "object") {
+	            // testing that this is DOM
+	            if (item.nodeType && typeof item.cloneNode == "function") {
+	                var result = item.cloneNode(true);
+	            } else if (!item.prototype) {
+	                // check that this is a literal
+	                if (item instanceof Date) {
+	                    result = new Date(item);
+	                } else {
+	                    // it is an object literal
+	                    result = {};
+	                    for (var i in item) {
+	                        result[i] = clone(item[i]);
+	                    }
+	                }
+	            } else {
+	                // depending what you would like here,
+	                // just keep the reference, or create new object
+	                if (item.constructor) {
+	                    result = new item.constructor();
+	                } else {
+	                    result = item;
+	                }
+	            }
+	        } else {
+	            result = item;
+	        }
+	    }
+	    return result;
+	}
+
+	/**
+	 * COPY First Layer, and Reference sub child
+	 * @param  {obj:obj}, ...args
+	 * @return {obj}
+	 */
+	function _deepCopy(obj) {
+	    obj = obj || {};
+	    if (arguments.length < 2) return obj;
+	    for (var i = 1; i < arguments.length; i++) {
+	        var dest = arguments[i];
+	        for (var prop in dest) {
+	            if (dest.hasOwnProperty(prop)) {
+	                var type = Object.prototype.toString.call(dest[prop]);
+	                if (type === '[object Object]') {
+	                    obj[prop] = obj[prop] || {};
+	                    _deepCopy(obj[prop], dest[prop]);
+	                } else if (type === '[object Array]') {
+	                    obj[prop] = obj[prop] || [];
+	                    _deepCopy(obj[prop], dest[prop]);
+	                } else {
+	                    obj[prop] = clone(dest[prop]);
+	                }
+	            }
+	        }
+	    }
+	    return obj;
+	}
+
+	function _extend(obj) {
+	    obj = obj || {};
+	    if (arguments.length < 2) return obj;
+	    for (var i = 1; i < arguments.length; i++) {
+	        var dest = arguments[i];
+	        for (var prop in dest) {
+	            if (dest.hasOwnProperty(prop)) {
+	                var type = Object.prototype.toString.call(dest[prop]);
+	                if (type === '[object Object]') {
+	                    obj[prop] = obj[prop] || {};
+	                    _extend(obj[prop], dest[prop]);
+	                } else if (type === '[object Array]') {
+	                    obj[prop] = obj[prop] || [];
+	                    _extend(obj[prop], dest[prop]);
+	                } else {
+	                    obj[prop] = dest[prop];
+	                }
+	            }
+	        }
+	    }
+	    return obj;
+	}
+
+	function _iterate(obj, condition, valueCallback) {
+	    var list = {};
+	    for (var name in obj) {
+	        if (obj.hasOwnProperty(name) && condition ? condition(name) : true) {
+	            list[name] = valueCallback ? valueCallback(obj[name]) : obj[name];
+	        }
+	    }
+	    return list;
+	}
+	function _pluck(obj, propArr) {
+	    if (!propArr || propArr.constructor != Array) return obj;
+	    return _iterate(obj, function (name) {
+	        return propArr.indexOf(name) >= 0;
+	    });
+	}
+	function _exclude(obj, propArr) {
+	    if (!propArr || propArr.constructor != Array) return obj;
+	    return _iterate(obj, function (name) {
+	        return propArr.indexOf(name) < 0;
+	    });
+	}
+	function _addToSet() {
+	    var i,
+	        isFirst,
+	        args = Array.prototype.slice.call(arguments, 0);
+	    if (typeof args[0] == 'boolean') isFirst = args.shift();
+	    var arr = args.shift();
+	    if (arr === null || (typeof arr === 'undefined' ? 'undefined' : _typeof(arr)) !== 'object') arr = [];
+	    for (i in args) {
+	        if (arr.indexOf(args[i]) < 0) {
+	            isFirst ? arr.unshift(args[i]) : arr.push(args[i]);
+	        }
+	    }
+	    return arr;
+	}
+
+	function objectPath(obj, is, value) {
+	    if (typeof is == 'string') return objectPath(obj, is.split('.'), value);else if (is.length == 1 && value !== undefined) return obj[is[0]] = value;else if (is.length == 0) return obj;else return objectPath(obj[is[0]], is.slice(1), value);
+	}
+
+	var addToObject = exports.addToObject = function addToObject(obj, key, value) {
+	    if (Object.prototype.toString.call(obj) == "[object Array]") {
+	        if (obj.indexOf(key) < 0) obj.push(key);
+	    } else {
+	        if (!(key in obj)) {
+	            obj[key] = value;
+	        }
+	    }
+	};
+
+	function removeClass(classProp, class1, class2, etc) {
+	    var list = classProp.split(/\s+/);
+	    var args = Array.prototype.slice.call(arguments, 1);
+	    return list.filter(function (v) {
+	        return args.indexOf(v) == -1;
+	    }).join(' ');
+	}
+
+	function addClass(classProp, class1, class2, etc) {
+	    var args = Array.prototype.slice.call(arguments, 0);
+	    args[0] = args[0].split(/\s+/);
+	    _addToSet.apply(null, args);
+	    return args[0].join(' ');
+	}
+
+	function RandomColor() {
+	    return '#' + Math.random().toString(16).slice(-6);
+	}
+
+	function NewID() {
+	    return +new Date() + "_" + Math.round(Math.random() * 1e6).toString(36);
+	}
+
+	function applyStyle(el, styleObj) {
+	    var pxReg = /^padding|^margin|size$|width$|height$|radius$|left$|top$|right$|bottom$/i;
+	    var quoteReg = /family$/i;
+	    // try{ el.style = el.style||{} } catch(e){}
+	    for (var i in styleObj) {
+	        var attr = styleObj[i];
+	        attr = pxReg.test(i) ? attr + 'px' : attr;
+	        attr = quoteReg.test(i) ? '"' + attr + '"' : attr;
+	        el.style[i] = attr;
+	    }
+	}
+	var rectsIntersect = exports.rectsIntersect = function rectsIntersect(r1, r2) {
+	    return r2.left <= r1.left + r1.width && r2.left + r2.width >= r1.left && r2.top <= r1.top + r1.height && r2.top + r2.height >= r1.top;
+	};
+
+	var debug = exports.debug = function debug(msg) {
+	    document.querySelector('#debug').innerHTML = msg;
+	};
+
+	var _excludeJsonStyle = exports._excludeJsonStyle = function _excludeJsonStyle(propStyle) {
+	    return _exclude(propStyle, ['borderWidth', 'borderStyle', 'borderColor', 'backgroundColor', 'padding']);
+	};
+	/**
+	 * applyProp from this.Prop, remove unused props, and apply style to int width/height etc.
+	 * @param  {[type]} thisProp [description]
+	 * @return {[type]}          [description]
+	 */
+	var applyProp = exports.applyProp = function applyProp(thisProp) {
+	    var Prop = _exclude(thisProp, ['eventData', 'isNew']);
+	    Prop.style = clone(thisProp.style);
+	    if (thisProp.style.borderWidth && thisProp.style.borderStyle && thisProp.style.borderColor) {
+	        Prop.style.border = thisProp.style.borderWidth + 'px ' + thisProp.style.borderStyle + ' ' + thisProp.style.borderColor;
+	    }
+	    applyStyle(Prop, thisProp.style);
+	    Prop.style = _excludeJsonStyle(Prop.style);
+	    if (Prop.class) Prop.class = Prop.class.replace(/\s+/, ' ').trim();
+	    if (Prop.className) Prop.className = Prop.className.replace(/\s+/, ' ').trim();
+	    return Prop;
+	};
+
+	/**
+	 * get outer rect of div/container that had a border style
+	 * @param  {[type]} style [description]
+	 * @return {[type]}       [description]
+	 */
+	var getOuterRect = exports.getOuterRect = function getOuterRect(style) {
+	    return {
+	        left: style.left,
+	        top: style.top,
+	        width: BORDER_BOX ? style.width : style.width + (style.borderLeftWidth || 0) + (style.borderRightWidth || 0),
+	        height: BORDER_BOX ? style.height : style.height + (style.borderTopWidth || 0) + (style.borderBottomWidth || 0)
+	    };
+	};
+
+	/**
+	 * curTool for canvas & layer to determine type
+	 * @type {String}
+	 */
+	var curTool = exports.curTool = 'stage';
 
 /***/ },
 /* 2 */
@@ -1582,336 +1618,309 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	    value: true
+	  value: true
 	});
-	exports.curTool = exports.getOuterRect = exports.applyProp = exports._excludeJsonStyle = exports.debug = exports.rectsIntersect = exports.addToObject = exports.clickE = exports.leaveE = exports.upE = exports.moveE = exports.downE = exports.isTouch = exports.isMobile = exports.isiOS = exports.isWeiXin = exports.isAndroid = exports.EDITING_CLASSNAME = exports.SELECTED_CLASSNAME = exports.POINT_HEIGHT = exports.POINT_WIDTH = exports.GRID_SIZE = exports.MIN_WIDTH = exports.BORDER_BOX = exports.mRequestApi = exports.APIHOST = undefined;
-	exports.isNumeric = isNumeric;
-	exports.clone = clone;
-	exports._deepCopy = _deepCopy;
-	exports._extend = _extend;
-	exports._iterate = _iterate;
-	exports._pluck = _pluck;
-	exports._exclude = _exclude;
-	exports._addToSet = _addToSet;
-	exports.objectPath = objectPath;
-	exports.removeClass = removeClass;
-	exports.addClass = addClass;
-	exports.RandomColor = RandomColor;
-	exports.NewID = NewID;
-	exports.applyStyle = applyStyle;
 
 	var _mithril = __webpack_require__(2);
 
 	var _mithril2 = _interopRequireDefault(_mithril);
 
+	var _global = __webpack_require__(1);
+
+	var Global = _interopRequireWildcard(_global);
+
+	var _WidgetDiv = __webpack_require__(5);
+
+	var _WidgetDiv2 = _interopRequireDefault(_WidgetDiv);
+
+	var _WidgetCanvas = __webpack_require__(15);
+
+	var _WidgetCanvas2 = _interopRequireDefault(_WidgetCanvas);
+
+	var _JsonEditor = __webpack_require__(11);
+
+	var _JsonEditor2 = _interopRequireDefault(_JsonEditor);
+
+	var _Events = __webpack_require__(17);
+
+	var _Events2 = _interopRequireDefault(_Events);
+
+	var _UndoManager = __webpack_require__(13);
+
+	var _UndoManager2 = _interopRequireDefault(_UndoManager);
+
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	function _typeof(obj) { return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj; }
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	/**
-	 * Polyfill functions
-	 */
-	if (!String.prototype.trim) {
-	    String.prototype.trim = function () {
-	        return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
-	    };
+	function buildStageFromData(data) {
+	  var parent = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
+
+	  var widget = data.classType == 'canvas' ? new _WidgetCanvas2.default(parent, data.jsonData) : new _WidgetDiv2.default(parent, data.jsonData, data.jsonData.type);
+	  widget.children = data.childWidget.map(function (v) {
+	    return buildStageFromData(v, widget);
+	  });
+	  return widget;
 	}
 
-	/**
-	 * Server config
-	 */
-	var APIHOST = exports.APIHOST = 'http://1111hui.com/json-api';
-	/**
-	 * below request a json-api using proper content-type and plain payload
-	 * @param  {[type]} method [description]
-	 * @param  {[type]} url    [description]
-	 * @param  {[type]} data   [description]
-	 * @return {[type]}        [description]
-	 */
-	var mRequestApi = exports.mRequestApi = function mRequestApi(method, url, data) {
-	    var xhrConfig = function xhrConfig(xhr) {
-	        xhr.setRequestHeader("Content-Type", "application/vnd.api+json");
-	    };
-	    return _mithril2.default.request({ method: method, url: url, data: data, serialize: function serialize(data) {
-	            return JSON.stringify(data);
-	        }, config: xhrConfig });
-	};
+	var Canvas = function Canvas(savedData) {
+	  _classCallCheck(this, Canvas);
 
-	/**
-	 * Helper functions
-	 */
+	  /**
+	   * Main Code below
+	   */
+	  var container = document.querySelector('#container');
 
-	// html {
-	//   box-sizing: border-box;
-	// }
-	// *, *:before, *:after {
-	//   box-sizing: inherit;
-	// }
-	// add above css code in HTML page to enable BORDER_BOX mode
-	var BORDER_BOX = exports.BORDER_BOX = window.getComputedStyle(document.body).boxSizing === "border-box";
-	var MIN_WIDTH = exports.MIN_WIDTH = 2;
-	var GRID_SIZE = exports.GRID_SIZE = 5;
-	var POINT_WIDTH = exports.POINT_WIDTH = 10;
-	var POINT_HEIGHT = exports.POINT_HEIGHT = 10;
-
-	var SELECTED_CLASSNAME = exports.SELECTED_CLASSNAME = 'selected';
-	var EDITING_CLASSNAME = exports.EDITING_CLASSNAME = 'editing';
-
-	var isAndroid = exports.isAndroid = /(android)/i.test(navigator.userAgent);
-	var isWeiXin = exports.isWeiXin = navigator.userAgent.match(/MicroMessenger\/([\d.]+)/i);
-	var isiOS = exports.isiOS = /iPhone/i.test(navigator.userAgent) || /iPod/i.test(navigator.userAgent) || /iPad/i.test(navigator.userAgent);
-	var isMobile = exports.isMobile = isAndroid || isWeiXin || isiOS;
-
-	// whether it's touch screen
-	var isTouch = exports.isTouch = 'ontouchstart' in window || 'DocumentTouch' in window && document instanceof DocumentTouch;
-
-	// touch event uniform to touchscreen & PC
-	var downE = exports.downE = isMobile ? 'touchstart' : 'mousedown';
-	var moveE = exports.moveE = isMobile ? 'touchmove' : 'mousemove';
-	var upE = exports.upE = isMobile ? 'touchend' : 'mouseup';
-	var leaveE = exports.leaveE = isMobile ? 'touchcancel' : 'mouseleave';
-	var clickE = exports.clickE = isMobile ? 'touchstart' : 'click';
-
-	// http://stackoverflow.com/questions/18082/validate-decimal-numbers-in-javascript-isnumeric?rq=1
-	function isNumeric(n) {
-	    return !isNaN(parseFloat(n)) && isFinite(n);
-	}
-
-	function clone(item) {
-	    if (!item) {
-	        return item;
-	    } // null, undefined values check
-
-	    var types = [Number, String, Boolean],
-	        result;
-
-	    // normalizing primitives if someone did new String('aaa'), or new Number('444');
-	    types.forEach(function (type) {
-	        if (item instanceof type) {
-	            result = type(item);
-	        }
+	  var Canvas1;
+	  if (savedData && savedData.data && savedData.data.attributes && savedData.data.attributes.dom) {
+	    Canvas1 = buildStageFromData(savedData.data.attributes.dom);
+	  } else {
+	    Canvas1 = new _WidgetCanvas2.default(null, {
+	      attrs: { title: 'StageName', name: 'Canvas1' },
+	      style: { left: 100, top: 100, width: 800, height: 500, backgroundType: 'color', backgroundColor: '#eeeeee', background: '#eeeeee' }
 	    });
+	  }
 
-	    if (typeof result == "undefined") {
-	        if (Object.prototype.toString.call(item) === "[object Array]") {
-	            result = [];
-	            item.forEach(function (child, index, array) {
-	                result[index] = clone(child);
-	            });
-	        } else if ((typeof item === 'undefined' ? 'undefined' : _typeof(item)) == "object") {
-	            // testing that this is DOM
-	            if (item.nodeType && typeof item.cloneNode == "function") {
-	                var result = item.cloneNode(true);
-	            } else if (!item.prototype) {
-	                // check that this is a literal
-	                if (item instanceof Date) {
-	                    result = new Date(item);
-	                } else {
-	                    // it is an object literal
-	                    result = {};
-	                    for (var i in item) {
-	                        result[i] = clone(item[i]);
-	                    }
-	                }
-	            } else {
-	                // depending what you would like here,
-	                // just keep the reference, or create new object
-	                if (item.constructor) {
-	                    result = new item.constructor();
-	                } else {
-	                    result = item;
-	                }
-	            }
-	        } else {
-	            result = item;
-	        }
+	  _mithril2.default.mount(container, {
+	    view: function view() {
+	      return (0, _mithril2.default)('.mainCanvas', { config: function config(el, isInit, context) {
+	          context.retain = true;
+	        } }, [(0, _mithril2.default)('h2', Canvas1.Prop.title), Canvas1.getView()]);
 	    }
-	    return result;
-	}
+	  });
 
-	/**
-	 * COPY First Layer, and Reference sub child
-	 * @param  {obj:obj}, ...args
-	 * @return {obj}
-	 */
-	function _deepCopy(obj) {
-	    obj = obj || {};
-	    if (arguments.length < 2) return obj;
-	    for (var i = 1; i < arguments.length; i++) {
-	        var dest = arguments[i];
-	        for (var prop in dest) {
-	            if (dest.hasOwnProperty(prop)) {
-	                var type = Object.prototype.toString.call(dest[prop]);
-	                if (type === '[object Object]') {
-	                    obj[prop] = obj[prop] || {};
-	                    _deepCopy(obj[prop], dest[prop]);
-	                } else if (type === '[object Array]') {
-	                    obj[prop] = obj[prop] || [];
-	                    _deepCopy(obj[prop], dest[prop]);
-	                } else {
-	                    obj[prop] = clone(dest[prop]);
-	                }
-	            }
-	        }
-	    }
-	    return obj;
-	}
+	  window.Canvas1 = Canvas1;
+	  Global.curTool = 'plain';
 
-	function _extend(obj) {
-	    obj = obj || {};
-	    if (arguments.length < 2) return obj;
-	    for (var i = 1; i < arguments.length; i++) {
-	        var dest = arguments[i];
-	        for (var prop in dest) {
-	            if (dest.hasOwnProperty(prop)) {
-	                var type = Object.prototype.toString.call(dest[prop]);
-	                if (type === '[object Object]') {
-	                    obj[prop] = obj[prop] || {};
-	                    _extend(obj[prop], dest[prop]);
-	                } else if (type === '[object Array]') {
-	                    obj[prop] = obj[prop] || [];
-	                    _extend(obj[prop], dest[prop]);
-	                } else {
-	                    obj[prop] = dest[prop];
-	                }
-	            }
-	        }
-	    }
-	    return obj;
-	}
+	  /**
+	   * DOM EVENT BELOW
+	   */
+	  // check mouse out of Main Canvas, to prevent mouse out problem
+	  container.onmouseover = function (e) {
+	    if (e.target.id == 'container') Canvas1.mouseUpFunc(e);
+	  };
 
-	function _iterate(obj, condition, valueCallback) {
-	    var list = {};
-	    for (var name in obj) {
-	        if (obj.hasOwnProperty(name) && condition ? condition(name) : true) {
-	            list[name] = valueCallback ? valueCallback(obj[name]) : obj[name];
-	        }
-	    }
-	    return list;
-	}
-	function _pluck(obj, propArr) {
-	    if (!propArr || propArr.constructor != Array) return obj;
-	    return _iterate(obj, function (name) {
-	        return propArr.indexOf(name) >= 0;
-	    });
-	}
-	function _exclude(obj, propArr) {
-	    if (!propArr || propArr.constructor != Array) return obj;
-	    return _iterate(obj, function (name) {
-	        return propArr.indexOf(name) < 0;
-	    });
-	}
-	function _addToSet() {
-	    var i,
-	        isFirst,
-	        args = Array.prototype.slice.call(arguments, 0);
-	    if (typeof args[0] == 'boolean') isFirst = args.shift();
-	    var arr = args.shift();
-	    if (arr === null || (typeof arr === 'undefined' ? 'undefined' : _typeof(arr)) !== 'object') arr = [];
-	    for (i in args) {
-	        if (arr.indexOf(args[i]) < 0) {
-	            isFirst ? arr.unshift(args[i]) : arr.push(args[i]);
-	        }
-	    }
-	    return arr;
-	}
+	  // short key event
+	  window.addEventListener('keydown', handleShortKeyDown);
+	  window.addEventListener('keyup', handleShortKeyUp);
 
-	function objectPath(obj, is, value) {
-	    if (typeof is == 'string') return objectPath(obj, is.split('.'), value);else if (is.length == 1 && value !== undefined) return obj[is[0]] = value;else if (is.length == 0) return obj;else return objectPath(obj[is[0]], is.slice(1), value);
-	}
+	  var SHIFT_KEY_DOWN = 0;
+	  var CTRL_KEY_DOWN = 0;
+	  var META_KEY_DOWN = 0;
 
-	var addToObject = exports.addToObject = function addToObject(obj, key, value) {
-	    if (Object.prototype.toString.call(obj) == "[object Array]") {
-	        if (obj.indexOf(key) < 0) obj.push(key);
-	    } else {
-	        if (!(key in obj)) {
-	            obj[key] = value;
-	        }
+	  function isInputElementActive() {
+	    var isInput = false;
+	    // Some shortcuts should not get handled if a control/input element
+	    // is selected.
+	    var curElement = document.activeElement || document.querySelector(':focus');
+	    var curElementTagName = curElement && curElement.tagName.toUpperCase();
+	    if (curElementTagName === 'INPUT' || curElementTagName === 'TEXTAREA' || curElementTagName === 'SELECT') {
+
+	      isInput = true;
 	    }
+	    return isInput;
+	  }
+
+	  function handleShortKeyUp(evt) {
+	    var isInput = isInputElementActive();
+	    if (isInput) return;
+	    var cmd = (evt.ctrlKey ? 1 : 0) | (evt.altKey ? 2 : 0) | (evt.shiftKey ? 4 : 0) | (evt.metaKey ? 8 : 0);
+
+	    if (/control/i.test(evt.keyIdentifier)) {
+	      //ctrl key
+	      CTRL_KEY_DOWN = 0;
+	    }
+	    if (/shift/i.test(evt.keyIdentifier)) {
+	      //ctrl key
+	      SHIFT_KEY_DOWN = 0;
+	    }
+
+	    if (/meta/i.test(evt.keyIdentifier)) {
+	      //ctrl key
+	      META_KEY_DOWN = 0;
+	    }
+	  }
+
+	  function handleShortKeyDown(evt) {
+	    var handled = false;
+	    var isInput = isInputElementActive();
+	    if (isInput) return;
+
+	    var cmd = (evt.ctrlKey ? 1 : 0) | (evt.altKey ? 2 : 0) | (evt.shiftKey ? 4 : 0) | (evt.metaKey ? 8 : 0);
+
+	    if (cmd === 8) {
+	      // meta
+	      META_KEY_DOWN = 1;
+	    }
+	    if (cmd === 0) {
+	      // no control key pressed at all.
+
+	      // console.log(evt, evt.keyCode);
+	      switch (evt.keyCode) {
+	        case 8: //backspace key : Delete the shape
+	        case 46:
+	          //delete key : Delete the shape
+
+	          _Events2.default.emit('remove', evt);
+	          handled = true;
+	          break;
+
+	        case 37:
+	          // left
+	          _Events2.default.emit('moveBy', { x: -Global.GRID_SIZE, y: 0 });
+	          handled = true;
+	          break;
+
+	        case 38:
+	          // up
+	          _Events2.default.emit('moveBy', { x: 0, y: -Global.GRID_SIZE });
+	          handled = true;
+	          break;
+
+	        case 39:
+	          // right
+	          _Events2.default.emit('moveBy', { x: Global.GRID_SIZE, y: 0 });
+	          handled = true;
+	          break;
+
+	        case 40:
+	          // down
+	          _Events2.default.emit('moveBy', { x: 0, y: Global.GRID_SIZE });
+	          handled = true;
+	          break;
+
+	      }
+	    }
+
+	    if (cmd === 1 || cmd === 8) {
+	      //ctrl key
+	      CTRL_KEY_DOWN = 1;
+	      switch (evt.keyCode) {
+
+	        case 90:
+	          //Ctrl+Z
+	          _UndoManager2.default.undo();
+	          handled = true;
+	          break;
+
+	        case 68:
+	          //Ctrl+D
+	          _Events2.default.emit('duplicate', evt);
+	          handled = true;
+	          break;
+
+	        case 37:
+	          // left
+	          _Events2.default.emit('moveBy', { x: -1, y: 0 });
+	          handled = true;
+	          break;
+
+	        case 38:
+	          // up
+	          _Events2.default.emit('moveBy', { x: 0, y: -1 });
+	          handled = true;
+	          break;
+
+	        case 39:
+	          // right
+	          _Events2.default.emit('moveBy', { x: 1, y: 0 });
+	          handled = true;
+	          break;
+
+	        case 40:
+	          // down
+	          _Events2.default.emit('moveBy', { x: 0, y: 1 });
+	          handled = true;
+	          break;
+
+	        case 90:
+	          //Ctrl+Z
+	          handled = true;
+	          break;
+	      }
+	    }
+
+	    if (cmd === 4) {
+	      // shift
+	      SHIFT_KEY_DOWN = 1;
+	      switch (evt.keyCode) {
+
+	        case 37:
+	          // left
+	          _Events2.default.emit('resizeBy', { w: -Global.GRID_SIZE, h: 0 });
+	          handled = true;
+	          break;
+
+	        case 38:
+	          // up
+	          _Events2.default.emit('resizeBy', { w: 0, h: -Global.GRID_SIZE });
+	          handled = true;
+	          break;
+
+	        case 39:
+	          // right
+	          _Events2.default.emit('resizeBy', { w: Global.GRID_SIZE, h: 0 });
+	          handled = true;
+	          break;
+
+	        case 40:
+	          // down
+	          _Events2.default.emit('resizeBy', { w: 0, h: Global.GRID_SIZE });
+	          handled = true;
+	          break;
+
+	      }
+	    }
+
+	    if (cmd === 5 || cmd === 12) {
+	      // ctrl+shift
+	      SHIFT_KEY_DOWN = 1;
+	      CTRL_KEY_DOWN = 1;
+
+	      switch (evt.keyCode) {
+	        case 90:
+	          //Ctrl+Shift+Z
+	          _UndoManager2.default.redo();
+	          handled = true;
+	          break;
+
+	        case 37:
+	          // left
+	          _Events2.default.emit('resizeBy', { w: -1, h: 0 });
+	          handled = true;
+	          break;
+
+	        case 38:
+	          // up
+	          _Events2.default.emit('resizeBy', { w: 0, h: -1 });
+	          handled = true;
+	          break;
+
+	        case 39:
+	          // right
+	          _Events2.default.emit('resizeBy', { w: 1, h: 0 });
+	          handled = true;
+	          break;
+
+	        case 40:
+	          // down
+	          _Events2.default.emit('resizeBy', { w: 0, h: 1 });
+	          handled = true;
+	          break;
+
+	      }
+	    }
+
+	    if (handled) {
+	      evt.preventDefault();
+	      return;
+	    }
+	  }
 	};
 
-	function removeClass(classProp, class1, class2, etc) {
-	    var list = classProp.split(/\s+/);
-	    var args = Array.prototype.slice.call(arguments, 1);
-	    return list.filter(function (v) {
-	        return args.indexOf(v) == -1;
-	    }).join(' ');
-	}
-
-	function addClass(classProp, class1, class2, etc) {
-	    var args = Array.prototype.slice.call(arguments, 0);
-	    args[0] = args[0].split(/\s+/);
-	    _addToSet.apply(null, args);
-	    return args[0].join(' ');
-	}
-
-	function RandomColor() {
-	    return '#' + Math.random().toString(16).slice(-6);
-	}
-
-	function NewID() {
-	    return +new Date() + "_" + Math.round(Math.random() * 1e6).toString(36);
-	}
-
-	function applyStyle(el, styleObj) {
-	    var pxReg = /^padding|^margin|size$|width$|height$|radius$|left$|top$|right$|bottom$/i;
-	    var quoteReg = /family$/i;
-	    // try{ el.style = el.style||{} } catch(e){}
-	    for (var i in styleObj) {
-	        var attr = styleObj[i];
-	        attr = pxReg.test(i) ? attr + 'px' : attr;
-	        attr = quoteReg.test(i) ? '"' + attr + '"' : attr;
-	        el.style[i] = attr;
-	    }
-	}
-	var rectsIntersect = exports.rectsIntersect = function rectsIntersect(r1, r2) {
-	    return r2.left <= r1.left + r1.width && r2.left + r2.width >= r1.left && r2.top <= r1.top + r1.height && r2.top + r2.height >= r1.top;
-	};
-
-	var debug = exports.debug = function debug(msg) {
-	    document.querySelector('#debug').innerHTML = msg;
-	};
-
-	var _excludeJsonStyle = exports._excludeJsonStyle = function _excludeJsonStyle(propStyle) {
-	    return _exclude(propStyle, ['borderWidth', 'borderStyle', 'borderColor', 'backgroundColor', 'padding']);
-	};
-	/**
-	 * applyProp from this.Prop, remove unused props, and apply style to int width/height etc.
-	 * @param  {[type]} thisProp [description]
-	 * @return {[type]}          [description]
-	 */
-	var applyProp = exports.applyProp = function applyProp(thisProp) {
-	    var Prop = _exclude(thisProp, ['eventData', 'isNew']);
-	    Prop.style = clone(thisProp.style);
-	    if (thisProp.style.borderWidth && thisProp.style.borderStyle && thisProp.style.borderColor) {
-	        Prop.style.border = thisProp.style.borderWidth + 'px ' + thisProp.style.borderStyle + ' ' + thisProp.style.borderColor;
-	    }
-	    applyStyle(Prop, thisProp.style);
-	    Prop.style = _excludeJsonStyle(Prop.style);
-	    if (Prop.class) Prop.class = Prop.class.replace(/\s+/, ' ').trim();
-	    if (Prop.className) Prop.className = Prop.className.replace(/\s+/, ' ').trim();
-	    return Prop;
-	};
-
-	/**
-	 * get outer rect of div/container that had a border style
-	 * @param  {[type]} style [description]
-	 * @return {[type]}       [description]
-	 */
-	var getOuterRect = exports.getOuterRect = function getOuterRect(style) {
-	    return {
-	        left: style.left,
-	        top: style.top,
-	        width: BORDER_BOX ? style.width : style.width + (style.borderLeftWidth || 0) + (style.borderRightWidth || 0),
-	        height: BORDER_BOX ? style.height : style.height + (style.borderTopWidth || 0) + (style.borderBottomWidth || 0)
-	    };
-	};
-
-	/**
-	 * curTool for canvas & layer to determine type
-	 * @type {String}
-	 */
-	var curTool = exports.curTool = 'stage';
+	exports.default = Canvas;
 
 /***/ },
 /* 5 */
@@ -1931,7 +1940,7 @@
 
 	var _mithril2 = _interopRequireDefault(_mithril);
 
-	var _global = __webpack_require__(4);
+	var _global = __webpack_require__(1);
 
 	var Global = _interopRequireWildcard(_global);
 
@@ -2071,7 +2080,7 @@
 
 	var _mithril2 = _interopRequireDefault(_mithril);
 
-	var _global = __webpack_require__(4);
+	var _global = __webpack_require__(1);
 
 	var Global = _interopRequireWildcard(_global);
 
@@ -2281,7 +2290,7 @@
 
 	var _mithril2 = _interopRequireDefault(_mithril);
 
-	var _global = __webpack_require__(4);
+	var _global = __webpack_require__(1);
 
 	var Global = _interopRequireWildcard(_global);
 
@@ -2379,7 +2388,7 @@
 	exports.extend = extend;
 	exports.override = override;
 
-	var _global = __webpack_require__(4);
+	var _global = __webpack_require__(1);
 
 	var Global = _interopRequireWildcard(_global);
 
@@ -2473,7 +2482,7 @@
 	exports.renderJsonEditor = renderJsonEditor;
 	exports.initDataTemplate = initDataTemplate;
 
-	var _global = __webpack_require__(4);
+	var _global = __webpack_require__(1);
 
 	var Global = _interopRequireWildcard(_global);
 
@@ -3111,7 +3120,7 @@
 	});
 	exports.initEditor = undefined;
 
-	var _global = __webpack_require__(4);
+	var _global = __webpack_require__(1);
 
 	var Global = _interopRequireWildcard(_global);
 
@@ -3838,7 +3847,7 @@
 
 	var _mithril2 = _interopRequireDefault(_mithril);
 
-	var _global = __webpack_require__(4);
+	var _global = __webpack_require__(1);
 
 	var Global = _interopRequireWildcard(_global);
 
@@ -3944,7 +3953,7 @@
 
 	var _mithril2 = _interopRequireDefault(_mithril);
 
-	var _global = __webpack_require__(4);
+	var _global = __webpack_require__(1);
 
 	var Global = _interopRequireWildcard(_global);
 
@@ -4817,7 +4826,7 @@
 
 	var _mithril2 = _interopRequireDefault(_mithril);
 
-	var _global = __webpack_require__(4);
+	var _global = __webpack_require__(1);
 
 	var Global = _interopRequireWildcard(_global);
 
