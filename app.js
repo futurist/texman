@@ -2764,7 +2764,7 @@
 	};
 
 	var jsonData = exports.jsonData = {
-	  "attrs": { title: '', name: '', required: false },
+	  "attrs": { title: '', name: '', order: 0, required: false },
 	  "children": {},
 	  "style": {
 	    "fontFamily": "宋体",
@@ -2824,6 +2824,11 @@
 	          "type": "string"
 	        },
 	        // "template":"{{=3245}}"
+	        "order": {
+	          "title": "order",
+	          "type": "number",
+	          "default": 0
+	        },
 	        "desc": {
 	          "title": "description",
 	          "type": "string",
