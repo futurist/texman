@@ -60,8 +60,6 @@
 
 	var _addEditorDom = __webpack_require__(19);
 
-	var _addEditorDom2 = _interopRequireDefault(_addEditorDom);
-
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
@@ -70,16 +68,16 @@
 	// new editor()
 
 	var PARAM = _mithril2.default.route.parseQueryString(location.hash.slice(1));
-	// Object {id: "567a078c03b3e16c150ddb40", ret: "http://1111hui.com:4000/formtype/567a078c03b3e16c150ddb40"}
+	// Object {id: "567a078c03b3e16c150ddb40", ret: "http://1111hui.com:4000/formtype.html"}
 
 	if (PARAM.id) {
 		_mithril2.default.request({ method: 'GET', url: Global.APIHOST + '/formtype/' + PARAM.id }).then(function (savedData) {
 			new _canvas2.default(savedData);
-			(0, _addEditorDom2.default)(savedData);
+			(0, _addEditorDom.addEditorDom)(savedData);
 		});
 	} else {
 		new _canvas2.default();
-		(0, _addEditorDom2.default)();
+		(0, _addEditorDom.addEditorDom)();
 	}
 
 /***/ },
@@ -144,7 +142,7 @@
 	            JSON.parse(xhr.responseText);
 	            return xhr.responseText;
 	        } catch (e) {
-	            var errorMsg = '{ errors:{status:' + xhr.status + ', title:' + xhr.status + ', detail:' + xhr.responseText + ' } }';
+	            var errorMsg = '{"errors":[{"status":"' + xhr.status + '","title":"' + xhr.status + '","detail":"' + xhr.status + '"}]}';
 	            return JSON.stringify(errorMsg);
 	        }
 	    };
@@ -4760,11 +4758,28 @@
 	Object.defineProperty(exports, "__esModule", {
 		value: true
 	});
+	exports.addEditorDom = addEditorDom;
 
-	exports.default = function (savedData) {
+	var _mithril = __webpack_require__(2);
+
+	var _mithril2 = _interopRequireDefault(_mithril);
+
+	var _global = __webpack_require__(1);
+
+	var Global = _interopRequireWildcard(_global);
+
+	var _DataTemplate = __webpack_require__(10);
+
+	var DataTemplate = _interopRequireWildcard(_DataTemplate);
+
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function addEditorDom(savedData) {
 		var ID = savedData && savedData.data && savedData.data.id;
 		var PARAM = _mithril2.default.route.parseQueryString(location.hash.slice(1));
-
+		console.log(ID);
 		// editor container & resize bar
 		var dragFunc = DragFactory();
 		var initEditorWidth = 400;
@@ -4790,7 +4805,7 @@
 							Global.curTool = v;
 						}
 					}, v);
-				}), (0, _mithril2.default)('.save', [(0, _mithril2.default)('input[type=button][value="保存"]', { onclick: function onclick() {
+				}), (0, _mithril2.default)('.save', [(0, _mithril2.default)('input[type=button]', { value: ID ? '更新' : '创建', onclick: function onclick() {
 						var xhrConfig = function xhrConfig(xhr) {
 							xhr.setRequestHeader("Content-Type", "application/vnd.api+json");
 						};
@@ -4817,31 +4832,15 @@
 							};
 							_mithril2.default.request({ method: "POST", url: Global.APIHOST + "/formtype", data: formtype, serialize: function serialize(data) {
 									return JSON.stringify(data);
-								}, config: xhrConfig }).then(function (data) {
-								console.log(data);
+								}, config: xhrConfig }).then(function (ret) {
+								savedData = ret;
+								if (ret.data && ret.data.id) ID = ret.data.id;
+								console.log(ret, ID);
 							});
 						}
-					} }), (0, _mithril2.default)('input[type=button][value="取消"]', { onclick: function onclick() {
-						alert(PARAM.ret);
 					} })])]);
 			} });
-	};
-
-	var _mithril = __webpack_require__(2);
-
-	var _mithril2 = _interopRequireDefault(_mithril);
-
-	var _global = __webpack_require__(1);
-
-	var Global = _interopRequireWildcard(_global);
-
-	var _DataTemplate = __webpack_require__(10);
-
-	var DataTemplate = _interopRequireWildcard(_DataTemplate);
-
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	}
 
 /***/ }
 /******/ ]);

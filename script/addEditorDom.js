@@ -2,10 +2,10 @@ import m from 'mithril'
 import * as Global from './global'
 import * as DataTemplate from './DataTemplate'
 
-export default function(savedData){
+export function addEditorDom (savedData){
 	var ID = savedData && savedData.data && savedData.data.id
 	var PARAM = m.route.parseQueryString(location.hash.slice(1));
-
+	console.log(ID)
 	// editor container & resize bar
 	var dragFunc = DragFactory();
 	var initEditorWidth = 400;
@@ -38,7 +38,7 @@ export default function(savedData){
 						}, v)
 				),
 				m('.save', [
-					m('input[type=button][value="保存"]', {onclick:function(){
+					m('input[type=button]', {value: ID?'更新':'创建', onclick:function(){
 						var xhrConfig = function(xhr) {
 						    xhr.setRequestHeader("Content-Type", "application/vnd.api+json");
 						}
@@ -61,13 +61,15 @@ export default function(savedData){
 									"attributes":window.Canvas1.getDomTree()
 								}
 							}
-							m.request({method: "POST", url: Global.APIHOST+"/formtype", data:formtype, serialize:function(data){ return JSON.stringify(data) }, config: xhrConfig}).then(function(data){
-								console.log(data)
+							m.request({method: "POST", url: Global.APIHOST+"/formtype", data:formtype, serialize:function(data){ return JSON.stringify(data) }, config: xhrConfig}).then(function(ret){
+								savedData = ret;
+								if(ret.data && ret.data.id) ID = ret.data.id;
+								console.log(ret, ID)
 							})
 						}
 
 					}}),
-					m('input[type=button][value="取消"]', {onclick:function(){ alert(PARAM.ret) }}),
+					// m('input[type=button][value="取消"]', {onclick:function(){ alert(PARAM.ret) }}),
 				])
 			] )
 	} }

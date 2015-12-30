@@ -29,7 +29,7 @@ export var mRequestApi = function(method, url, data) {
             JSON.parse(xhr.responseText)
             return xhr.responseText
         }catch(e){
-            var errorMsg = `{ errors:{status:${xhr.status}, title:${xhr.status}, detail:${xhr.responseText} } }`
+            var errorMsg = `{"errors":[{"status":"${xhr.status}","title":"${xhr.status}","detail":"${xhr.status}"}]}`
             return JSON.stringify(errorMsg)
         }
     }
