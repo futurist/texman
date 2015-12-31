@@ -167,6 +167,7 @@
 	 */
 	var mRequestApi = exports.mRequestApi = function mRequestApi(method, url, data) {
 	    var xhrConfig = function xhrConfig(xhr) {
+	        xhr.setRequestHeader("Accept", "application/*");
 	        xhr.setRequestHeader("Content-Type", "application/vnd.api+json");
 	    };
 	    var extract = function extract(xhr, xhrOptions) {

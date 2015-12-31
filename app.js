@@ -71,7 +71,7 @@
 	// Object {id: "567a078c03b3e16c150ddb40", ret: "http://1111hui.com:4000/formtype.html"}
 
 	if (PARAM.id) {
-		_mithril2.default.request({ method: 'GET', url: Global.APIHOST + '/formtype/' + PARAM.id }).then(function (savedData) {
+		Global.mRequestApi('GET', Global.APIHOST + '/formtype/' + PARAM.id).then(function (savedData) {
 			new _canvas2.default(savedData);
 			(0, _addEditorDom.addEditorDom)(savedData);
 		});
@@ -135,6 +135,7 @@
 	 */
 	var mRequestApi = exports.mRequestApi = function mRequestApi(method, url, data) {
 	    var xhrConfig = function xhrConfig(xhr) {
+	        xhr.setRequestHeader("Accept", "application/*");
 	        xhr.setRequestHeader("Content-Type", "application/vnd.api+json");
 	    };
 	    var extract = function extract(xhr, xhrOptions) {
@@ -4818,9 +4819,7 @@
 									"attributes": window.Canvas1.getDomTree()
 								}
 							};
-							_mithril2.default.request({ method: "PATCH", url: Global.APIHOST + "/formtype/" + ID, data: formtype, serialize: function serialize(data) {
-									return JSON.stringify(data);
-								}, config: xhrConfig }).then(function (data) {
+							Global.mRequestApi("PATCH", Global.APIHOST + "/formtype/" + ID, formtype).then(function (data) {
 								console.log(data);
 							});
 						} else {
@@ -4830,9 +4829,7 @@
 									"attributes": window.Canvas1.getDomTree()
 								}
 							};
-							_mithril2.default.request({ method: "POST", url: Global.APIHOST + "/formtype", data: formtype, serialize: function serialize(data) {
-									return JSON.stringify(data);
-								}, config: xhrConfig }).then(function (ret) {
+							Global.mRequestApi("POST", Global.APIHOST + "/formtype", formtype).then(function (ret) {
 								savedData = ret;
 								if (ret.data && ret.data.id) ID = ret.data.id;
 								console.log(ret, ID);

@@ -22,6 +22,7 @@ export var APIHOST = 'http://1111hui.com/json-api'
  */
 export var mRequestApi = function(method, url, data) {
     var xhrConfig = function(xhr) {
+        xhr.setRequestHeader("Accept", "application/*");
         xhr.setRequestHeader("Content-Type", "application/vnd.api+json");
     }
     var extract = function(xhr, xhrOptions) {

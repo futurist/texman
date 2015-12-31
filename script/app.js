@@ -10,7 +10,7 @@ var PARAM = m.route.parseQueryString(location.hash.slice(1));
 // Object {id: "567a078c03b3e16c150ddb40", ret: "http://1111hui.com:4000/formtype.html"}
 
 if(PARAM.id){
-	m.request({ method:'GET', url: Global.APIHOST+'/formtype/'+PARAM.id }).then(function (savedData) {
+	Global.mRequestApi('GET', Global.APIHOST+'/formtype/'+PARAM.id ).then(function (savedData) {
 		new canvas(savedData)
 		addEditorDom(savedData)
 	})

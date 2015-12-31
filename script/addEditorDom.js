@@ -51,7 +51,7 @@ export function addEditorDom (savedData){
 									"attributes":window.Canvas1.getDomTree()
 								}
 							}
-							m.request({method: "PATCH", url: Global.APIHOST+"/formtype/"+ID, data:formtype, serialize:function(data){ return JSON.stringify(data) }, config: xhrConfig}).then(function(data){
+							Global.mRequestApi("PATCH", Global.APIHOST+"/formtype/"+ID, formtype).then(function(data){
 								console.log(data)
 							})
 						} else {
@@ -61,7 +61,7 @@ export function addEditorDom (savedData){
 									"attributes":window.Canvas1.getDomTree()
 								}
 							}
-							m.request({method: "POST", url: Global.APIHOST+"/formtype", data:formtype, serialize:function(data){ return JSON.stringify(data) }, config: xhrConfig}).then(function(ret){
+							Global.mRequestApi("POST", Global.APIHOST+"/formtype", formtype).then(function(ret){
 								savedData = ret;
 								if(ret.data && ret.data.id) ID = ret.data.id;
 								console.log(ret, ID)
