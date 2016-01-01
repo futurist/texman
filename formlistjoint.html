@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title></title>
+<link rel="stylesheet" type="text/css" href="js/joint.min.css" />
+<style type="text/css">
+.rectTest:hover{
+	fill:green;
+}
+</style>
+</head>
+<body>
+<div id="container"></div>
+<div id="myholder-small"></div>
+<div id="holder"></div>
+</body>
+</html>
+
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript" src="js/underscore-min.js"></script>
+<script type="text/javascript" src="js/backbone.js"></script>
+<script type="text/javascript" src="js/joint.min.js"></script>
+<script type="text/javascript">
+
+var graph = new joint.dia.Graph;
+var paper = new joint.dia.Paper({
+	el:$('#holder'),
+	width:800,
+	height:500,
+	model:graph,
+	gridSize:5
+})
+var paperSmall = new joint.dia.Paper({
+    el: $('#myholder-small'),
+    width: 400,
+    height: 100,
+    model: graph,
+    gridSize: 1
+});
+paperSmall.scale(.5);
+paperSmall.$el.css('pointer-events', 'none');
+
+
+var rect = new joint.shapes.basic.Rect({
+	position:{x:100, y:100},
+	size:{width:80, height:80},
+	attrs:{
+		'.rotatable':{class:'rotatable testel'},
+		rect:{fill:'red', stroke:'none', rx:5, ry:5, class:'rectTest'}, 
+		text:{text:'test', fill:'white'} 
+	}
+})
+var rect2 = rect.clone()
+rect2.translate(300)
+var link = new joint.dia.Link({
+	source: rect,
+	target: rect2
+})
+link.set('vertices', [{ x: 300, y: 60 }, { x: 400, y: 60 }, { x: 400, y: 20 }])
+link.set('smooth', true)
+
+graph.addCells([rect,rect2,link])
+graph.on('all', function(eventName, cell) {
+    console.log(arguments);
+});
+
+
+
+
+var APIROOT= '/json-api'
+var urlRoot = APIROOT+'/formtype'
+
+var Formtype = Backbone.Model.extend({
+	urlRoot: urlRoot
+})
+
+var Forms = Backbone.Collection.extend({
+	model:Formtype,
+	  url: urlRoot+'?fields[formtype]=name,title,createAt',
+	  parse: function(data){
+	  	return data.data
+	  }
+});
+
+var FormView = Backbone.View.extend({
+	tagName:'li',
+	template: _.template('<div><%=title%></div>'),
+	model: null,
+	initialize:function(){
+		this.listenTo(this.model, 'change', this.render);
+      	this.listenTo(this.model, 'destroy', this.remove);
+	},
+	events:{
+		'click' : 'edit',
+	},
+	render:function(){
+		console.log(234897)
+		this.$el.html( this.template( this.model.get('attributes') ) )
+		return this
+	},
+	edit:function(){
+		console.log(arguments)
+	}
+})
+
+var AppView = Backbone.View.extend({
+	el : $('#container').get(0),
+	model: null,
+	initialize:function(){
+		this.listenTo(this.model, 'add', this.addOne);
+		this.listenTo(this.model, 'remove', this.removeOne);
+		this.listenTo(this.model, 'change', this.changeOne);
+		this.listenTo(this.model, 'reset', this.resetAll);
+		this.listenTo(this.model, 'all', _.debounce(this.render, 0));
+		this.model.fetch()
+	},
+	render:function(){
+		var self = this;
+		return this
+	},
+	addOne: function (model, collection, response) {
+		var view = new FormView({ model: model });
+		this.$el.append(view.render().el);
+	},
+	removeOne: function (model, collection, changed) {
+		console.log(arguments)
+		this.resetAll()
+	},
+	changeOne: function (model, option) {
+		console.log(arguments)
+		this.resetAll()
+	},
+	resetAll: function () {
+		this.$el.empty();
+		this.model.each(this.addOne, this);
+	},
+})
+
+var forms = new Forms
+var appView = new AppView({model: forms})
+
+
+
+</script>
