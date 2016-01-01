@@ -36,6 +36,8 @@ export default class WidgetCanvas extends ContainerBaseClass {
 		return {
 			name: this.Prop.name,
 			title: this.Prop.title,
+			width: this.Prop.style.width,
+			height: this.Prop.style.height,
 			desc: this.Prop.desc||'',
 			template:template,
 			dom: getJsonData(this)

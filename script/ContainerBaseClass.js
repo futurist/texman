@@ -114,7 +114,7 @@ export default class ContainerBaseClass extends LayerBaseClass {
 		UndoManager.add({
 			redo: redo,
 			undo:function(){
-				console.log(prevSel)
+				// console.log(prevSel)
 				editing.selectedWidget = prevSel;
 				editing.selectedWidget.forEach( v=>{v.onSelected();editing.children.push(v)} )
 				m.redraw()

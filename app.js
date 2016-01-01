@@ -3913,6 +3913,8 @@
 				return {
 					name: this.Prop.name,
 					title: this.Prop.title,
+					width: this.Prop.style.width,
+					height: this.Prop.style.height,
 					desc: this.Prop.desc || '',
 					template: template,
 					dom: getJsonData(this)
@@ -4116,7 +4118,7 @@
 				if (prevSel.length) _UndoManager2.default.add({
 					redo: redo,
 					undo: function undo() {
-						console.log(prevSel);
+						// console.log(prevSel)
 						editing.selectedWidget = prevSel;
 						editing.selectedWidget.forEach(function (v) {
 							v.onSelected();editing.children.push(v);

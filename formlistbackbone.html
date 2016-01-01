@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title></title>
+</head>
+<body>
+<div id="container"></div>
+</body>
+</html>
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript" src="js/underscore-min.js"></script>
+<script type="text/javascript" src="js/backbone.js"></script>
+<script type="text/javascript">
+var APIROOT= '/json-api'
+var urlRoot = APIROOT+'/formtype'
+
+var Formtype = Backbone.Model.extend({
+	urlRoot: urlRoot
+})
+
+var Forms = Backbone.Collection.extend({
+	model:Formtype,
+	  url: urlRoot+'?fields[formtype]=name,title,createAt',
+	  parse: function(data){
+	  	return data.data
+	  }
+});
+
+var FormView = Backbone.View.extend({
+	tagName:'li',
+	template: _.template('<div><%=title%></div>'),
+	model: null,
+	initialize:function(){
+		this.listenTo(this.model, 'change', this.render);
+      	this.listenTo(this.model, 'destroy', this.remove);
+	},
+	events:{
+		'click' : 'edit',
+	},
+	render:function(){
+		console.log(234897)
+		this.$el.html( this.template( this.model.get('attributes') ) )
+		return this
+	},
+	edit:function(e){
+		console.log(e)
+	}
+})
+
+var AppView = Backbone.View.extend({
+	el : $('#container').get(0),
+	model: null,
+	initialize:function(){
+		this.listenTo(this.model, 'add', this.addOne);
+		this.listenTo(this.model, 'remove', this.removeOne);
+		this.listenTo(this.model, 'change', this.changeOne);
+		this.listenTo(this.model, 'reset', this.resetAll);
+		this.listenTo(this.model, 'filter', this.filterAll);
+		this.listenTo(this.model, 'all', _.debounce(this.render, 0));
+		this.model.fetch()
+	},
+	render:function(){
+		var self = this;
+		return this
+	},
+	addOne: function (model, collection, response) {
+		var view = new FormView({ model: model });
+		this.$el.append(view.render().el);
+	},
+	removeOne: function (model, collection, changed) {
+		console.log(model, collection, changed)
+	},
+	changeOne: function (model, option) {
+		console.log(model, option)
+	},
+	resetAll: function () {
+		this.$el.empty();
+		this.model.each(this.addOne, this);
+	},
+})
+
+var forms = new Forms
+var appView = new AppView({model: forms})
+
+
+
+</script>
