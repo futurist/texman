@@ -615,9 +615,11 @@ function checkPropRelation(data, path, value){
 
 export function renderJsonEditor(){
   var self = this;
+  var editorDom = document.querySelector('.editor')
+  if(!editorDom) return false;
     if( this.isValidRect() && this.jsonData && this.jsonSchema ){
       Global._extend(this.jsonData().style, this.Prop.style)
-      m.mount( document.querySelector('.editor'), new JsonEditor( this.jsonSchema, this.jsonData, { config:(el)=>{
+      m.mount( editorDom , new JsonEditor( this.jsonSchema, this.jsonData, { config:(el)=>{
         // below add drag&drop function to change array item order
         $(el).find('.array .props .row').each(function(){
 

@@ -1,5 +1,6 @@
 import m from 'mithril'
 import * as Global from './global'
+import canvas from './canvas'
 
 export class formList {
 	constructor(){
@@ -20,10 +21,9 @@ export class formList {
 						m('.operat', m('a[href="cane.html"][target=_blank]','添加')),
 						m('ul',
 							data.map((v,i)=>{
-								console.log(v,i)
 								return m('li',
 									[
-										m('.name', v.attributes.name),
+										m('.name', { onclick:function(){ getForm(v.id) } }, v.attributes.name),
 										m('.title', v.attributes.title),
 										m('.createAt', v.attributes.createAt),
 										m('a.action[href="cane.html#id='+v.id+'&ret='+window.location.href+'"][target=_blank]', '编辑'),
@@ -49,8 +49,22 @@ export class formList {
 			if(ctrl) ctrl.updateList()
 		})
 	}
-	
+
 }
 
 
-m.mount( $('#container').get(0), new formList )
+m.mount( $('#formlist').get(0), new formList )
+
+
+// get a form when click
+function getForm(id) {
+	m.mount( document.querySelector('#container'), null )
+	Global.mRequestApi('GET', Global.APIHOST+'/formtype/'+id).then(function(savedData){
+		new canvas(savedData)
+	})
+}
+
+
+
+
+

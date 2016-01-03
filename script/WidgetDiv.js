@@ -4,8 +4,8 @@ import LayerBaseClass from './LayerBaseClass'
 
 export default class WidgetDiv extends LayerBaseClass {
 
-	constructor(parent, prop) {
-		super(parent, prop);
+	constructor(parent, prop, tool) {
+		super(parent, prop, tool);
 		this.parent = parent;
     this.key = m.prop( Global.NewID() );
 	}
@@ -16,7 +16,8 @@ export default class WidgetDiv extends LayerBaseClass {
     super.onSelected()
   }
   onUnSelected () {
-    m.mount(document.querySelector('.editor'), null)
+    var editorDom = document.querySelector('.editor');
+    if(editorDom) m.mount(editorDom, null)
     super.onUnSelected()
   }
 

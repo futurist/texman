@@ -64,7 +64,9 @@ export function addEditorDom (savedData){
 							Global.mRequestApi("POST", Global.APIHOST+"/formtype", formtype).then(function(ret){
 								savedData = ret;
 								if(ret.data && ret.data.id) ID = ret.data.id;
-								console.log(ret, ID)
+								if(ID){
+									window.location.hash = 'id=' + ID
+								}
 							})
 						}
 
