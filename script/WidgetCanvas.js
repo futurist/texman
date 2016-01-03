@@ -3,8 +3,14 @@ import * as Global from './global'
 import ContainerBaseClass from './ContainerBaseClass'
 
 export default class WidgetCanvas extends ContainerBaseClass {
-	constructor(parent, prop){
-		super(parent, prop)
+	constructor(parent, prop, options){
+		super(parent, prop, options)
+
+		this.options = options = Global._extend({
+		  tool:Global.curTool,
+		  mode:'edit'
+		}, options)
+
 		this.parent = parent
 	    this.key = m.prop( Global.NewID() );
 	}
@@ -54,7 +60,7 @@ export default class WidgetCanvas extends ContainerBaseClass {
 				            return self.children.map((v)=>{ return v.getView() })
 						}()
 					]),
-					self.buildControlPoint(),
+					self.options.mode=='edit' ? this.buildControlPoint() : []
 			]
 		);
 		return self.isValidRect() ? dom : []

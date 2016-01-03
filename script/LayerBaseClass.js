@@ -6,7 +6,7 @@ import * as DataTemplate from './DataTemplate'
 
 export default class LayerBaseClass {
 	constructor(parent, prop, options){
-		options = Global._extend({
+		this.options = options = Global._extend({
 			tool:Global.curTool,
 			mode:'edit'
 		}, options)

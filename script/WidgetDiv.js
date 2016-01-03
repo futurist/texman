@@ -6,6 +6,12 @@ export default class WidgetDiv extends LayerBaseClass {
 
 	constructor(parent, prop, options) {
 		super(parent, prop, options);
+
+    this.options = options = Global._extend({
+      tool:Global.curTool,
+      mode:'edit'
+    }, options)
+
 		this.parent = parent;
     this.key = m.prop( Global.NewID() );
 	}
@@ -75,8 +81,12 @@ export default class WidgetDiv extends LayerBaseClass {
     var Prop = Global.applyProp(this.Prop)
     var dom = m('div.layer', Global._extend({}, Prop, { key: self.key(), 'data-key': self.key()} ), [
         this.getChildren(),
-        m('.bbox', {config: function(el,isInit,context){context.retain=true} } ),
-        this.buildControlPoint()
+
+        // if not edit mode, do nothing
+        self.options.mode=='edit'
+          ? [m('.bbox', {config: function(el,isInit,context){context.retain=true} } ),this.buildControlPoint()]
+          : []
+
       ] )
 		return this.isValidRect()
 		? dom

@@ -2208,6 +2208,11 @@
 
 	    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(WidgetDiv).call(this, parent, prop, options));
 
+	    _this.options = options = Global._extend({
+	      tool: Global.curTool,
+	      mode: 'edit'
+	    }, options);
+
 	    _this.parent = parent;
 	    _this.key = _mithril2.default.prop(Global.NewID());
 	    return _this;
@@ -2288,9 +2293,12 @@
 	    value: function view(ctrl) {
 	      var self = this;
 	      var Prop = Global.applyProp(this.Prop);
-	      var dom = (0, _mithril2.default)('div.layer', Global._extend({}, Prop, { key: self.key(), 'data-key': self.key() }), [this.getChildren(), (0, _mithril2.default)('.bbox', { config: function config(el, isInit, context) {
+	      var dom = (0, _mithril2.default)('div.layer', Global._extend({}, Prop, { key: self.key(), 'data-key': self.key() }), [this.getChildren(),
+
+	      // if not edit mode, do nothing
+	      self.options.mode == 'edit' ? [(0, _mithril2.default)('.bbox', { config: function config(el, isInit, context) {
 	          context.retain = true;
-	        } }), this.buildControlPoint()]);
+	        } }), this.buildControlPoint()] : []]);
 	      return this.isValidRect() ? dom : [];
 	    }
 	  }, {
@@ -2347,7 +2355,7 @@
 		function LayerBaseClass(parent, prop, options) {
 			_classCallCheck(this, LayerBaseClass);
 
-			options = Global._extend({
+			this.options = options = Global._extend({
 				tool: Global.curTool,
 				mode: 'edit'
 			}, options);
@@ -4126,10 +4134,15 @@
 	var WidgetCanvas = (function (_ContainerBaseClass) {
 		_inherits(WidgetCanvas, _ContainerBaseClass);
 
-		function WidgetCanvas(parent, prop) {
+		function WidgetCanvas(parent, prop, options) {
 			_classCallCheck(this, WidgetCanvas);
 
-			var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(WidgetCanvas).call(this, parent, prop));
+			var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(WidgetCanvas).call(this, parent, prop, options));
+
+			_this.options = options = Global._extend({
+				tool: Global.curTool,
+				mode: 'edit'
+			}, options);
 
 			_this.parent = parent;
 			_this.key = _mithril2.default.prop(Global.NewID());
@@ -4185,7 +4198,7 @@
 					return self.children.map(function (v) {
 						return v.getView();
 					});
-				})()]), self.buildControlPoint()]);
+				})()]), self.options.mode == 'edit' ? this.buildControlPoint() : []]);
 				return self.isValidRect() ? dom : [];
 			}
 		}]);
@@ -4250,10 +4263,15 @@
 	var ContainerBaseClass = (function (_LayerBaseClass) {
 		_inherits(ContainerBaseClass, _LayerBaseClass);
 
-		function ContainerBaseClass(parent, prop) {
+		function ContainerBaseClass(parent, prop, options) {
 			_classCallCheck(this, ContainerBaseClass);
 
-			var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ContainerBaseClass).call(this, parent, prop));
+			var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ContainerBaseClass).call(this, parent, prop, options));
+
+			_this.options = options = Global._extend({
+				tool: Global.curTool,
+				mode: 'edit'
+			}, options);
 
 			_this.parent = parent;
 			_this.editingContainer = undefined;
@@ -4261,9 +4279,12 @@
 			_this.selectedWidget = [];
 			_this.resetAllEvent();
 			_this.setupContainerMode();
-			_this.setupContainerEvent();
-			_this.setupShortKeyEvent();
-			window.m = _mithril2.default;
+
+			if (options.mode == 'edit') {
+				_this.setupContainerEvent();
+				_this.setupShortKeyEvent();
+			}
+
 			return _this;
 		}
 

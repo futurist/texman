@@ -7,17 +7,26 @@ import EE from './Events'
 import UndoManager from './UndoManager'
 
 export default class ContainerBaseClass extends LayerBaseClass {
-	constructor(parent, prop) {
-		super(parent, prop);
+	constructor(parent, prop, options) {
+		super(parent, prop, options);
+
+		this.options = options = Global._extend({
+			tool:Global.curTool,
+			mode:'edit'
+		}, options)
+
 		this.parent = parent;
 		this.editingContainer = undefined;
 		this.children = [];
 		this.selectedWidget = [];
 		this.resetAllEvent()
 		this.setupContainerMode()
-		this.setupContainerEvent()
-		this.setupShortKeyEvent()
-		window.m = m;
+
+		if(options.mode=='edit'){
+			this.setupContainerEvent()
+			this.setupShortKeyEvent()
+		}
+
 	}
 
 	setupShortKeyEvent (){
