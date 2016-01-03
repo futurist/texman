@@ -37,6 +37,7 @@ export default class WidgetDiv extends LayerBaseClass {
     }
 
     if( isSelect ) {
+    	console.log(data.children)
         var options = data.children.children.map(function(v){ return m('option', v) });
         if( data.children.attrs.placeholder ) options.unshift( m('option', {disabled:true, value:''}, data.children.attrs.placeholder ) );
         dom = Global._extend( {}, data.children )

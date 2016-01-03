@@ -12,7 +12,7 @@ export var jsonType = {
               "padding": 2, "paddingTop": 2, "paddingBottom": 2, "paddingRight": 2, "paddingLeft": 2,
             }
           },
-  select:{type:'select',  attrs:{}, children:{ tag:'select', attrs:{placeholder:'select client...', value:'', required:true, multiple:false,  }, children:[] },
+  select:{type:'select',  attrs:{}, children:{ tag:'select', attrs:{placeholder:'请选择...', value:'', required:true, multiple:false,  }, children:[] },
         style:{
           "borderWidth": 1, "borderTopWidth": 1, "borderRightWidth": 1, "borderBottomWidth": 1, "borderLeftWidth": 1,
           "padding": 2, "paddingTop": 2, "paddingBottom": 2, "paddingRight": 2, "paddingLeft": 2,
@@ -138,6 +138,11 @@ export var jsonTypeSchema = {
                     "title": "multiple",
                     "type": "boolean",
                     "default": false
+                  },
+                  "placeholder": {
+                    "title": "placeholder",
+                    "type": "string",
+                    "default":""
                   },
                   "value": {
                     "title": "value",
