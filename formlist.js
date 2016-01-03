@@ -61,9 +61,13 @@
 
 	var Global = _interopRequireWildcard(_global);
 
-	var _canvas = __webpack_require__(4);
+	var _WidgetDiv = __webpack_require__(5);
 
-	var _canvas2 = _interopRequireDefault(_canvas);
+	var _WidgetDiv2 = _interopRequireDefault(_WidgetDiv);
+
+	var _WidgetCanvas = __webpack_require__(15);
+
+	var _WidgetCanvas2 = _interopRequireDefault(_WidgetCanvas);
 
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
@@ -119,10 +123,28 @@
 
 	// get a form when click
 	function getForm(id) {
-		_mithril2.default.mount(document.querySelector('#container'), null);
+		var container = document.querySelector('#container');
+		_mithril2.default.mount(container, null);
 		Global.mRequestApi('GET', Global.APIHOST + '/formtype/' + id).then(function (savedData) {
-			new _canvas2.default(savedData);
+			var Canvas1 = buildStageFromData(savedData.data.attributes.dom);
+			_mithril2.default.mount(container, {
+				view: function view() {
+					return (0, _mithril2.default)('.mainCanvas', { config: function config(el, isInit, context) {
+							context.retain = true;
+						} }, [(0, _mithril2.default)('h2', Canvas1.Prop.title), Canvas1.getView()]);
+				}
+			});
 		});
+	}
+
+	function buildStageFromData(data) {
+		var parent = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
+
+		var widget = data.classType == 'canvas' ? new _WidgetCanvas2.default(parent, data.jsonData, { mode: 'present' }) : new _WidgetDiv2.default(parent, data.jsonData, { tool: data.jsonData.type, mode: 'present' });
+		widget.children = data.childWidget.map(function (v) {
+			return buildStageFromData(v, widget);
+		});
+		return widget;
 	}
 
 /***/ },
@@ -1897,317 +1919,7 @@
 
 
 /***/ },
-/* 4 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-
-	var _mithril = __webpack_require__(2);
-
-	var _mithril2 = _interopRequireDefault(_mithril);
-
-	var _global = __webpack_require__(1);
-
-	var Global = _interopRequireWildcard(_global);
-
-	var _WidgetDiv = __webpack_require__(5);
-
-	var _WidgetDiv2 = _interopRequireDefault(_WidgetDiv);
-
-	var _WidgetCanvas = __webpack_require__(15);
-
-	var _WidgetCanvas2 = _interopRequireDefault(_WidgetCanvas);
-
-	var _JsonEditor = __webpack_require__(11);
-
-	var _JsonEditor2 = _interopRequireDefault(_JsonEditor);
-
-	var _Events = __webpack_require__(17);
-
-	var _Events2 = _interopRequireDefault(_Events);
-
-	var _UndoManager = __webpack_require__(13);
-
-	var _UndoManager2 = _interopRequireDefault(_UndoManager);
-
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	function buildStageFromData(data) {
-	  var parent = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
-
-	  var widget = data.classType == 'canvas' ? new _WidgetCanvas2.default(parent, data.jsonData) : new _WidgetDiv2.default(parent, data.jsonData, data.jsonData.type);
-	  widget.children = data.childWidget.map(function (v) {
-	    return buildStageFromData(v, widget);
-	  });
-	  return widget;
-	}
-
-	var Canvas = function Canvas(savedData) {
-	  _classCallCheck(this, Canvas);
-
-	  /**
-	   * Main Code below
-	   */
-	  var container = document.querySelector('#container');
-
-	  var Canvas1;
-	  if (savedData && savedData.data && savedData.data.attributes && savedData.data.attributes.dom) {
-	    Canvas1 = buildStageFromData(savedData.data.attributes.dom);
-	  } else {
-	    Canvas1 = new _WidgetCanvas2.default(null, {
-	      attrs: { title: 'StageName', name: 'Canvas1' },
-	      style: { left: 100, top: 100, width: 800, height: 500, backgroundType: 'color', backgroundColor: '#eeeeee', background: '#eeeeee' }
-	    });
-	  }
-
-	  _mithril2.default.mount(container, {
-	    view: function view() {
-	      return (0, _mithril2.default)('.mainCanvas', { config: function config(el, isInit, context) {
-	          context.retain = true;
-	        } }, [(0, _mithril2.default)('h2', Canvas1.Prop.title), Canvas1.getView()]);
-	    }
-	  });
-
-	  window.Canvas1 = Canvas1;
-	  Global.curTool = 'plain';
-
-	  /**
-	   * DOM EVENT BELOW
-	   */
-	  // check mouse out of Main Canvas, to prevent mouse out problem
-	  container.onmouseover = function (e) {
-	    if (e.target.id == 'container') Canvas1.mouseUpFunc(e);
-	  };
-
-	  // short key event
-	  window.addEventListener('keydown', handleShortKeyDown);
-	  window.addEventListener('keyup', handleShortKeyUp);
-
-	  var SHIFT_KEY_DOWN = 0;
-	  var CTRL_KEY_DOWN = 0;
-	  var META_KEY_DOWN = 0;
-
-	  function isInputElementActive() {
-	    var isInput = false;
-	    // Some shortcuts should not get handled if a control/input element
-	    // is selected.
-	    var curElement = document.activeElement || document.querySelector(':focus');
-	    var curElementTagName = curElement && curElement.tagName.toUpperCase();
-	    if (curElementTagName === 'INPUT' || curElementTagName === 'TEXTAREA' || curElementTagName === 'SELECT') {
-
-	      isInput = true;
-	    }
-	    return isInput;
-	  }
-
-	  function handleShortKeyUp(evt) {
-	    var isInput = isInputElementActive();
-	    if (isInput) return;
-	    var cmd = (evt.ctrlKey ? 1 : 0) | (evt.altKey ? 2 : 0) | (evt.shiftKey ? 4 : 0) | (evt.metaKey ? 8 : 0);
-
-	    if (/control/i.test(evt.keyIdentifier)) {
-	      //ctrl key
-	      CTRL_KEY_DOWN = 0;
-	    }
-	    if (/shift/i.test(evt.keyIdentifier)) {
-	      //ctrl key
-	      SHIFT_KEY_DOWN = 0;
-	    }
-
-	    if (/meta/i.test(evt.keyIdentifier)) {
-	      //ctrl key
-	      META_KEY_DOWN = 0;
-	    }
-	  }
-
-	  function handleShortKeyDown(evt) {
-	    var handled = false;
-	    var isInput = isInputElementActive();
-	    if (isInput) return;
-
-	    var cmd = (evt.ctrlKey ? 1 : 0) | (evt.altKey ? 2 : 0) | (evt.shiftKey ? 4 : 0) | (evt.metaKey ? 8 : 0);
-
-	    if (cmd === 8) {
-	      // meta
-	      META_KEY_DOWN = 1;
-	    }
-	    if (cmd === 0) {
-	      // no control key pressed at all.
-
-	      // console.log(evt, evt.keyCode);
-	      switch (evt.keyCode) {
-	        case 8: //backspace key : Delete the shape
-	        case 46:
-	          //delete key : Delete the shape
-
-	          _Events2.default.emit('remove', evt);
-	          handled = true;
-	          break;
-
-	        case 37:
-	          // left
-	          _Events2.default.emit('moveBy', { x: -Global.GRID_SIZE, y: 0 });
-	          handled = true;
-	          break;
-
-	        case 38:
-	          // up
-	          _Events2.default.emit('moveBy', { x: 0, y: -Global.GRID_SIZE });
-	          handled = true;
-	          break;
-
-	        case 39:
-	          // right
-	          _Events2.default.emit('moveBy', { x: Global.GRID_SIZE, y: 0 });
-	          handled = true;
-	          break;
-
-	        case 40:
-	          // down
-	          _Events2.default.emit('moveBy', { x: 0, y: Global.GRID_SIZE });
-	          handled = true;
-	          break;
-
-	      }
-	    }
-
-	    if (cmd === 1 || cmd === 8) {
-	      //ctrl key
-	      CTRL_KEY_DOWN = 1;
-	      switch (evt.keyCode) {
-
-	        case 90:
-	          //Ctrl+Z
-	          _UndoManager2.default.undo();
-	          handled = true;
-	          break;
-
-	        case 68:
-	          //Ctrl+D
-	          _Events2.default.emit('duplicate', evt);
-	          handled = true;
-	          break;
-
-	        case 37:
-	          // left
-	          _Events2.default.emit('moveBy', { x: -1, y: 0 });
-	          handled = true;
-	          break;
-
-	        case 38:
-	          // up
-	          _Events2.default.emit('moveBy', { x: 0, y: -1 });
-	          handled = true;
-	          break;
-
-	        case 39:
-	          // right
-	          _Events2.default.emit('moveBy', { x: 1, y: 0 });
-	          handled = true;
-	          break;
-
-	        case 40:
-	          // down
-	          _Events2.default.emit('moveBy', { x: 0, y: 1 });
-	          handled = true;
-	          break;
-
-	        case 90:
-	          //Ctrl+Z
-	          handled = true;
-	          break;
-	      }
-	    }
-
-	    if (cmd === 4) {
-	      // shift
-	      SHIFT_KEY_DOWN = 1;
-	      switch (evt.keyCode) {
-
-	        case 37:
-	          // left
-	          _Events2.default.emit('resizeBy', { w: -Global.GRID_SIZE, h: 0 });
-	          handled = true;
-	          break;
-
-	        case 38:
-	          // up
-	          _Events2.default.emit('resizeBy', { w: 0, h: -Global.GRID_SIZE });
-	          handled = true;
-	          break;
-
-	        case 39:
-	          // right
-	          _Events2.default.emit('resizeBy', { w: Global.GRID_SIZE, h: 0 });
-	          handled = true;
-	          break;
-
-	        case 40:
-	          // down
-	          _Events2.default.emit('resizeBy', { w: 0, h: Global.GRID_SIZE });
-	          handled = true;
-	          break;
-
-	      }
-	    }
-
-	    if (cmd === 5 || cmd === 12) {
-	      // ctrl+shift
-	      SHIFT_KEY_DOWN = 1;
-	      CTRL_KEY_DOWN = 1;
-
-	      switch (evt.keyCode) {
-	        case 90:
-	          //Ctrl+Shift+Z
-	          _UndoManager2.default.redo();
-	          handled = true;
-	          break;
-
-	        case 37:
-	          // left
-	          _Events2.default.emit('resizeBy', { w: -1, h: 0 });
-	          handled = true;
-	          break;
-
-	        case 38:
-	          // up
-	          _Events2.default.emit('resizeBy', { w: 0, h: -1 });
-	          handled = true;
-	          break;
-
-	        case 39:
-	          // right
-	          _Events2.default.emit('resizeBy', { w: 1, h: 0 });
-	          handled = true;
-	          break;
-
-	        case 40:
-	          // down
-	          _Events2.default.emit('resizeBy', { w: 0, h: 1 });
-	          handled = true;
-	          break;
-
-	      }
-	    }
-
-	    if (handled) {
-	      evt.preventDefault();
-	      return;
-	    }
-	  }
-	};
-
-	exports.default = Canvas;
-
-/***/ },
+/* 4 */,
 /* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -2248,10 +1960,10 @@
 	var WidgetDiv = (function (_LayerBaseClass) {
 	  _inherits(WidgetDiv, _LayerBaseClass);
 
-	  function WidgetDiv(parent, prop, tool) {
+	  function WidgetDiv(parent, prop, options) {
 	    _classCallCheck(this, WidgetDiv);
 
-	    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(WidgetDiv).call(this, parent, prop, tool));
+	    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(WidgetDiv).call(this, parent, prop, options));
 
 	    _this.parent = parent;
 	    _this.key = _mithril2.default.prop(Global.NewID());
@@ -2294,7 +2006,6 @@
 	      }
 
 	      if (isSelect) {
-	        console.log(data.children);
 	        var options = data.children.children.map(function (v) {
 	          return (0, _mithril2.default)('option', v);
 	        });
@@ -2390,8 +2101,13 @@
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var LayerBaseClass = (function () {
-		function LayerBaseClass(parent, prop, tool) {
+		function LayerBaseClass(parent, prop, options) {
 			_classCallCheck(this, LayerBaseClass);
+
+			options = Global._extend({
+				tool: Global.curTool,
+				mode: 'edit'
+			}, options);
 
 			this.parent = parent;
 			this.ID = Global.NewID();
@@ -2399,7 +2115,7 @@
 			this.Prop.key = this.ID;
 			this.Prop.className = '';
 			// var curTool = parent&&parent.children.length%2 ? 'select' : 'inputText'
-			DataTemplate.initDataTemplate.call(this, tool || Global.curTool, prop);
+			DataTemplate.initDataTemplate.call(this, options.tool, prop);
 
 			// this.Prop = Global._deepCopy( this.Prop, prop||{} );
 

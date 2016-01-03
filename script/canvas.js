@@ -9,7 +9,7 @@ import UndoManager from './UndoManager'
 function buildStageFromData(data, parent=null) {
   var widget = data.classType=='canvas'
   ? new WidgetCanvas(parent, data.jsonData)
-  : new WidgetDiv(parent, data.jsonData, data.jsonData.type)
+  : new WidgetDiv(parent, data.jsonData, {tool:data.jsonData.type} )
   widget.children = data.childWidget.map(v=>{
     return buildStageFromData( v, widget )
   })

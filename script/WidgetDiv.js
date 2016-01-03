@@ -4,8 +4,8 @@ import LayerBaseClass from './LayerBaseClass'
 
 export default class WidgetDiv extends LayerBaseClass {
 
-	constructor(parent, prop, tool) {
-		super(parent, prop, tool);
+	constructor(parent, prop, options) {
+		super(parent, prop, options);
 		this.parent = parent;
     this.key = m.prop( Global.NewID() );
 	}
@@ -37,7 +37,6 @@ export default class WidgetDiv extends LayerBaseClass {
     }
 
     if( isSelect ) {
-    	console.log(data.children)
         var options = data.children.children.map(function(v){ return m('option', v) });
         if( data.children.attrs.placeholder ) options.unshift( m('option', {disabled:true, value:''}, data.children.attrs.placeholder ) );
         dom = Global._extend( {}, data.children )

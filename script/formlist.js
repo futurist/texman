@@ -1,6 +1,7 @@
 import m from 'mithril'
 import * as Global from './global'
-import canvas from './canvas'
+import WidgetDiv from './WidgetDiv'
+import WidgetCanvas from './WidgetCanvas'
 
 export class formList {
 	constructor(){
@@ -58,12 +59,32 @@ m.mount( $('#formlist').get(0), new formList )
 
 // get a form when click
 function getForm(id) {
-	m.mount( document.querySelector('#container'), null )
+	var container = document.querySelector('#container')
+	m.mount( container , null )
 	Global.mRequestApi('GET', Global.APIHOST+'/formtype/'+id).then(function(savedData){
-		new canvas(savedData)
+		var Canvas1 = buildStageFromData(savedData.data.attributes.dom)
+		m.mount(container,
+		{
+		  view: function(){
+		    return m('.mainCanvas', { config:function(el, isInit, context){ context.retain=true } }, [
+		      m('h2', Canvas1.Prop.title),
+		      Canvas1.getView()
+		    ])
+		  }
+		}
+		);
 	})
 }
 
+function buildStageFromData(data, parent=null) {
+  var widget = data.classType=='canvas'
+  ? new WidgetCanvas(parent, data.jsonData, {mode:'present'} )
+  : new WidgetDiv(parent, data.jsonData, {tool:data.jsonData.type, mode:'present' } )
+  widget.children = data.childWidget.map(v=>{
+    return buildStageFromData( v, widget )
+  })
+  return widget;
+}
 
 
 

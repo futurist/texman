@@ -1898,7 +1898,7 @@
 	function buildStageFromData(data) {
 	  var parent = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
 
-	  var widget = data.classType == 'canvas' ? new _WidgetCanvas2.default(parent, data.jsonData) : new _WidgetDiv2.default(parent, data.jsonData, data.jsonData.type);
+	  var widget = data.classType == 'canvas' ? new _WidgetCanvas2.default(parent, data.jsonData) : new _WidgetDiv2.default(parent, data.jsonData, { tool: data.jsonData.type });
 	  widget.children = data.childWidget.map(function (v) {
 	    return buildStageFromData(v, widget);
 	  });
@@ -2203,10 +2203,10 @@
 	var WidgetDiv = (function (_LayerBaseClass) {
 	  _inherits(WidgetDiv, _LayerBaseClass);
 
-	  function WidgetDiv(parent, prop, tool) {
+	  function WidgetDiv(parent, prop, options) {
 	    _classCallCheck(this, WidgetDiv);
 
-	    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(WidgetDiv).call(this, parent, prop, tool));
+	    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(WidgetDiv).call(this, parent, prop, options));
 
 	    _this.parent = parent;
 	    _this.key = _mithril2.default.prop(Global.NewID());
@@ -2249,7 +2249,6 @@
 	      }
 
 	      if (isSelect) {
-	        console.log(data.children);
 	        var options = data.children.children.map(function (v) {
 	          return (0, _mithril2.default)('option', v);
 	        });
@@ -2345,8 +2344,13 @@
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var LayerBaseClass = (function () {
-		function LayerBaseClass(parent, prop, tool) {
+		function LayerBaseClass(parent, prop, options) {
 			_classCallCheck(this, LayerBaseClass);
+
+			options = Global._extend({
+				tool: Global.curTool,
+				mode: 'edit'
+			}, options);
 
 			this.parent = parent;
 			this.ID = Global.NewID();
@@ -2354,7 +2358,7 @@
 			this.Prop.key = this.ID;
 			this.Prop.className = '';
 			// var curTool = parent&&parent.children.length%2 ? 'select' : 'inputText'
-			DataTemplate.initDataTemplate.call(this, tool || Global.curTool, prop);
+			DataTemplate.initDataTemplate.call(this, options.tool, prop);
 
 			// this.Prop = Global._deepCopy( this.Prop, prop||{} );
 
