@@ -185,6 +185,9 @@ span[type=checkbox] label
 .mainCanvas h2{
 	margin-left: 100px;
 }
+.mainCanvas .canvasOp{
+	margin-left: 100px;
+}
 #debug{
 	position: absolute;
 	top:0;

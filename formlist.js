@@ -124,18 +124,36 @@
 	// get a form when click
 	function getForm(id) {
 		var container = document.querySelector('#container');
-		_mithril2.default.mount(container, null);
-		Global.mRequestApi('GET', Global.APIHOST + '/formtype/' + id).then(function (savedData) {
-			var Canvas1 = buildStageFromData(savedData.data.attributes.dom);
-			_mithril2.default.mount(container, {
-				view: function view() {
-					return (0, _mithril2.default)('.mainCanvas', { config: function config(el, isInit, context) {
-							context.retain = true;
-						} }, [(0, _mithril2.default)('h2', Canvas1.Prop.title), Canvas1.getView()]);
-				}
-			});
-		});
+		_mithril2.default.mount(container, new Canvas(id));
 	}
+
+	var Canvas = function Canvas(id) {
+		_classCallCheck(this, Canvas);
+
+		var self = this;
+		this.getCanvasData = function () {
+			return Global.mRequestApi('GET', Global.APIHOST + '/formtype/' + id);
+		};
+
+		this.controller = function () {
+			this.buildCanvas = function () {
+				this.Canvas1 = self.getCanvasData().then(function (data) {
+					return buildStageFromData(data.data.attributes.dom);
+				});
+			};
+			this.buildCanvas();
+		};
+
+		this.view = function (ctrl) {
+			return (0, _mithril2.default)('.mainCanvas', { config: function config(el, isInit, context) {
+					context.retain = true;
+				} }, [(0, _mithril2.default)('h2', ctrl.Canvas1().Prop.title), (0, _mithril2.default)('.canvasOp', [(0, _mithril2.default)('input[type=button][value=提交]', { onclick: function onclick() {
+					console.log(ctrl.Canvas1().getDomTree());
+				} }), (0, _mithril2.default)('input[type=button][value=重置]', { onclick: function onclick() {
+					ctrl.buildCanvas();
+				} })]), ctrl.Canvas1().getView()]);
+		};
+	};
 
 	function buildStageFromData(data) {
 		var parent = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];

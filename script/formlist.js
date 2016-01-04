@@ -60,20 +60,40 @@ m.mount( $('#formlist').get(0), new formList )
 // get a form when click
 function getForm(id) {
 	var container = document.querySelector('#container')
-	m.mount( container , null )
-	Global.mRequestApi('GET', Global.APIHOST+'/formtype/'+id).then(function(savedData){
-		var Canvas1 = buildStageFromData(savedData.data.attributes.dom)
-		m.mount(container,
-		{
-		  view: function(){
+	m.mount(container, new Canvas(id) );
+}
+
+class Canvas {
+	constructor(id){
+		var self = this;
+		this.getCanvasData = function() {
+			return Global.mRequestApi('GET', Global.APIHOST+'/formtype/'+id)
+		}
+
+		  this.controller = function(){
+		  	this.buildCanvas = function(){
+		  		this.Canvas1 = self.getCanvasData().then( function(data){
+					return buildStageFromData( data.data.attributes.dom )
+				})
+		  	}
+		  	this.buildCanvas()
+		  }
+
+		  this.view = function(ctrl){
 		    return m('.mainCanvas', { config:function(el, isInit, context){ context.retain=true } }, [
-		      m('h2', Canvas1.Prop.title),
-		      Canvas1.getView()
+		      m('h2', ctrl.Canvas1().Prop.title),
+		      m('.canvasOp', [
+		      	m('input[type=button][value=提交]', {onclick:function(){ 
+		      		console.log( ctrl.Canvas1().getDomTree() )
+		      	}}),
+		      	m('input[type=button][value=重置]', {onclick:function(){
+		      		ctrl.buildCanvas()
+		      	}}), 
+		      	]),
+		      ctrl.Canvas1().getView()
 		    ])
 		  }
-		}
-		);
-	})
+	}
 }
 
 function buildStageFromData(data, parent=null) {
