@@ -656,7 +656,7 @@ export function renderJsonEditor(CanvasDom){
 
       } }, 
 
-      // VALIDATOR
+      // VALIDATOR, if return false, then don't change
       function(path,value, getData, data, oldValue ){
         path = path.replace(/^root\./,'')
         var _path = path.split('.')

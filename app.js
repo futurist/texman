@@ -3346,7 +3346,7 @@
 	        });
 	      } },
 
-	    // VALIDATOR
+	    // VALIDATOR, if return false, then don't change
 	    function (path, value, getData, data, oldValue) {
 	      path = path.replace(/^root\./, '');
 	      var _path = path.split('.');
@@ -4375,7 +4375,7 @@
 				var _this3 = this;
 
 				src.children && src.children.forEach(function (child) {
-					var newChild = new child.constructor(dest, { style: child.Prop.style });
+					var newChild = new child.constructor(dest, { style: child.Prop.style }, { tool: child.jsonData().type });
 					dest.children.push(newChild);
 					_this3.duplicateChild(child, newChild);
 				});
@@ -4386,7 +4386,7 @@
 				var editing = this.getRoot().editingContainer;
 				var newWidget = [];
 				for (var i = 0, v; v = editing.selectedWidget[i]; i++) {
-					var widget = new v.constructor(v.parent, { style: v.Prop.style });
+					var widget = new v.constructor(v.parent, { style: v.Prop.style }, { tool: v.jsonData().type });
 					this.duplicateChild(v, widget);
 					editing.children.push(widget);
 					newWidget.push(widget);

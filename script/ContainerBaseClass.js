@@ -78,7 +78,7 @@ export default class ContainerBaseClass extends LayerBaseClass {
 
 	duplicateChild (src, dest){
 		src.children && src.children.forEach((child)=>{
-			var newChild = new child.constructor( dest, {style:child.Prop.style } );
+			var newChild = new child.constructor( dest, {style:child.Prop.style }, {tool:child.jsonData().type} );
 			dest.children.push( newChild )
 			this.duplicateChild( child, newChild )
 		})
@@ -88,7 +88,7 @@ export default class ContainerBaseClass extends LayerBaseClass {
 		var editing = this.getRoot().editingContainer;
 		var newWidget = []
 		for(var i=0,v; v=editing.selectedWidget[i]; i++ ) {
-			var widget = new v.constructor( v.parent, {style:v.Prop.style} )
+			var widget = new v.constructor( v.parent, {style:v.Prop.style}, {tool:v.jsonData().type} )
 			this.duplicateChild(v, widget)
 			editing.children.push(widget);
 			newWidget.push(widget)
