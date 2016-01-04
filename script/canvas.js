@@ -6,12 +6,12 @@ import JsonEditor from './JsonEditor'
 import EE from './Events'
 import UndoManager from './UndoManager'
 
-function buildStageFromData(data, parent=null) {
+export function buildStageFromData(data, parent=null, options={}) {
   var widget = data.classType=='canvas'
-  ? new WidgetCanvas(parent, data.jsonData)
-  : new WidgetDiv(parent, data.jsonData, {tool:data.jsonData.type} )
+  ? new WidgetCanvas(parent, data.jsonData, options)
+  : new WidgetDiv(parent, data.jsonData, Global._extend( {tool:data.jsonData.type}, options ) )
   widget.children = data.childWidget.map(v=>{
-    return buildStageFromData( v, widget )
+    return buildStageFromData( v, widget, options )
   })
   return widget;
 }

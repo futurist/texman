@@ -2,6 +2,7 @@ import m from 'mithril'
 import * as Global from './global'
 import WidgetDiv from './WidgetDiv'
 import WidgetCanvas from './WidgetCanvas'
+import {buildStageFromData} from './canvas'
 
 export class formList {
 	constructor(){
@@ -60,10 +61,10 @@ m.mount( $('#formlist').get(0), new formList )
 // get a form when click
 function getForm(id) {
 	var container = document.querySelector('#container')
-	m.mount(container, new Canvas(id) );
+	m.mount(container, new CanvasView(id) );
 }
 
-class Canvas {
+class CanvasView {
 	constructor(id){
 		var self = this;
 		this.getCanvasData = function() {
@@ -71,12 +72,15 @@ class Canvas {
 		}
 
 		  this.controller = function(){
-		  	this.buildCanvas = function(){
-		  		this.Canvas1 = self.getCanvasData().then( function(data){
-					return buildStageFromData( data.data.attributes.dom )
+		  	var ctrl = this;
+		  	ctrl.savedData = m.prop()
+		  	ctrl.buildCanvas = function(){
+		  		ctrl.Canvas1 = self.getCanvasData().then( function(data){
+		  			ctrl.savedData(data)
+					return buildStageFromData( data.data.attributes.dom, null, {mode:'present'} )
 				})
 		  	}
-		  	this.buildCanvas()
+		  	ctrl.buildCanvas()
 		  }
 
 		  this.view = function(ctrl){
@@ -95,17 +99,6 @@ class Canvas {
 		  }
 	}
 }
-
-function buildStageFromData(data, parent=null) {
-  var widget = data.classType=='canvas'
-  ? new WidgetCanvas(parent, data.jsonData, {mode:'present'} )
-  : new WidgetDiv(parent, data.jsonData, {tool:data.jsonData.type, mode:'present' } )
-  widget.children = data.childWidget.map(v=>{
-    return buildStageFromData( v, widget )
-  })
-  return widget;
-}
-
 
 
 

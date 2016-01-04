@@ -1863,6 +1863,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
+	exports.buildStageFromData = buildStageFromData;
 
 	var _mithril = __webpack_require__(2);
 
@@ -1900,10 +1901,11 @@
 
 	function buildStageFromData(data) {
 	  var parent = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
+	  var options = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
-	  var widget = data.classType == 'canvas' ? new _WidgetCanvas2.default(parent, data.jsonData) : new _WidgetDiv2.default(parent, data.jsonData, { tool: data.jsonData.type });
+	  var widget = data.classType == 'canvas' ? new _WidgetCanvas2.default(parent, data.jsonData, options) : new _WidgetDiv2.default(parent, data.jsonData, Global._extend({ tool: data.jsonData.type }, options));
 	  widget.children = data.childWidget.map(function (v) {
-	    return buildStageFromData(v, widget);
+	    return buildStageFromData(v, widget, options);
 	  });
 	  return widget;
 	}
