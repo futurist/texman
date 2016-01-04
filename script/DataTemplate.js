@@ -618,13 +618,17 @@ function checkPropRelation(data, path, value){
   }
 }
 
-export function renderJsonEditor(){
+export function renderJsonEditor(CanvasDom){
   var self = this;
   var editorDom = document.querySelector('.editor')
   if(!editorDom) return false;
     if( this.isValidRect() && this.jsonData && this.jsonSchema ){
       Global._extend(this.jsonData().style, this.Prop.style)
-      m.mount( editorDom , new JsonEditor( this.jsonSchema, this.jsonData, { config:(el)=>{
+      m.mount( editorDom , new JsonEditor( 
+        this.jsonSchema, 
+        this.jsonData, 
+        // PROP
+        { config:(el)=>{
         // below add drag&drop function to change array item order
         $(el).find('.array .props .row').each(function(){
 
@@ -650,10 +654,27 @@ export function renderJsonEditor(){
           }
         })
 
-      } }, function(path,value, getData, data ){
+      } }, 
+
+      // VALIDATOR
+      function(path,value, getData, data, oldValue ){
         path = path.replace(/^root\./,'')
         var _path = path.split('.')
+        // check for duplicate names in all forms
+        if(path=='attrs.name'){
+          var templates = self.getRoot().getDomTree().template;
+          if( Object.keys(templates).filter( v=>{return v==value} ).length ){
+            alert('字段名称与其它字段冲突');
+            return false;
+          }
+        }
 
+      },
+
+      // CHANGE CALLBACK
+      function(path,value, getData, data, oldValue ){
+        path = path.replace(/^root\./,'')
+        var _path = path.split('.')
         checkPropRelation(data, path, value)
 
         ;(self.parent?self.parent.selectedWidget:[self]).forEach(v=>{
@@ -670,7 +691,9 @@ export function renderJsonEditor(){
         })
 
         m.redraw()
-      }) )
+      }
+
+      ) )
     }
 }
 

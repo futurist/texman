@@ -4,7 +4,7 @@ import doT from './doT'
 
 export default class JsonEditor {
 
-	constructor(SCHEMA, DATA, PROPS={}, CALLBACK=()=>{} ) {
+	constructor(SCHEMA, DATA, PROPS={}, VALIDATOR=()=>{}, CALLBACK=()=>{} ) {
 
 		var orgData = Global.clone( DATA() )
 		var schemaObjects = {};
@@ -51,19 +51,20 @@ export default class JsonEditor {
 			} else {
 				var temp = DATA()
 				var _value = value===null? schemaObjects[path.join('.')].empty||'' :value;
-				var oldValue = _dotPathValue(temp, path );
+				var oldValue = _dotPathValue(temp, path);
 				if( oldValue==_value) return;
+				if( false === VALIDATOR(path.join('.'), _value, getOriginalKeyVal( temp, orgData ), temp, oldValue, templateFieldValue, inheritFieldValue, schemaObjects) ) return;
 				_dotPathValue(temp, path, _value);
 				DATA(temp)
 				var callback = function(p, v){
 					var _path = p||path.join('.')
-					CALLBACK(_path, _value, getOriginalKeyVal( temp, orgData ), temp, templateFieldValue, inheritFieldValue, schemaObjects );
+					CALLBACK(_path, _value, getOriginalKeyVal( temp, orgData ), temp, oldValue, templateFieldValue, inheritFieldValue, schemaObjects );
 				}
 				// below line will update the key for force update view
 				var shouldCallback = true;
 				for(var i in templateFieldValue){
 					if(i==path.join('.')) shouldCallback = false;
-					var updated = templateFieldValue[i].some( (watchPath)=> {
+					var updated = templateFieldValue[i].forEach( (watchPath)=> {
 						if(watchPath == path.join('.')) {
 							var updateFunc = templateFieldValue[i][0]
 							updateFunc()

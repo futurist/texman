@@ -3389,7 +3389,7 @@
 	  }
 	}
 
-	function renderJsonEditor() {
+	function renderJsonEditor(CanvasDom) {
 	  var _this = this;
 
 	  var self = this;
@@ -3397,7 +3397,9 @@
 	  if (!editorDom) return false;
 	  if (this.isValidRect() && this.jsonData && this.jsonSchema) {
 	    Global._extend(this.jsonData().style, this.Prop.style);
-	    _mithril2.default.mount(editorDom, new _JsonEditor2.default(this.jsonSchema, this.jsonData, { config: function config(el) {
+	    _mithril2.default.mount(editorDom, new _JsonEditor2.default(this.jsonSchema, this.jsonData,
+	    // PROP
+	    { config: function config(el) {
 	        // below add drag&drop function to change array item order
 	        $(el).find('.array .props .row').each(function () {});
 	        if (!_this.jsonData().attrs.name && self.parent) _this.jsonData().attrs.name = _this.jsonData().type + _this.parent.children.length;
@@ -3422,10 +3424,28 @@
 	            });
 	          }
 	        });
-	      } }, function (path, value, getData, data) {
+	      } },
+
+	    // VALIDATOR
+	    function (path, value, getData, data, oldValue) {
 	      path = path.replace(/^root\./, '');
 	      var _path = path.split('.');
+	      // check for duplicate names in all forms
+	      if (path == 'attrs.name') {
+	        var templates = self.getRoot().getDomTree().template;
+	        if (Object.keys(templates).filter(function (v) {
+	          return v == value;
+	        }).length) {
+	          alert('字段名称与其它字段冲突');
+	          return false;
+	        }
+	      }
+	    },
 
+	    // CHANGE CALLBACK
+	    function (path, value, getData, data, oldValue) {
+	      path = path.replace(/^root\./, '');
+	      var _path = path.split('.');
 	      checkPropRelation(data, path, value);(self.parent ? self.parent.selectedWidget : [self]).forEach(function (v) {
 	        // v.jsonData() is like {attrs:{}, style:{}, children:{}}
 	        // v.Prop is like { key:key, className:..., style:{} }
@@ -3494,7 +3514,8 @@
 
 	var JsonEditor = function JsonEditor(SCHEMA, DATA) {
 		var PROPS = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
-		var CALLBACK = arguments.length <= 3 || arguments[3] === undefined ? function () {} : arguments[3];
+		var VALIDATOR = arguments.length <= 3 || arguments[3] === undefined ? function () {} : arguments[3];
+		var CALLBACK = arguments.length <= 4 || arguments[4] === undefined ? function () {} : arguments[4];
 
 		_classCallCheck(this, JsonEditor);
 
@@ -3544,17 +3565,18 @@
 				var _value = value === null ? schemaObjects[path.join('.')].empty || '' : value;
 				var oldValue = _dotPathValue(temp, path);
 				if (oldValue == _value) return;
+				if (false === VALIDATOR(path.join('.'), _value, getOriginalKeyVal(temp, orgData), temp, oldValue, templateFieldValue, inheritFieldValue, schemaObjects)) return;
 				_dotPathValue(temp, path, _value);
 				DATA(temp);
 				var callback = function callback(p, v) {
 					var _path = p || path.join('.');
-					CALLBACK(_path, _value, getOriginalKeyVal(temp, orgData), temp, templateFieldValue, inheritFieldValue, schemaObjects);
+					CALLBACK(_path, _value, getOriginalKeyVal(temp, orgData), temp, oldValue, templateFieldValue, inheritFieldValue, schemaObjects);
 				};
 				// below line will update the key for force update view
 				var shouldCallback = true;
 				for (var i in templateFieldValue) {
 					if (i == path.join('.')) shouldCallback = false;
-					var updated = templateFieldValue[i].some(function (watchPath) {
+					var updated = templateFieldValue[i].forEach(function (watchPath) {
 						if (watchPath == path.join('.')) {
 							var updateFunc = templateFieldValue[i][0];
 							updateFunc();
