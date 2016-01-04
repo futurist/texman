@@ -36,7 +36,9 @@ export var mRequestApi = function(method, url, data) {
     }
     return m.request({method: method, url: url, data:data, extract:extract, serialize:function(data){ return JSON.stringify(data) }, config: xhrConfig})
 }
-
+export var mSkipRedraw = function mSkipRedraw(){
+    m.redraw.strategy("none");
+}
 
 /**
  * Helper functions

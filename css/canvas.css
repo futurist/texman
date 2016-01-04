@@ -25,6 +25,9 @@ ul,li{
 	overflow: visible;
 	position: absolute;
 }
+.canvas *:focus{
+	outline:0;
+}
 .canvas.editing{
 	background-image: url(../images/grid.png)!important;
 }
@@ -32,7 +35,7 @@ ul,li{
 	position: absolute;
 }
 
-.canvas .content {
+.canvas.editing .content {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   -khtml-user-select: none;

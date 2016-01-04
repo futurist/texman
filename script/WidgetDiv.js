@@ -38,6 +38,9 @@ export default class WidgetDiv extends LayerBaseClass {
     if(typeof data.children=='object'){
       data.children.attrs = data.children.attrs || {}
       data.children.attrs.style = data.children.attrs.style||{}
+      // var oldKeyPressFunc = data.children.attrs.onkeypress;
+      // data.children.attrs.onkeypress = function(){ Global.mSkipRedraw(); if(typeof oldKeyPressFunc=='function') oldKeyPressFunc.apply(this, arguments); }
+      data.children.attrs.oninput = function(){ data.children.attrs.value = ( $(this).val() ) }
       Global.applyStyle( data.children.attrs, Global._pluck(data.style, ['fontFamily', 'fontSize', 'color', 'textAlign', 'fontStyle', 'fontWeight']) );
       Global.applyStyle( contentProp, Global._pluck(data.style, ['alignItems', 'justifyContent']) );
     }
@@ -65,8 +68,7 @@ export default class WidgetDiv extends LayerBaseClass {
       dom = Global._extend( {}, data.children )
       dom.children = dom.html? m.trust(dom.children) : dom.children;
     }
-
-    return m('.content', Global._extend( { config: function(el,isInit,context){context.retain=false} }, contentProp ), [dom] );
+    return m('.content', Global._extend( { config: function(el,isInit,context){context.retain=true} }, contentProp ), [dom] );
 
   }
 

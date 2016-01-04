@@ -28,7 +28,6 @@ export default class LayerBaseClass {
 			// Global.applyStyle(el, this.Prop.style);
 			context.retain=true;
 		}
-		this.Prop.onkeypress = function(e){ console.log(e,this)  }
 		this.ControlPoints = []
 		this.activeControlPoint = undefined;
 	   addEditorToLayerBase()

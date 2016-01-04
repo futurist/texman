@@ -156,7 +156,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
-	exports.curTool = exports.getOuterRect = exports.applyProp = exports._excludeJsonStyle = exports.debug = exports.rectsIntersect = exports.addToObject = exports.clickE = exports.leaveE = exports.upE = exports.moveE = exports.downE = exports.isTouch = exports.isMobile = exports.isiOS = exports.isWeiXin = exports.isAndroid = exports.EDITING_CLASSNAME = exports.SELECTED_CLASSNAME = exports.POINT_HEIGHT = exports.POINT_WIDTH = exports.GRID_SIZE = exports.MIN_WIDTH = exports.BORDER_BOX = exports.mRequestApi = exports.APIHOST = undefined;
+	exports.curTool = exports.getOuterRect = exports.applyProp = exports._excludeJsonStyle = exports.debug = exports.rectsIntersect = exports.addToObject = exports.clickE = exports.leaveE = exports.upE = exports.moveE = exports.downE = exports.isTouch = exports.isMobile = exports.isiOS = exports.isWeiXin = exports.isAndroid = exports.EDITING_CLASSNAME = exports.SELECTED_CLASSNAME = exports.POINT_HEIGHT = exports.POINT_WIDTH = exports.GRID_SIZE = exports.MIN_WIDTH = exports.BORDER_BOX = exports.mSkipRedraw = exports.mRequestApi = exports.APIHOST = undefined;
 	exports.isNumeric = isNumeric;
 	exports.clone = clone;
 	exports._deepCopy = _deepCopy;
@@ -217,6 +217,9 @@
 	    return _mithril2.default.request({ method: method, url: url, data: data, extract: extract, serialize: function serialize(data) {
 	            return JSON.stringify(data);
 	        }, config: xhrConfig });
+	};
+	var mSkipRedraw = exports.mSkipRedraw = function mSkipRedraw() {
+	    _mithril2.default.redraw.strategy("none");
 	};
 
 	/**
@@ -2006,6 +2009,11 @@
 	      if (_typeof(data.children) == 'object') {
 	        data.children.attrs = data.children.attrs || {};
 	        data.children.attrs.style = data.children.attrs.style || {};
+	        // var oldKeyPressFunc = data.children.attrs.onkeypress;
+	        // data.children.attrs.onkeypress = function(){ Global.mSkipRedraw(); if(typeof oldKeyPressFunc=='function') oldKeyPressFunc.apply(this, arguments); }
+	        data.children.attrs.oninput = function () {
+	          data.children.attrs.value = $(this).val();
+	        };
 	        Global.applyStyle(data.children.attrs, Global._pluck(data.style, ['fontFamily', 'fontSize', 'color', 'textAlign', 'fontStyle', 'fontWeight']));
 	        Global.applyStyle(contentProp, Global._pluck(data.style, ['alignItems', 'justifyContent']));
 	      }
@@ -2035,9 +2043,8 @@
 	        dom = Global._extend({}, data.children);
 	        dom.children = dom.html ? _mithril2.default.trust(dom.children) : dom.children;
 	      }
-
 	      return (0, _mithril2.default)('.content', Global._extend({ config: function config(el, isInit, context) {
-	          context.retain = false;
+	          context.retain = true;
 	        } }, contentProp), [dom]);
 	    }
 	  }, {
@@ -2133,9 +2140,6 @@
 	   **/
 				// Global.applyStyle(el, this.Prop.style);
 				context.retain = true;
-			};
-			this.Prop.onkeypress = function (e) {
-				console.log(e, this);
 			};
 			this.ControlPoints = [];
 			this.activeControlPoint = undefined;
