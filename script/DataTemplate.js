@@ -664,8 +664,8 @@ export function renderJsonEditor(CanvasDom){
         if(path=='attrs.name'){
           var templates = self.getRoot().getDomTree().template;
           if( Object.keys(templates).filter( v=>{return v==value} ).length ){
-            alert('字段名称与其它字段冲突');
-            return false;
+            alert(`字段名称 ${value} 与其它字段冲突`);
+            return 'error';
           }
         }
 

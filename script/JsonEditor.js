@@ -53,7 +53,7 @@ export default class JsonEditor {
 				var _value = value===null? schemaObjects[path.join('.')].empty||'' :value;
 				var oldValue = _dotPathValue(temp, path);
 				if( oldValue==_value) return;
-				if( false === VALIDATOR(path.join('.'), _value, getOriginalKeyVal( temp, orgData ), temp, oldValue, templateFieldValue, inheritFieldValue, schemaObjects) ) return;
+				if( VALIDATOR(path.join('.'), _value, getOriginalKeyVal( temp, orgData ), temp, oldValue, templateFieldValue, inheritFieldValue, schemaObjects) ) return;
 				_dotPathValue(temp, path, _value);
 				DATA(temp)
 				var callback = function(p, v){

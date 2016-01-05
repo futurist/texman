@@ -2253,6 +2253,8 @@
 
 	      if (_typeof(data.children) == 'object') {
 	        data.children.attrs = data.children.attrs || {};
+	        data.children.attrs['data-input'] = true;
+	        data.children.attrs['data-type'] = data.type;
 	        data.children.attrs.style = data.children.attrs.style || {};
 	        // var oldKeyPressFunc = data.children.attrs.onkeypress;
 	        // data.children.attrs.onkeypress = function(){ Global.mSkipRedraw(); if(typeof oldKeyPressFunc=='function') oldKeyPressFunc.apply(this, arguments); }
@@ -3356,8 +3358,8 @@
 	        if (Object.keys(templates).filter(function (v) {
 	          return v == value;
 	        }).length) {
-	          alert('字段名称与其它字段冲突');
-	          return false;
+	          alert('字段名称 ' + value + ' 与其它字段冲突');
+	          return 'error';
 	        }
 	      }
 	    },
@@ -3485,7 +3487,7 @@
 				var _value = value === null ? schemaObjects[path.join('.')].empty || '' : value;
 				var oldValue = _dotPathValue(temp, path);
 				if (oldValue == _value) return;
-				if (false === VALIDATOR(path.join('.'), _value, getOriginalKeyVal(temp, orgData), temp, oldValue, templateFieldValue, inheritFieldValue, schemaObjects)) return;
+				if (VALIDATOR(path.join('.'), _value, getOriginalKeyVal(temp, orgData), temp, oldValue, templateFieldValue, inheritFieldValue, schemaObjects)) return;
 				_dotPathValue(temp, path, _value);
 				DATA(temp);
 				var callback = function callback(p, v) {
@@ -5112,9 +5114,6 @@
 						}
 					}, v);
 				}), (0, _mithril2.default)('.save', [(0, _mithril2.default)('input[type=button]', { value: ID ? '更新' : '创建', onclick: function onclick() {
-						var xhrConfig = function xhrConfig(xhr) {
-							xhr.setRequestHeader("Content-Type", "application/vnd.api+json");
-						};
 
 						if (ID) {
 							var formtype = {

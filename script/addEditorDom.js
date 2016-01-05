@@ -39,9 +39,6 @@ export function addEditorDom (savedData){
 				),
 				m('.save', [
 					m('input[type=button]', {value: ID?'更新':'创建', onclick:function(){
-						var xhrConfig = function(xhr) {
-						    xhr.setRequestHeader("Content-Type", "application/vnd.api+json");
-						}
 
 						if(ID){
 							let formtype = {

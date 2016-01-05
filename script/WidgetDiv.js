@@ -37,6 +37,8 @@ export default class WidgetDiv extends LayerBaseClass {
 
     if(typeof data.children=='object'){
       data.children.attrs = data.children.attrs || {}
+      data.children.attrs['data-input'] = true;
+      data.children.attrs['data-type'] = data.type;
       data.children.attrs.style = data.children.attrs.style||{}
       // var oldKeyPressFunc = data.children.attrs.onkeypress;
       // data.children.attrs.onkeypress = function(){ Global.mSkipRedraw(); if(typeof oldKeyPressFunc=='function') oldKeyPressFunc.apply(this, arguments); }

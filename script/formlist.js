@@ -88,7 +88,21 @@ class CanvasView {
 		      m('h2', ctrl.Canvas1().Prop.title),
 		      m('.canvasOp', [
 		      	m('input[type=button][value=提交]', {onclick:function(){ 
-		      		console.log( ctrl.Canvas1().getDomTree() )
+		      		var domData = ctrl.Canvas1().getDomTree();
+		      		var userData = {}
+		      		for(let i in domData.template){
+		      			userData[i] = $(`.canvas [name="${i}"] [data-input]`).val() ;
+		      		}
+		      		let apiData = {
+						"data":{
+							"type": domData.name ,
+							"attributes": userData
+						}
+					}
+		      		console.log( apiData )
+		      		Global.mRequestApi('POST', Global.APIHOST+'/userform_'+domData.name, apiData, function(ret){
+		      			console.log(ret)
+		      		} )
 		      	}}),
 		      	m('input[type=button][value=重置]', {onclick:function(){
 		      		ctrl.buildCanvas()
