@@ -20,7 +20,7 @@ export class formList {
 			var data = forms&&forms.data || [];
 			return m('.list',
 					[
-						m('.operat', m('a[href="cane.html"][target=_blank]','添加')),
+						m('.operate', m('a[href="cane.html"][target=_blank]','添加')),
 						m('ul',
 							data.map((v,i)=>{
 								return m('li',
@@ -91,7 +91,7 @@ class CanvasView {
 		      		var domData = ctrl.Canvas1().getDomTree();
 		      		var userData = {}
 		      		for(let i in domData.template){
-		      			userData[i] = $(`.canvas [name="${i}"] [data-input]`).val() ;
+		      			userData[i] = Global.getInputVal(i, '.canvas') ;
 		      		}
 		      		let apiData = {
 						"data":{
@@ -106,7 +106,7 @@ class CanvasView {
 		      	}}),
 		      	m('input[type=button][value=重置]', {onclick:function(){
 		      		ctrl.buildCanvas()
-		      	}}), 
+		      	}}),
 		      	]),
 		      ctrl.Canvas1().getView()
 		    ])

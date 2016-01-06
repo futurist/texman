@@ -34,11 +34,10 @@ export default class WidgetDiv extends LayerBaseClass {
     var isCheckbox = data.type=='checkbox';
     var isSelect = data.type=='select';
     var dom, contentProp={ style:{} }
+    var name = data.attrs.name;
 
     if(typeof data.children=='object'){
       data.children.attrs = data.children.attrs || {}
-      data.children.attrs['data-input'] = true;
-      data.children.attrs['data-type'] = data.type;
       data.children.attrs.style = data.children.attrs.style||{}
       // var oldKeyPressFunc = data.children.attrs.onkeypress;
       // data.children.attrs.onkeypress = function(){ Global.mSkipRedraw(); if(typeof oldKeyPressFunc=='function') oldKeyPressFunc.apply(this, arguments); }
@@ -48,6 +47,7 @@ export default class WidgetDiv extends LayerBaseClass {
     }
 
     if( isSelect ) {
+        data.children.attrs['name'] = name;
         var options = data.children.children.map(function(v){ return m('option', v) });
         if( data.children.attrs.placeholder ) options.unshift( m('option', {disabled:true, value:''}, data.children.attrs.placeholder ) );
         dom = Global._extend( {}, data.children )
@@ -55,18 +55,19 @@ export default class WidgetDiv extends LayerBaseClass {
     } else if( isCheckbox ) {
         var options = data.children.children.map(function(v){
           let checked = v==data.children.attrs.value?'[checked]':'';
-          return m('label', [ v, m(`input.checkbox[type=checkbox]${checked}`, v) ] );
+          return m('label', [ v, m(`input.checkbox[type=checkbox][value=${v}][name=${name}]${checked}`, v) ] );
         });
         dom = Global._extend( {}, data.children )
         dom.children = options
     } else if( isRadio ) {
         var options = data.children.children.map(function(v){
           let checked = v==data.children.attrs.value?'[checked]':'';
-          return m('label', [ v, m(`input.radio[type=radio]${checked}`, v) ] );
+          return m('label', [ v, m(`input.radio[type=radio][value=${v}][name=${name}]${checked}`, v) ] );
         });
         dom = Global._extend( {}, data.children )
         dom.children = options
     } else {
+      data.children.attrs['name'] = name;
       dom = Global._extend( {}, data.children )
       dom.children = dom.html? m.trust(dom.children) : dom.children;
     }

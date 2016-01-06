@@ -286,7 +286,7 @@ export var _excludeJsonStyle = function( propStyle ){
  * @return {[type]}          [description]
  */
 export var applyProp = function( thisProp ){
-	var Prop = _exclude( thisProp, ['eventData','isNew'] )
+	var Prop = _exclude( thisProp, ['eventData','isNew','name'] )
     Prop.style = clone(thisProp.style)
     if(thisProp.style.borderWidth && thisProp.style.borderStyle && thisProp.style.borderColor){
         Prop.style.border = thisProp.style.borderWidth+'px '+thisProp.style.borderStyle+' '+thisProp.style.borderColor
@@ -318,3 +318,13 @@ export var getOuterRect = function( style ){
  */
 export var curTool = 'stage'
 
+export function getInputVal(name, ns=''){
+    var val = []
+    if(ns) ns = ns + ' '
+    var el = $(ns+`[name="${name}"]`)
+    if(el.length==1) return el.val()
+    else{
+        el.filter(':checked').each(function(){ val.push( $(this).val() ) })
+        return val;
+    }
+}

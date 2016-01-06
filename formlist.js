@@ -93,7 +93,7 @@
 			this.view = function (ctrl) {
 				var forms = ctrl.forms();
 				var data = forms && forms.data || [];
-				return (0, _mithril2.default)('.list', [(0, _mithril2.default)('.operat', (0, _mithril2.default)('a[href="cane.html"][target=_blank]', '添加')), (0, _mithril2.default)('ul', data.map(function (v, i) {
+				return (0, _mithril2.default)('.list', [(0, _mithril2.default)('.operate', (0, _mithril2.default)('a[href="cane.html"][target=_blank]', '添加')), (0, _mithril2.default)('ul', data.map(function (v, i) {
 					return (0, _mithril2.default)('li', [(0, _mithril2.default)('.name', { onclick: function onclick() {
 							getForm(v.id);
 						} }, v.attributes.name), (0, _mithril2.default)('.title', v.attributes.title), (0, _mithril2.default)('.createAt', v.attributes.createAt), (0, _mithril2.default)('a.action[href="cane.html#id=' + v.id + '&ret=' + window.location.href + '"][target=_blank]', '编辑'), (0, _mithril2.default)('a.action[href="#' + v.id + '"]', { onclick: function onclick() {
@@ -156,7 +156,7 @@
 					var domData = ctrl.Canvas1().getDomTree();
 					var userData = {};
 					for (var i in domData.template) {
-						userData[i] = $('.canvas [name="' + i + '"] [data-input]').val();
+						userData[i] = Global.getInputVal(i, '.canvas');
 					}
 					var apiData = {
 						"data": {
@@ -198,6 +198,7 @@
 	exports.RandomColor = RandomColor;
 	exports.NewID = NewID;
 	exports.applyStyle = applyStyle;
+	exports.getInputVal = getInputVal;
 
 	var _mithril = __webpack_require__(2);
 
@@ -493,7 +494,7 @@
 	 * @return {[type]}          [description]
 	 */
 	var applyProp = exports.applyProp = function applyProp(thisProp) {
-	    var Prop = _exclude(thisProp, ['eventData', 'isNew']);
+	    var Prop = _exclude(thisProp, ['eventData', 'isNew', 'name']);
 	    Prop.style = clone(thisProp.style);
 	    if (thisProp.style.borderWidth && thisProp.style.borderStyle && thisProp.style.borderColor) {
 	        Prop.style.border = thisProp.style.borderWidth + 'px ' + thisProp.style.borderStyle + ' ' + thisProp.style.borderColor;
@@ -524,6 +525,20 @@
 	 * @type {String}
 	 */
 	var curTool = exports.curTool = 'stage';
+
+	function getInputVal(name) {
+	    var ns = arguments.length <= 1 || arguments[1] === undefined ? '' : arguments[1];
+
+	    var val = [];
+	    if (ns) ns = ns + ' ';
+	    var el = $(ns + ('[name="' + name + '"]'));
+	    if (el.length == 1) return el.val();else {
+	        el.filter(':checked').each(function () {
+	            val.push($(this).val());
+	        });
+	        return val;
+	    }
+	}
 
 /***/ },
 /* 2 */
@@ -2344,11 +2359,10 @@
 	      var isSelect = data.type == 'select';
 	      var dom,
 	          contentProp = { style: {} };
+	      var name = data.attrs.name;
 
 	      if (_typeof(data.children) == 'object') {
 	        data.children.attrs = data.children.attrs || {};
-	        data.children.attrs['data-input'] = true;
-	        data.children.attrs['data-type'] = data.type;
 	        data.children.attrs.style = data.children.attrs.style || {};
 	        // var oldKeyPressFunc = data.children.attrs.onkeypress;
 	        // data.children.attrs.onkeypress = function(){ Global.mSkipRedraw(); if(typeof oldKeyPressFunc=='function') oldKeyPressFunc.apply(this, arguments); }
@@ -2360,6 +2374,7 @@
 	      }
 
 	      if (isSelect) {
+	        data.children.attrs['name'] = name;
 	        var options = data.children.children.map(function (v) {
 	          return (0, _mithril2.default)('option', v);
 	        });
@@ -2369,18 +2384,19 @@
 	      } else if (isCheckbox) {
 	        var options = data.children.children.map(function (v) {
 	          var checked = v == data.children.attrs.value ? '[checked]' : '';
-	          return (0, _mithril2.default)('label', [v, (0, _mithril2.default)('input.checkbox[type=checkbox]' + checked, v)]);
+	          return (0, _mithril2.default)('label', [v, (0, _mithril2.default)('input.checkbox[type=checkbox][value=' + v + '][name=' + name + ']' + checked, v)]);
 	        });
 	        dom = Global._extend({}, data.children);
 	        dom.children = options;
 	      } else if (isRadio) {
 	        var options = data.children.children.map(function (v) {
 	          var checked = v == data.children.attrs.value ? '[checked]' : '';
-	          return (0, _mithril2.default)('label', [v, (0, _mithril2.default)('input.radio[type=radio]' + checked, v)]);
+	          return (0, _mithril2.default)('label', [v, (0, _mithril2.default)('input.radio[type=radio][value=' + v + '][name=' + name + ']' + checked, v)]);
 	        });
 	        dom = Global._extend({}, data.children);
 	        dom.children = options;
 	      } else {
+	        data.children.attrs['name'] = name;
 	        dom = Global._extend({}, data.children);
 	        dom.children = dom.html ? _mithril2.default.trust(dom.children) : dom.children;
 	      }
