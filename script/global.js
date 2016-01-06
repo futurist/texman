@@ -9,6 +9,7 @@ if (!String.prototype.trim) {
   };
 }
 
+
 /**
  * Server config
  */
@@ -21,20 +22,35 @@ export var APIHOST = 'http://1111hui.com/json-api'
  * @return {[type]}        [description]
  */
 export var mRequestApi = function(method, url, data) {
+    var tryParse = function (str, err){
+        try{
+            return JSON.parse(str)
+        }catch(e){
+            return {"errors":[err||{detail:str}]}
+        }
+    }
     var xhrConfig = function(xhr) {
         xhr.setRequestHeader("Accept", "application/*");
         xhr.setRequestHeader("Content-Type", "application/vnd.api+json");
     }
     var extract = function(xhr, xhrOptions) {
-        try{
-            JSON.parse(xhr.responseText)
-            return xhr.responseText
-        }catch(e){
-            var errorMsg = `{"errors":[{"status":"${xhr.status}","title":"${xhr.status}","detail":"${xhr.status}"}]}`
-            return JSON.stringify(errorMsg)
-        }
+        var err = {"status":xhr.status,"title":xhr.statusText,"detail":xhr.responseText};
+        if(xhr.status==500) return tryParse(xhr.responseText, err)
+        else return tryParse(xhr.responseText)
     }
-    return m.request({method: method, url: url, data:data, extract:extract, serialize:function(data){ return JSON.stringify(data) }, config: xhrConfig})
+    return m.request({
+        method: method, 
+        url: url, 
+        data:data, 
+        extract:extract, 
+        serialize:function(data){ return JSON.stringify(data) },
+        deserialize:function(data){ return data },
+        unwrapError: function(err) {
+            if(err.errors) alert(err.errors[0].detail)
+            return err;
+        },
+        config: xhrConfig
+    })
 }
 export var mSkipRedraw = function mSkipRedraw(){
     m.redraw.strategy("none");

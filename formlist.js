@@ -229,22 +229,38 @@
 	 * @return {[type]}        [description]
 	 */
 	var mRequestApi = exports.mRequestApi = function mRequestApi(method, url, data) {
+	    var tryParse = function tryParse(str, err) {
+	        try {
+	            return JSON.parse(str);
+	        } catch (e) {
+	            return { "errors": [err || { detail: str }] };
+	        }
+	    };
 	    var xhrConfig = function xhrConfig(xhr) {
 	        xhr.setRequestHeader("Accept", "application/*");
 	        xhr.setRequestHeader("Content-Type", "application/vnd.api+json");
 	    };
 	    var extract = function extract(xhr, xhrOptions) {
-	        try {
-	            JSON.parse(xhr.responseText);
-	            return xhr.responseText;
-	        } catch (e) {
-	            var errorMsg = '{"errors":[{"status":"' + xhr.status + '","title":"' + xhr.status + '","detail":"' + xhr.status + '"}]}';
-	            return JSON.stringify(errorMsg);
-	        }
+	        var err = { "status": xhr.status, "title": xhr.statusText, "detail": xhr.responseText };
+	        if (xhr.status == 500) return tryParse(xhr.responseText, err);else return tryParse(xhr.responseText);
 	    };
-	    return _mithril2.default.request({ method: method, url: url, data: data, extract: extract, serialize: function serialize(data) {
+	    return _mithril2.default.request({
+	        method: method,
+	        url: url,
+	        data: data,
+	        extract: extract,
+	        serialize: function serialize(data) {
 	            return JSON.stringify(data);
-	        }, config: xhrConfig });
+	        },
+	        deserialize: function deserialize(data) {
+	            return data;
+	        },
+	        unwrapError: function unwrapError(err) {
+	            if (err.errors) alert(err.errors[0].detail);
+	            return err;
+	        },
+	        config: xhrConfig
+	    });
 	};
 	var mSkipRedraw = exports.mSkipRedraw = function mSkipRedraw() {
 	    _mithril2.default.redraw.strategy("none");

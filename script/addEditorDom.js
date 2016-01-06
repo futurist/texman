@@ -39,13 +39,14 @@ export function addEditorDom (savedData){
 				),
 				m('.save', [
 					m('input[type=button]', {value: ID?'更新':'创建', onclick:function(){
-
+						var dom = window.Canvas1.getDomTree();
+						if(dom.dom.childWidget.length==0) return alert('无法保存空白画布');
 						if(ID){
 							let formtype = {
 								"data":{
 									"type":"formtype",
 									"id":ID,
-									"attributes":window.Canvas1.getDomTree()
+									"attributes":dom
 								}
 							}
 							Global.mRequestApi("PATCH", Global.APIHOST+"/formtype/"+ID, formtype).then(function(data){
@@ -55,7 +56,7 @@ export function addEditorDom (savedData){
 							let formtype = {
 								"data":{
 									"type":"formtype",
-									"attributes":window.Canvas1.getDomTree()
+									"attributes":dom
 								}
 							}
 							Global.mRequestApi("POST", Global.APIHOST+"/formtype", formtype).then(function(ret){
