@@ -8,20 +8,21 @@ import {buildStageFromData} from './canvas'
 export class formList {
 	constructor(){
 		var self = this;
-		this.sheet = j2c.sheet({
+		self.css = {
 			'.item':{
 				color: 'blue'
 			}
-		});
-		this.controller=function (args) {
+		}
+		self.controller=function (args) {
 			this.updateList = function(){
 				this.forms = self.getList()
+				this.sheet = j2c.sheet(self.css);
 			}
 			this.updateList()
 		}
 
-		this.view = function(ctrl){
-			var sheet = self.sheet;
+		self.view = function(ctrl){
+			var sheet = ctrl.sheet;
 			var forms = ctrl.forms();
 			var data = forms&&forms.data || [];
 			return m('.'+sheet.list, [
