@@ -1,4 +1,5 @@
 import m from 'mithril'
+import j2c from 'j2c'
 import * as Global from './global'
 import WidgetDiv from './WidgetDiv'
 import WidgetCanvas from './WidgetCanvas'
@@ -7,7 +8,11 @@ import {buildStageFromData} from './canvas'
 export class formList {
 	constructor(){
 		var self = this;
-
+		this.sheet = j2c.sheet({
+			'.item':{
+				color: 'blue'
+			}
+		});
 		this.controller=function (args) {
 			this.updateList = function(){
 				this.forms = self.getList()
@@ -16,18 +21,23 @@ export class formList {
 		}
 
 		this.view = function(ctrl){
+			var sheet = self.sheet;
 			var forms = ctrl.forms();
 			var data = forms&&forms.data || [];
-			return m('.list',
+			return m('.'+sheet.list, [
+					m('style', sheet),
+					m('.list',
 					[
 						m('.operate', m('a[href="cane.html"][target=_blank]','添加')),
 						m('ul',
 							data.map((v,i)=>{
 								return m('li',
 									[
-										m('.name', { onclick:function(){ getForm(v.id) } }, v.attributes.name),
-										m('.title', v.attributes.title),
-										m('.createAt', v.attributes.createAt),
+										m('.'+sheet.item, { onclick:function(){ getForm(v.id) } }, [
+											m('.name', v.attributes.name),
+											m('.title', v.attributes.title),
+											m('.createAt', v.attributes.createAt),
+										]),
 										m('a.action[href="cane.html#id='+v.id+'&ret='+window.location.href+'"][target=_blank]', '编辑'),
 										m(`a.action[href="#${v.id}"]`, { onclick: function(){
 											self.deleteItem(v.id, ctrl)
@@ -38,6 +48,7 @@ export class formList {
 						)
 					]
 				)
+					])
 		}
 	}
 
@@ -84,10 +95,11 @@ class CanvasView {
 		  }
 
 		  this.view = function(ctrl){
+		  	if( !ctrl.Canvas1() ) return;
 		    return m('.mainCanvas', { config:function(el, isInit, context){ context.retain=true } }, [
 		      m('h2', ctrl.Canvas1().Prop.title),
 		      m('.canvasOp', [
-		      	m('input[type=button][value=提交]', {onclick:function(){ 
+		      	m('input[type=button][value=提交]', {onclick:function(){
 		      		var domData = ctrl.Canvas1().getDomTree();
 		      		var userData = {}
 		      		for(let i in domData.template){
