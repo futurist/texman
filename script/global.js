@@ -46,7 +46,7 @@ export var mRequestApi = function(method, url, data) {
         serialize:function(data){ return JSON.stringify(data) },
         deserialize:function(data){ return data },
         unwrapError: function(err) {
-            if(err.errors) alert(err.errors[0].detail)
+            if(err.errors) alert(err.errors[0].detail||'网络连接失败')
             return err;
         },
         config: xhrConfig

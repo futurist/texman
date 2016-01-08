@@ -1,5 +1,5 @@
 import m from 'mithril'
-import j2c from 'j2c'
+import m_j2c from 'm_j2c'
 import * as Global from './global'
 import WidgetDiv from './WidgetDiv'
 import WidgetCanvas from './WidgetCanvas'
@@ -9,32 +9,43 @@ export class formList {
 	constructor(){
 		var self = this;
 		self.css = {
-			'.item':{
-				color: 'blue'
+			':global(.list)':{
+				' .item':{
+					cursor: 'pointer',
+					color: '#666'
+				},
+				' .name':{ color:'red' },
+				' .title':{},
+				' .createAt':{},
 			}
 		}
 		self.controller=function (args) {
+			this.updateStyle = function(){
+				m_j2c.add('formlist', self.css);
+				m_j2c.add('<head>', { ' body':{color:'black'} } );
+				// m_j2c.remove('formlist', {':global(.list)':{ ' .item':{cursor:'hand'} } } )
+				// m_j2c.add('formlist', {':global(.list)':{ ' .item':{cursor:'hand'} } } )
+				console.log( m_j2c() )
+			}
 			this.updateList = function(){
 				this.forms = self.getList()
-				this.sheet = j2c.sheet(self.css);
 			}
 			this.updateList()
+			this.updateStyle()
 		}
 
 		self.view = function(ctrl){
-			var sheet = ctrl.sheet;
 			var forms = ctrl.forms();
 			var data = forms&&forms.data || [];
-			return m('.'+sheet.list, [
-					m('style', sheet),
-					m('.list',
+
+			var dom = m('.global(list)', { config:function(el, isInit, ctx, vdom){  }  },
 					[
-						m('.operate', m('a[href="cane.html"][target=_blank]','添加')),
+						m('.global(operate)', m('a[href="cane.html"][target=_blank]','添加')),
 						m('ul',
 							data.map((v,i)=>{
 								return m('li',
 									[
-										m('.'+sheet.item, { onclick:function(){ getForm(v.id) } }, [
+										m('.item', { onclick:function(){ showForm(v.id) } }, [
 											m('.name', v.attributes.name),
 											m('.title', v.attributes.title),
 											m('.createAt', v.attributes.createAt),
@@ -49,7 +60,8 @@ export class formList {
 						)
 					]
 				)
-					])
+
+			return m_j2c('formlist', dom)
 		}
 	}
 
@@ -71,16 +83,40 @@ m.mount( $('#formlist').get(0), new formList )
 
 
 // get a form when click
-function getForm(id) {
+function showDataList(formID) {
 	var container = document.querySelector('#container')
-	m.mount(container, new CanvasView(id) );
+	m.mount(container, new DataListView(formID) );
 }
 
-class CanvasView {
-	constructor(id){
+// get a form when click
+function showForm(formID) {
+	var container = document.querySelector('#container')
+	m.mount(container, new CanvasView(formID) );
+}
+
+class DataListView {
+	constructor(formID) {
 		var self = this;
 		this.getCanvasData = function() {
-			return Global.mRequestApi('GET', Global.APIHOST+'/formtype/'+id)
+			return Global.mRequestApi('GET', Global.APIHOST+'/formtype/'+formID)
+		}
+
+		this.controller = function(){
+			var ctrl = this;
+		}
+
+		this.view = function(ctrl){
+			return m();
+		}
+	}
+}
+
+
+class CanvasView {
+	constructor(formID){
+		var self = this;
+		this.getCanvasData = function() {
+			return Global.mRequestApi('GET', Global.APIHOST+'/formtype/'+formID)
 		}
 
 		  this.controller = function(){
