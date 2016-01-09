@@ -7,6 +7,10 @@ import {buildStageFromData} from './canvas'
 
 export class formList {
 	constructor(){
+		// config m_j2c
+		m_j2c.setM(m)
+		m_j2c.setNS('formlist')
+
 		var self = this;
 		self.css = {
 			':global(.list)':{
@@ -22,10 +26,25 @@ export class formList {
 		self.controller=function (args) {
 			this.updateStyle = function(){
 				m_j2c.add('formlist', self.css);
-				m_j2c.add('<head>', { ' body':{color:'black'} } );
+				m_j2c.add('<head>', { ' body':{color:'black'}, '.text':{font_size:'12px'} } );
 				// m_j2c.remove('formlist', {':global(.list)':{ ' .item':{cursor:'hand'} } } )
 				// m_j2c.add('formlist', {':global(.list)':{ ' .item':{cursor:'hand'} } } )
 				console.log( m_j2c() )
+
+				// m_j2c.setNS('abc')
+				// m_j2c.add('formlist', {'.list': {color:'green'}, '.add':{color:'red'} } );
+				// console.log( m_j2c() )
+
+				// m_j2c.setNS('formlist')
+				// console.log( m_j2c() )
+
+				// m_j2c.setNS('abc')
+				// console.log( m_j2c() )
+
+				// m_j2c.setNS('formlist')
+
+				window.mm = m_j2c
+				window.m = m
 			}
 			this.updateList = function(){
 				this.forms = self.getList()
@@ -40,14 +59,14 @@ export class formList {
 
 			var dom = m('.global(list)', { config:function(el, isInit, ctx, vdom){  }  },
 					[
-						m('.global(operate)', m('a[href="cane.html"][target=_blank]','添加')),
+						m('.global(operate)', m('a.add[href="cane.html"][target=_blank]','添加')),
 						m('ul',
 							data.map((v,i)=>{
 								return m('li',
 									[
-										m('.item', { onclick:function(){ showForm(v.id) } }, [
-											m('.name', v.attributes.name),
-											m('.title', v.attributes.title),
+										m('.item', [
+											m('.name', { onclick:function(){ showForm(v.id) } }, v.attributes.name),
+											m('.title', {onclick:function(){ showDataList(v.attributes.name) }}, v.attributes.title),
 											m('.createAt', v.attributes.createAt),
 										]),
 										m('a.action[href="cane.html#id='+v.id+'&ret='+window.location.href+'"][target=_blank]', '编辑'),
@@ -83,9 +102,9 @@ m.mount( $('#formlist').get(0), new formList )
 
 
 // get a form when click
-function showDataList(formID) {
+function showDataList(formName) {
 	var container = document.querySelector('#container')
-	m.mount(container, new DataListView(formID) );
+	m.mount(container, new DataListView(formName) );
 }
 
 // get a form when click
@@ -95,20 +114,32 @@ function showForm(formID) {
 }
 
 class DataListView {
-	constructor(formID) {
+	constructor(formName) {
 		var self = this;
-		this.getCanvasData = function() {
-			return Global.mRequestApi('GET', Global.APIHOST+'/formtype/'+formID)
+		this.getList = function() {
+			return Global.mRequestApi('GET', Global.APIHOST+'/userform_'+formName)
 		}
 
 		this.controller = function(){
 			var ctrl = this;
+		  	ctrl.savedData = m.prop()
+		  	ctrl.updateListView = function(){
+		  		self.getList().then( function(data){
+		  			ctrl.savedData(data)
+					return buildList( data )
+				})
+		  	}
+		  	ctrl.updateListView()
 		}
 
 		this.view = function(ctrl){
-			return m();
+			return m('div', 'content');
 		}
 	}
+}
+
+function buildList(data){
+	console.log(data)
 }
 
 
