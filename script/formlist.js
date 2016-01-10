@@ -31,12 +31,12 @@ export class formList {
 				// m_j2c.add('formlist', {':global(.list)':{ ' .item':{cursor:'hand'} } } )
 				console.log( m_j2c() )
 
-				// m_j2c.setNS('abc')
-				// m_j2c.add('formlist', {'.list': {color:'green'}, '.add':{color:'red'} } );
-				// console.log( m_j2c() )
+				m_j2c.setNS('abc')
+				m_j2c.add('formlist', {'.list': {color:'green'}, '.add':{color:'red'} } );
+				console.log( m_j2c() )
 
-				// m_j2c.setNS('formlist')
-				// console.log( m_j2c() )
+				m_j2c.setNS('formlist')
+				console.log( m_j2c() )
 
 				// m_j2c.setNS('abc')
 				// console.log( m_j2c() )
@@ -57,7 +57,12 @@ export class formList {
 			var forms = ctrl.forms();
 			var data = forms&&forms.data || [];
 
-			var dom = m('.global(list)', { config:function(el, isInit, ctx, vdom){  }  },
+			var dom = m('.global(list)',
+					{ config:function(el, old, ctx, vdom){
+						var cls=m_j2c.getClass('formlist')
+						// ctx.retain = true;
+						// console.log( old, cls, $( ('.'+cls.list) ) )
+					}  },
 					[
 						m('.global(operate)', m('a.add[href="cane.html"][target=_blank]','添加')),
 						m('ul',
@@ -65,7 +70,7 @@ export class formList {
 								return m('li',
 									[
 										m('.item', [
-											m('.name', { onclick:function(){ showForm(v.id) } }, v.attributes.name),
+											m('.name', { onclick:function(){ m_j2c.setNS('abc'); showForm(v.id) } }, v.attributes.name),
 											m('.title', {onclick:function(){ showDataList(v.attributes.name) }}, v.attributes.title),
 											m('.createAt', v.attributes.createAt),
 										]),
@@ -116,6 +121,11 @@ function showForm(formID) {
 class DataListView {
 	constructor(formName) {
 		var self = this;
+		m_j2c.add('data_table', {
+			'.table':{display:'table', table_layout: 'fixed'},
+			'.row':{display:'table-row'},
+			'.cell':{display:'table-cell',  width: '2%'},
+		})
 		this.getList = function() {
 			return Global.mRequestApi('GET', Global.APIHOST+'/userform_'+formName)
 		}
@@ -126,20 +136,26 @@ class DataListView {
 		  	ctrl.updateListView = function(){
 		  		self.getList().then( function(data){
 		  			ctrl.savedData(data)
-					return buildList( data )
+					ctrl.tableRows = buildTableRows( data )
 				})
 		  	}
 		  	ctrl.updateListView()
 		}
 
 		this.view = function(ctrl){
-			return m('div', 'content');
+			return m_j2c('data_table', m('table.table', ctrl.tableRows) )
 		}
 	}
 }
 
-function buildList(data){
-	console.log(data)
+function buildTableRows(data){
+	return data.data.map(function(v){
+		return m('tr.row', [
+				Object.keys(v.attributes).map(key=>{
+					return m('td.cell.'+key, v.attributes[key])
+				})
+			] )
+	})
 }
 
 
