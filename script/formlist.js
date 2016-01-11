@@ -132,7 +132,7 @@ class DataListView {
 		})
 		this.getList = function() {
 			var query = '&filter[meta_ver]=<='+ version +'&include=meta_form&fields[formtype]=template'
-			return Global.mRequestApi('GET', Global.APIHOST+'/userform_'+name+'?' + query)
+			return Global.mRequestApi('GET', Global.APIHOST+'/form_'+name+'?' + query)
 		}
 
 		this.controller = function(){
@@ -202,7 +202,7 @@ class CanvasView {
 						}
 					}
 		      		console.log( apiData )
-		      		Global.mRequestApi('POST', Global.APIHOST+'/userform_'+domData.name, apiData, function(ret){
+		      		Global.mRequestApi('POST', Global.APIHOST+'/form_'+domData.name, apiData, function(ret){
 		      			console.log(ret)
 		      		} )
 		      	}}),
