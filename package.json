@@ -1,7 +1,7 @@
 {
   "name": "texman",
-  "version": "1.0.1",
-  "description": "",
+  "version": "1.0.2",
+  "description": " ",
   "main": "index.js",
   "scripts": {
     "push": "npm version patch && git push",
