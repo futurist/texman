@@ -71,7 +71,7 @@ export class formList {
 									[
 										m('.item', [
 											m('.name', { onclick:function(){ m_j2c.setNS('abc'); showForm(v.id) } }, v.attributes.name),
-											m('.title', {onclick:function(){ showDataList(v.attributes.name) }}, v.attributes.title),
+											m('.title', {onclick:function(){ showDataList(v) }}, v.attributes.title),
 											m('.createAt', v.attributes.createAt),
 										]),
 										m('a.action[href="cane.html#id='+v.id+'&ret='+window.location.href+'"][target=_blank]', '编辑'),
@@ -91,6 +91,7 @@ export class formList {
 
 	getList(){
 		var field = '?fields[formtype]=name,title,createAt'
+		field = ''
 		return Global.mRequestApi('GET', Global.APIHOST+'/formtype'+field)
 	}
 
@@ -107,9 +108,9 @@ m.mount( $('#formlist').get(0), new formList )
 
 
 // get a form when click
-function showDataList(formName) {
+function showDataList(formType) {
 	var container = document.querySelector('#container')
-	m.mount(container, new DataListView(formName) );
+	m.mount(container, new DataListView(formType) );
 }
 
 // get a form when click
@@ -119,15 +120,19 @@ function showForm(formID) {
 }
 
 class DataListView {
-	constructor(formName) {
+	constructor(formType) {
 		var self = this;
+		var name = formType.attributes.name;
+		var id = formType.attributes.id;
+		var version = formType.attributes.version;
 		m_j2c.add('data_table', {
 			'.table':{display:'table', table_layout: 'fixed'},
 			'.row':{display:'table-row'},
 			'.cell':{display:'table-cell',  width: '2%'},
 		})
 		this.getList = function() {
-			return Global.mRequestApi('GET', Global.APIHOST+'/userform_'+formName)
+			var query = '&filter[meta_ver]=<='+ version +'&include=meta_form&fields[formtype]=template'
+			return Global.mRequestApi('GET', Global.APIHOST+'/userform_'+name+'?' + query)
 		}
 
 		this.controller = function(){
@@ -189,6 +194,7 @@ class CanvasView {
 		      		for(let i in domData.template){
 		      			userData[i] = Global.getInputVal(i, '.canvas') ;
 		      		}
+		      		userData.meta_form = {type:'formtype', id:formID}
 		      		let apiData = {
 						"data":{
 							"type": domData.name ,
