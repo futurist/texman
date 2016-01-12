@@ -2,10 +2,14 @@ import m from 'mithril'
 import * as Global from './global'
 import * as DataTemplate from './DataTemplate'
 
+import m_j2c from './m_j2c'
+import {canvasToolBar} from './css/formCSS'
+m_j2c.add('', 'canvasToolBar', canvasToolBar)
+
+
 export function addEditorDom (savedData){
 	var ID = savedData && savedData.data && savedData.data.id
 	var PARAM = m.route.parseQueryString(location.hash.slice(1));
-	console.log(ID)
 	// editor container & resize bar
 	var dragFunc = DragFactory();
 	var initEditorWidth = 400;
@@ -23,7 +27,7 @@ export function addEditorDom (savedData){
 
 	// add toolbox
 	m.mount( document.querySelector('.toolbarContainer'), {view: ()=>{
-		return m('.toolSet',
+		return m_j2c('', 'canvasToolBar', m('.toolSet',
 			[
 				m('.stageProp.tool', {onclick:function(){
 					DataTemplate.renderJsonEditor.apply(Canvas1)
@@ -71,7 +75,7 @@ export function addEditorDom (savedData){
 					}}),
 					// m('input[type=button][value="取消"]', {onclick:function(){ alert(PARAM.ret) }}),
 				])
-			] )
+			] ) )
 	} }
 	)
 }

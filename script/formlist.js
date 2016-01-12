@@ -1,14 +1,16 @@
 import m from 'mithril'
-import m_j2c from 'm_j2c'
+import m_j2c from './m_j2c'
 import * as Global from './global'
 import WidgetDiv from './WidgetDiv'
 import WidgetCanvas from './WidgetCanvas'
 import {buildStageFromData} from './canvas'
 
+import {canvasForm} from './css/formCSS'
+
 export class formList {
 	constructor(){
+		m_j2c.add('', 'canvasForm', canvasForm)
 		// config m_j2c
-		m_j2c.setM(m)
 		m_j2c.setNS('formlist')
 
 		var self = this;
@@ -185,7 +187,7 @@ class CanvasView {
 
 		  this.view = function(ctrl){
 		  	if( !ctrl.Canvas1() ) return;
-		    return m('.mainCanvas', { config:function(el, isInit, context){ context.retain=true } }, [
+		    return m_j2c('', 'canvasForm', m('.mainCanvas', { config:function(el, isInit, context){ context.retain=true } }, [
 		      m('h2', ctrl.Canvas1().Prop.title),
 		      m('.canvasOp', [
 		      	m('input[type=button][value=提交]', {onclick:function(){
@@ -211,7 +213,7 @@ class CanvasView {
 		      	}}),
 		      	]),
 		      ctrl.Canvas1().getView()
-		    ])
+		    ]) )
 		  }
 	}
 }

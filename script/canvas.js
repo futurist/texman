@@ -6,6 +6,13 @@ import JsonEditor from './JsonEditor'
 import EE from './Events'
 import UndoManager from './UndoManager'
 
+
+import m_j2c from './m_j2c'
+import {canvasForm} from './css/formCSS'
+
+m_j2c.add('', 'canvasForm', canvasForm)
+window.mm = m_j2c
+
 export function buildStageFromData(data, parent=null, options={}) {
   var widget = data.classType=='canvas'
   ? new WidgetCanvas(parent, data.jsonData, options)
@@ -38,10 +45,10 @@ constructor(savedData) {
     m.mount(container,
     {
       view: function(){
-        return m('.mainCanvas', { config:function(el, isInit, context){ context.retain=true } }, [
+        return m_j2c('', 'canvasForm', m('.mainCanvas', { config:function(el, isInit, context){ context.retain=true } }, [
           m('h2', Canvas1.Prop.title),
           Canvas1.getView()
-        ])
+        ]) )
       }
     }
     );

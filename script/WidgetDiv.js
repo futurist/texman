@@ -30,19 +30,35 @@ export default class WidgetDiv extends LayerBaseClass {
   getChildren(){
     var self = this;
     var data = this.jsonData();
+    var isInput = data.type=='inputText';
     var isRadio = data.type=='radio';
     var isCheckbox = data.type=='checkbox';
     var isSelect = data.type=='select';
+    var isTextarea = data.type=='textarea';
     var dom, contentProp={ style:{} }
     var name = data.attrs.name;
 
     if(typeof data.children=='object'){
       data.children.attrs = data.children.attrs || {}
       data.children.attrs.style = data.children.attrs.style||{}
-      data.children.attrs.title = data.attrs.title
+      data.children.attrs.title = data.attrs.title||''
+      data.children.attrs.table = data.attrs.table||''
+      data.children.attrs.tkey = data.attrs.tkey||''
       // var oldKeyPressFunc = data.children.attrs.onkeypress;
       // data.children.attrs.onkeypress = function(){ Global.mSkipRedraw(); if(typeof oldKeyPressFunc=='function') oldKeyPressFunc.apply(this, arguments); }
-      data.children.attrs.oninput = function(){ data.children.attrs.value = ( $(this).val() ) }
+      if(data.attrs.table){
+        if(isInput){
+          data.children.attrs.readOnly = false;
+          data.children.attrs.onfocus = function(){
+            console.log(data.type)
+          }
+        }
+      }else if(isTextarea){
+        data.children.attrs.oninput = function(){ data.children.children = ( $(this).val() ) }
+      }else{
+        data.children.attrs.oninput = function(){ data.children.attrs.value = ( $(this).val() ) }
+      }
+      data.children.attrs.config = function(el,old,context){ context.retain = true; }
       Global.applyStyle( data.children.attrs, Global._pluck(data.style, ['fontFamily', 'fontSize', 'color', 'textAlign', 'fontStyle', 'fontWeight']) );
       Global.applyStyle( contentProp, Global._pluck(data.style, ['alignItems', 'justifyContent']) );
     }
@@ -72,7 +88,7 @@ export default class WidgetDiv extends LayerBaseClass {
       dom = Global._extend( {}, data.children )
       dom.children = dom.html? m.trust(dom.children) : dom.children;
     }
-    return m('.content', Global._extend( { config: function(el,isInit,context){context.retain=true} }, contentProp ), [dom] );
+    return m('.content', Global._extend( { key:'key_'+name, config: function(el,isInit,context){context.retain=true} }, contentProp ), [dom] );
 
   }
 

@@ -1,10 +1,11 @@
 import * as Global from './global'
 import m from 'mithril'
+import m_j2c from './m_j2c'
 import doT from './doT'
 
 export default class JsonEditor {
 
-	constructor(SCHEMA, DATA, PROPS={}, VALIDATOR=()=>{}, CALLBACK=()=>{} ) {
+	constructor(SCHEMA, DATA, PROPS={}, VALIDATOR=()=>{}, CALLBACK=()=>{}, j2cCSSObject={} ) {
 
 		var orgData = Global.clone( DATA() )
 		var schemaObjects = {};
@@ -374,9 +375,10 @@ export default class JsonEditor {
 			return getOriginalKeyVal( DATA(), orgData )
 		}
 		this.controller = function(args){
+			m_j2c.add('m_jsonEditor', j2cCSSObject)
 		}
 		this.view = function(ctrl){
-			return this.parseSchema(SCHEMA(), 'root');
+			return m_j2c('m_jsonEditor', this.parseSchema(SCHEMA(), 'root') );
 		}
 		this.getView = function() {
 			return this.view( new this.controller() );

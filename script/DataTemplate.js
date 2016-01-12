@@ -3,20 +3,22 @@ import m from 'mithril'
 import JsonEditor from './JsonEditor'
 import UndoManager from './UndoManager'
 
+import {canvasEditor} from './css/formCSS'
+
+var formElementStyle = {
+  "borderWidth": 1, "borderTopWidth": 1, "borderRightWidth": 1, "borderBottomWidth": 1, "borderLeftWidth": 1,
+  "padding": 2, "paddingTop": 2, "paddingBottom": 2, "paddingRight": 2, "paddingLeft": 2,
+}
 export var jsonType = {
   stage:{ type:'stage', attrs: {title:'', name:''} },
-  plain:{type:'plain', attrs: {title:'plain text'}, children:{tag:'span', html:false, children:"文字"}, style:{} },
-  inputText:{type:'inputText', attrs: {title:'input text'}, children:{ tag:'input', attrs:{ value:'输入文字', type:'text' } },
-            style:{
-              "borderWidth": 1, "borderTopWidth": 1, "borderRightWidth": 1, "borderBottomWidth": 1, "borderLeftWidth": 1,
-              "padding": 2, "paddingTop": 2, "paddingBottom": 2, "paddingRight": 2, "paddingLeft": 2,
-            }
+  plain:{type:'plain', attrs: {title:'plain text'}, children:{tag:'span', html:false, children:"标题"}, style:{} },
+  inputText:{type:'inputText', attrs: {title:'input text'}, children:{ tag:'input', attrs:{ value:'', type:'text' } },
+            style:formElementStyle
           },
+  textarea:{type:'textarea', attrs: {title:'text area'}, children:{ tag:'textarea', attrs:{ type:'text'}, children:'default text' }, 
+        style:formElementStyle },
   select:{type:'select',  attrs:{}, children:{ tag:'select', attrs:{placeholder:'请选择...', value:'', required:true, multiple:false,  }, children:[] },
-        style:{
-          "borderWidth": 1, "borderTopWidth": 1, "borderRightWidth": 1, "borderBottomWidth": 1, "borderLeftWidth": 1,
-          "padding": 2, "paddingTop": 2, "paddingBottom": 2, "paddingRight": 2, "paddingLeft": 2,
-        }
+        style:formElementStyle
       },
   checkbox:{type:'checkbox',  attrs:{}, children:{ tag:'span', attrs:{type:'checkbox', value:'下拉' }, children:['下拉','下拉2','下拉3'] },
         style:{
@@ -364,6 +366,16 @@ export var jsonSchema = {
           "type": "number",
           "default":0
         },
+        "table": {
+          "title": "table",
+          "type": "string",
+          "default":''
+        },
+        "tkey": {
+          "title": "tkey",
+          "type": "string",
+          "default":''
+        },
         "desc": {
           "title": "description",
           "type": "string",
@@ -624,16 +636,16 @@ export function renderJsonEditor(CanvasDom){
   if(!editorDom) return false;
     if( this.isValidRect() && this.jsonData && this.jsonSchema ){
       Global._extend(this.jsonData().style, this.Prop.style)
-      m.mount( editorDom , new JsonEditor( 
-        this.jsonSchema, 
-        this.jsonData, 
+      m.mount( editorDom, new JsonEditor(
+        self.jsonSchema,
+        self.jsonData,
         // PROP
         { config:(el)=>{
         // below add drag&drop function to change array item order
         $(el).find('.array .props .row').each(function(){
 
         })
-        if(!this.jsonData().attrs.name && self.parent) this.jsonData().attrs.name = this.jsonData().type+ this.parent.children.length
+        if(!self.jsonData().attrs.name && self.parent) self.jsonData().attrs.name = self.jsonData().type+ self.parent.children.length
         // below move all inherit to it's parent, wrap into .inheritCon, hide, and show when click
         $(el).find('.inherit').each(function(){
           var inheritClass = $(this).attr('class').split(/\s+/).filter(v=>{return v.indexOf('inherit-')>=0 }).pop()
@@ -691,8 +703,8 @@ export function renderJsonEditor(CanvasDom){
         })
 
         m.redraw()
-      }
-
+      },
+      canvasEditor  //j2c css object
       ) )
     }
 }
