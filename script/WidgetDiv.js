@@ -30,6 +30,7 @@ export default class WidgetDiv extends LayerBaseClass {
   getChildren(){
     var self = this;
     var data = this.jsonData();
+    var schema = this.jsonSchema();
     var isInput = data.type=='inputText';
     var isRadio = data.type=='radio';
     var isCheckbox = data.type=='checkbox';
@@ -41,7 +42,9 @@ export default class WidgetDiv extends LayerBaseClass {
     if(typeof data.children=='object'){
       data.children.attrs = data.children.attrs || {}
       data.children.attrs.style = data.children.attrs.style||{}
+      data.children.attrs.order = parseInt(data.attrs.order)||0
       data.children.attrs.title = data.attrs.title||''
+      data.children.attrs.description = data.attrs.description||''
       data.children.attrs.table = data.attrs.table||''
       data.children.attrs.tkey = data.attrs.tkey||''
       // var oldKeyPressFunc = data.children.attrs.onkeypress;
@@ -50,10 +53,10 @@ export default class WidgetDiv extends LayerBaseClass {
         if(isInput){
           data.children.attrs.readOnly = false;
           data.children.attrs.onfocus = function(){
-            console.log(data.type, data.children.attrs.table, data.children.attrs.tkey)
           }
         }
-      }else if(isTextarea){
+      }
+      if(isTextarea){
         data.children.attrs.oninput = function(){ data.children.children = ( $(this).val() ) }
       }else{
         data.children.attrs.oninput = function(){ data.children.attrs.value = ( $(this).val() ) }

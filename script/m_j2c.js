@@ -98,6 +98,7 @@ function m_j2c(ns, name, vdom) {
 	var sheet = styleObj.sheet;
 	var styleDom = m('style', {
 		config:function(el, old, context, vdom){
+			context.retain = true;
 			if(!old) {
                 stylize(el, sheet);
                 styleObj.dom = el;
@@ -105,6 +106,9 @@ function m_j2c(ns, name, vdom) {
 		}
 	});
 	styleDom.attrs[ 'data-'+ namespace + '_' + name+'_'+styleObj.version ] = true;
+	// here we can insert into header instead of vdom
+	// styleDom = null; addStyleToHead(styleObj)
+
 	// Known Issue: the dom will always re-created when pass to mithril, so we set below to skip next redraw()
 	// m.redraw.strategy('none')
 	return [ styleDom, applyStyle(sheet, vdom) ]
@@ -148,7 +152,7 @@ m_j2c.setNS = function( ns ){
 
 	return m_j2c
 }
-
+m_j2c.get = m_j2c;
 m_j2c.add = function( ns, name, cssObj ) {
 	var args = arguments;
 	if(args.length===0) return j2cGlobal[namespace];
@@ -218,7 +222,7 @@ m_j2c.getClass = function (ns, name) {
 	for(var i in store){
 		// tutpoint: string.match(undefined) ?
 		if( (sheet=store[i].sheet) && ( {}.toString.call(name)=="[object RegExp]" ? i.match(name) : i==name ) ){
-			for(var name in sheet){ if(sheet.hasOwnProperty(name)&& !name.match(/^\d/) ) list[name]=sheet[name] }
+			for(var key in sheet){ if(sheet.hasOwnProperty(key)&& !key.match(/^\d/) ) list[key]=sheet[key] }
 		}
 	}
 	return list;

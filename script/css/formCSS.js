@@ -2,22 +2,26 @@
 export var canvasForm = 
 [
 
+{
+	'#poplist':{position:'absolute'}
+},
+
 // canvas input form
 {
 	'.canvas':{
 		width:'100%', height:'100%', border:'none', background:'none'
 	},
-	'.canvas':{
-		' input[type=text], input[type=number], select, textarea':{
-			  "borderWidth": '1px', "borderTopWidth": '1px', "borderRightWidth": '1px', "borderBottomWidth": '1px', "borderLeftWidth": '1px',
-			  "padding": '2px', "paddingTop": '2px', "paddingBottom": '2px', "paddingRight": '2px', "paddingLeft": '2px', 
-			width:'100%', height:'100%', border:'none', background:'none'
-		}
-	}
 },
 
 // reset
 	{
+		'.canvas':{
+			' input[type=text], input[type=number], select, textarea':{
+				  "borderWidth": '1px', "borderTopWidth": '1px', "borderRightWidth": '1px', "borderBottomWidth": '1px', "borderLeftWidth": '1px',
+				  "padding": '2px', "paddingTop": '2px', "paddingBottom": '2px', "paddingRight": '2px', "paddingLeft": '2px', 
+				width:'100%', height:'100%', border:'none', background:'none'
+			}
+		},
 		" html": {
 			"boxSizing": "border-box"
 		},
