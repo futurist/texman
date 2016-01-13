@@ -1,22 +1,14 @@
 
 export var canvasForm = 
-[
-
 {
-	'#poplist':{position:'absolute'}
-},
+	'#poplist':{position:'absolute'},
 
-// canvas input form
-{
-	'.canvas':{
-		width:'100%', height:'100%', border:'none', background:'none'
-	},
-},
-
-// reset
-	{
+	// canvas input form
 		'.canvas':{
-			' input[type=text], input[type=number], select, textarea':{
+			"overflow": "visible",
+			"position": "absolute",
+			width:'100%', height:'100%', border:'none', background:'none',
+			' input[type=text], input[type=number], select, textarea': {
 				  "borderWidth": '1px', "borderTopWidth": '1px', "borderRightWidth": '1px', "borderBottomWidth": '1px', "borderLeftWidth": '1px',
 				  "padding": '2px', "paddingTop": '2px', "paddingBottom": '2px', "paddingRight": '2px', "paddingLeft": '2px', 
 				width:'100%', height:'100%', border:'none', background:'none'
@@ -53,15 +45,11 @@ export var canvasForm =
 			"background": "#666",
 			"color": "white",
 			"display": "none"
-		}
-},
+		},
+
 
 // canvas style
-{
-		".canvas": {
-			"overflow": "visible",
-			"position": "absolute"
-		},
+
 		".canvas *:focus": {
 			"outline": 0
 		},
@@ -124,7 +112,7 @@ export var canvasForm =
 			"marginLeft": "100px"
 		},
 }
-]
+
 
 export var canvasEditor = {
 		":global(.editorDragContainer)": {

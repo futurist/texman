@@ -138,7 +138,7 @@ class DataListView {
 		m_j2c.add('data_table', {
 			'.table': util._extend( {display:'table', table_layout: 'fixed', border_collapse:'collapse' }, prop ),
 			'.row':{display:'table-row'},
-			'.cell':{display:'table-cell',  width: '2%', border:'1px solid #ccc'},
+			'.cell':{display:'table-cell',  width: '2%', padding: '5px', border:'1px solid #ccc'},
 		})
 		this.getList = function() {
 			var query = '&filter[meta_ver]=<='+ version +'&include=meta_form&fields[formtype]=template'
