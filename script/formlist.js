@@ -128,13 +128,32 @@ class DataListView {
 		var id = formType.attributes.id;
 		var version = formType.attributes.version;
 		m_j2c.add('data_table', {
-			'.table':{display:'table', table_layout: 'fixed'},
+			'.table':{display:'table', table_layout: 'fixed', border_collapse:'collapse'},
 			'.row':{display:'table-row'},
-			'.cell':{display:'table-cell',  width: '2%'},
+			'.cell':{display:'table-cell',  width: '2%', border:'1px solid #ccc'},
 		})
 		this.getList = function() {
 			var query = '&filter[meta_ver]=<='+ version +'&include=meta_form&fields[formtype]=template'
 			return Global.mRequestApi('GET', Global.APIHOST+'/form_'+name+'?' + query)
+		}
+
+		function buildTableRows(typeInfo, data){
+			return data.data.map(function(v){
+				return m('tr.row', [
+						Object.keys(typeInfo).map(key=>{
+							return m('td.cell.'+key, v.attributes[key])
+						})
+					] )
+			})
+		}
+
+		function buildTableHeader(typeInfo){
+			return m('th.row', [
+					Object.keys(typeInfo).map( (v)=>{
+						console.log( typeInfo[v] )
+						return m('td.cell.'+v, typeInfo[v].attrs&&typeInfo[v].attrs.title||v )
+					})
+				] )
 		}
 
 		this.controller = function(){
@@ -143,27 +162,23 @@ class DataListView {
 		  	ctrl.updateListView = function(){
 		  		self.getList().then( function(data){
 		  			ctrl.savedData(data)
-					ctrl.tableRows = buildTableRows( data )
+		  			var typeInfo = data.included[0].attributes.template
+					typeInfo['meta_ver'] = {type:String}
+					console.log(typeInfo)
+					ctrl.tableHeader = buildTableHeader( typeInfo )
+					ctrl.tableRows = buildTableRows( typeInfo, data )
 				})
 		  	}
 		  	ctrl.updateListView()
 		}
 
 		this.view = function(ctrl){
-			return m_j2c('data_table', m('table.table', ctrl.tableRows) )
+			return m_j2c('data_table', m('table.table', [ctrl.tableHeader, ctrl.tableRows] ) )
 		}
 	}
 }
 
-function buildTableRows(data){
-	return data.data.map(function(v){
-		return m('tr.row', [
-				Object.keys(v.attributes).map(key=>{
-					return m('td.cell.'+key, v.attributes[key])
-				})
-			] )
-	})
-}
+
 
 
 class CanvasView {

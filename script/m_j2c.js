@@ -74,22 +74,19 @@ function removeDom (styleObj) {
 	delete styleObj.dom
 }
 
-function nsArgs (args, namePos){
-	if( typeof args[namePos]=='string' && typeof args[namePos+1]=='string' ){
-		return {ns: args[namePos]||DEFAULT_NS, name: args[namePos+1]}
-	}
-	return {ns: namespace, name: args[namePos]}
-}
-
-function m_j2c(name, vdom) {
+function m_j2c(ns, name, vdom) {
+	var args = arguments;
 	// usage: m_j2c() will return all j2cStore
-	var path = nsArgs(arguments, 0)
-	var ns = path.ns
-	name = path.name
-	vdom = arguments[arguments.length-1]
+	if(args.length===0) return j2cGlobal;
+	if(args.length===1) name=ns, ns=namespace;
+	if(typeof args[1]=='object') vdom=name, name=ns, ns=namespace;
+	ns=ns||DEFAULT_NS
+
+	if(!name) return j2cGlobal[ns];
+	else if(!vdom) return j2cGlobal[ns]&&j2cGlobal[ns][name];
+
+	if( isElement(name)||isElement(vdom) ) return m_j2c.applyClass.call(this, vdom||name, ns, name);
 	var j2cStore = j2cGlobal[ns]
-	if(!name) return j2cGlobal;
-	if( isElement(name) ) return m_j2c.applyDom.apply(this, arguments);
 	var styleObj = j2cStore[name]
 	// usage: m_j2c('name') will return all j2cStore['name']
 	if(!vdom) return styleObj;
@@ -127,19 +124,21 @@ m_j2c.removeNS = function( ns ){
 		namespace = DEFAULT_NS
 		m.redraw()
 	}
-	return delete j2cGlobal[ns]
+	delete j2cGlobal[ns]
+	return m_j2c
 }
 m_j2c.getNS = function( ns ){
 	return ns ? j2cGlobal[ns] : namespace
 }
 m_j2c.setNS = function( ns ){
+	var j2cStore = j2cGlobal[namespace]
 	ns = ns||DEFAULT_NS
 	namespace = ns;
-	var j2cStore = j2cGlobal[ns]
 	for(var i in j2cStore){
 		removeDom( j2cStore[i] )
 	}
 	m_j2c.applyClass(null,null,false)
+
 	if(!j2cGlobal[namespace]) j2cGlobal[namespace] = j2cStore = {} ;
 	else j2cStore = j2cGlobal[namespace];
 	for(i in j2cStore){
@@ -150,14 +149,18 @@ m_j2c.setNS = function( ns ){
 	return m_j2c
 }
 
-m_j2c.add = function( name, cssObj ) {
+m_j2c.add = function( ns, name, cssObj ) {
 	var args = arguments;
-	var path = nsArgs(args, 0)
-	var ns = path.ns
-	name = path.name
-	cssObj = args[args.length-1]
-	if(!name)return;
+	if(args.length===0) return j2cGlobal[namespace];
+	if(args.length===1) name=ns, ns=namespace;
+	if(typeof args[1]=='object') cssObj=name, name=ns, ns=namespace;
+	ns=ns||DEFAULT_NS
+
+	if(!name)return j2cGlobal[ns];
+	else if(!cssObj)return j2cGlobal[ns]&&j2cGlobal[ns][name];
+	
 	var j2cStore = j2cGlobal[ns]
+	if(!j2cStore) j2cGlobal[ns]={}
 	var styleObj
 	var isHead = name.indexOf('<head')===0;
 	if(!j2cStore[name]){
@@ -173,13 +176,19 @@ m_j2c.add = function( name, cssObj ) {
 
 	return j2cStore[name];
 }
-m_j2c.remove = function(name, cssObj) {
-	var path = nsArgs(arguments, 0)
-	var ns = path.ns
-	name = path.name
-	cssObj = arguments[arguments.length-1]
+m_j2c.remove = function(ns, name, cssObj) {
+	var args = arguments;
+	if(args.length===0) return j2cGlobal[namespace];
+	if(args.length===1) name=ns, ns=namespace;
+	if(typeof args[1]=='object') cssObj=name, name=ns, ns=namespace;
+	ns=ns||DEFAULT_NS
+
+	if(!name)return j2cGlobal[ns];
+	else if(!cssObj)return j2cGlobal[ns]&&j2cGlobal[ns][name];
+
 	var j2cStore = j2cGlobal[ns]
-	if(!name)return;
+	if(!j2cStore) return;
+
 	var isHead = name.indexOf('<head')===0;
 	var styleObj = j2cStore[name];
 	if(!cssObj){
@@ -198,15 +207,17 @@ m_j2c.remove = function(name, cssObj) {
 
 	return styleObj
 }
-m_j2c.getClass = function (ns, nameRegex) {
-	var ns, args = arguments
-	if(args.length===1) nameRegex=ns, ns=namespace
-	if(args.length===2) ns=ns||DEFAULT_NS
+m_j2c.getClass = function (ns, name) {
+	var args = arguments
+	if(args.length===0) return j2cGlobal[namespace];
+	if(args.length===1) name=ns, ns=namespace
+	ns=ns||DEFAULT_NS
 	var sheet, list = {}, store= j2cGlobal[ns]
-	nameRegex = nameRegex||/./
+	if(!store) return;
+	name = name||/./
 	for(var i in store){
 		// tutpoint: string.match(undefined) ?
-		if( (sheet=store[i].sheet) && ( {}.toString.call(nameRegex)=="[object RegExp]" ? i.match(nameRegex) : i==nameRegex ) ){
+		if( (sheet=store[i].sheet) && ( {}.toString.call(name)=="[object RegExp]" ? i.match(name) : i==name ) ){
 			for(var name in sheet){ if(sheet.hasOwnProperty(name)&& !name.match(/^\d/) ) list[name]=sheet[name] }
 		}
 	}
@@ -215,9 +226,16 @@ m_j2c.getClass = function (ns, nameRegex) {
 m_j2c.getClassMap = function () {
 	return domClassMap
 }
-m_j2c.applyClass = function (target, nameRegex, isAdd){
+m_j2c.applyClass = function (ns, name, target, isAdd){
 	if(! isBrowser) return;
-	var list = m_j2c.getClass(nameRegex)
+	var args = arguments;
+	if(args.length===0) return m_j2c.getClass.apply(this, args);
+	if(args.length===1) name=ns, ns=namespace;
+	if(typeof args[1]=='object') isAdd=target, target=name, name=ns, ns=namespace;
+	ns=ns||DEFAULT_NS
+
+	var list = m_j2c.getClass(name)
+	if(!list) return;
 	var _addClassToDom = function(dom){
 		var pos, c = dom.className&&dom.className.split(/\s+/)
 	    if(c) dom.className = c.map(function(v){

@@ -50,7 +50,7 @@ export default class WidgetDiv extends LayerBaseClass {
         if(isInput){
           data.children.attrs.readOnly = false;
           data.children.attrs.onfocus = function(){
-            console.log(data.type)
+            console.log(data.type, data.children.attrs.table, data.children.attrs.tkey)
           }
         }
       }else if(isTextarea){
