@@ -113,14 +113,17 @@ m.mount( $('#formlist').get(0), new formList )
 
 
 // get a form when click
-function showDataList(formType, prop) {
+function showDataList(formType, options={}) {
 	var container = document.querySelector('#container')
-	var prop = {width:$(container).width()-300+'px'}
-	m.mount(container, new DataListView(formType, container, prop) );
+	options.tableStyle = options.tableStyle||{width:$(container).width()-300+'px'}
+	options.container = options.container||container;
+	m.mount(container, new DataListView(formType, options) );
 }
-function showPopList(formType, prop) {
+function showPopList(formType, options={}) {
 	var container = $('#poplist').show().get(0)
-	m.mount(container, new DataListView(formType, container, prop) );
+	options.tableStyle = options.tableStyle||{width:'auto'}
+	options.container = options.container||container;
+	m.mount(container, new DataListView(formType, options) );
 }
 
 // get a form when click
@@ -130,14 +133,15 @@ function showForm(formType, container) {
 }
 
 class DataListView {
-	constructor(formType, container=document.body, prop={}) {
+	constructor(formType, options={} ) {
 		var self = this;
-		var name = formType.attributes.name;
+		var name = options.tableName || formType.attributes.name;
 		var id = formType.attributes.id;
 		var version = formType.attributes.version;
 		m_j2c.add('data_table', {
-			'.table': util._extend( {display:'table', table_layout: 'fixed', border_collapse:'collapse' }, prop ),
+			'.table': util._extend( {display:'table', table_layout: 'fixed', border_collapse:'collapse' }, options.tableStyle ),
 			'.row':{display:'table-row'},
+			'.row:hover':{background:'#ccc'},
 			'.cell':{display:'table-cell',  width: '2%', padding: '5px', border:'1px solid #ccc'},
 		})
 		this.getList = function() {
@@ -147,9 +151,21 @@ class DataListView {
 
 		function buildTableRows(typeInfo, data){
 			return data.data.map(function(v){
-				return m('tr.row', [
+				return m('tr.row', 
+						{config: function(el,old,context){ 
+								if(old) return;
+								$(el).on('click', function(e){
+									options.onRowClick&&options.onRowClick(el, { formType:formType, row:v } ) 
+								})
+						}}, 
+						[
 						Object.keys(typeInfo).map(key=>{
-							return m('td.cell.'+key, v.attributes[key])
+							return m('td.cell.'+key, {config: function(el,old,context){ 
+								if(old) return;
+								$(el).on('click', function(e){
+									options.onCellClick&&options.onCellClick(el, { formType:formType, row:v, key:key } ) 
+								})
+							}}, v.attributes[key])
 						})
 					] )
 			})
@@ -175,7 +191,8 @@ class DataListView {
 					var type = {}
 					Object.keys(template)
 						.sort(function(a,b){ return template[a].attrs.order - template[a].attrs.order })
-						.map(function(v){ type[v] = template[v] })
+						.map(function(v){ type[v] = template[v] });
+
 					type['meta_ver'] = {type:String, attrs:{order:999}}
 
 					ctrl.tableHeader = buildTableHeader( type )
@@ -224,6 +241,10 @@ class CanvasView {
 		  	}
 		}
 
+		this.populateRef = function(formName) {
+			var query = '&filter[meta_ver]=>=0&include=meta_form&fields[formtype]=template'
+			return Global.mRequestApi('GET', Global.APIHOST+'/form_'+formName+'?' + query)
+		}
 		this.getCanvasData = function() {
 			return Global.mRequestApi('GET', Global.APIHOST+'/formtype/'+formType.id)
 		}
@@ -241,6 +262,18 @@ class CanvasView {
 					return buildStageFromData( data.data.attributes.dom, null, {mode:'present'} )
 				})
 		  	}
+		  	ctrl.setTemplateValue = function(key, val){
+		  		var domData = ctrl.Canvas1().getDomTree();
+		  		var template = domData.template[key]
+		  		var templateRef = domData.templateRef[key]
+		  		var isTextArea = template.tag==='textarea'
+		  		var isSelect = template.tag==='select'
+				if(isTextArea || isSelect) {
+					template.children = val
+				}else{
+					template.attrs.value = val
+				}
+		  	}
 		  	// self.setPopListOpen(false)
 		  	ctrl.buildCanvas()
 		  }
@@ -254,14 +287,38 @@ class CanvasView {
 
 			    	Object.keys(template).forEach(function(v) {
 			    		var $f = $('[name="'+ v +'"]')
-			    		var T = template[v].attrs;
-			    		var table = T.table;
-			    		var tkey = T.tkey;
-			    		if( table )
-			    		$f.on('focus', v=>{
-			    			self.setPopListOpen(true)
-			    			showPopList(formType, {width:'auto'} )
-			    		})
+			    		var T = template[v];
+			    		var isSelect = T.tag=='select'
+			    		var table = T.attrs.table;
+			    		var tkey = T.attrs.tkey;
+			    		if( table ){
+			    			if(isSelect){
+			    				self.populateRef(table).then(function(ret){
+			    					var kv = ret.data.map(row=>{
+			    						return {value:row.id, text: tkey?row.attributes[tkey]:row.id}
+			    					})
+			    					ctrl.setTemplateValue( v, kv )
+			    				})
+			    			}
+			    			else
+					    		$f.on('focus', evt=>{
+					    			self.setPopListOpen(true)
+					    			showPopList(formType, {
+					    				tableName: table,
+					    				onCellClick: function(el,data) {
+					    					var id = data.row.id
+					    					var value = data.row.attributes[tkey||data.key]
+					    					self.setPopListOpen(false)
+					    					$f.val( value )
+					    					ctrl.setTemplateValue( v, value )
+					    				},
+					    				onRowClick: function(el,data) {
+					    					console.log(el, data)
+					    				},
+					    			})
+					    		})
+			    			
+			    		}
 			    	})
 		    	}
 		    } }, [

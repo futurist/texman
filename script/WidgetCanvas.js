@@ -25,13 +25,14 @@ export default class WidgetCanvas extends ContainerBaseClass {
 			v.children && v.children.forEach(interDom)
 		}
 
-		var index=0, template={};
+		var index=0, template={}, templateRef={} ;
 		function getJsonData( widget ) {
 			index++;
 			var obj = { classType: widget.constructor==WidgetCanvas?'canvas':'layer' }
 			var jsonData = widget.jsonData();
 			obj.jsonData = jsonData;
 			if( !/stage|plain/i.test(jsonData.type) && jsonData.attrs && jsonData.attrs.name ) {
+				templateRef[jsonData.attrs.name] = widget.jsonData;
 				template[jsonData.attrs.name] = jsonData.children;
 			}
 			obj.childWidget = (widget.children||[]).map(function(v, i){
@@ -46,6 +47,7 @@ export default class WidgetCanvas extends ContainerBaseClass {
 			height: this.Prop.style.height,
 			desc: this.Prop.desc||'',
 			template:template,
+			templateRef:templateRef,
 			dom: getJsonData(this)
 		}
 	}

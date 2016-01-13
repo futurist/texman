@@ -68,21 +68,33 @@ export default class WidgetDiv extends LayerBaseClass {
 
     if( isSelect ) {
         data.children.attrs['name'] = name;
-        var options = data.children.children.map(function(v){ return m('option', v) });
+        let defaultVal = data.children.attrs.value
+        var options = data.children.children.map(function(v){
+          let checked = defaultVal.split('||').indexOf(v)>-1?'[selected]':'';
+          let value =v, text=v
+          if(typeof v=='object'&&v)value=v.value, text=v.text
+          return m('option'+checked, {value:value}, text)
+        });
         if( data.children.attrs.placeholder ) options.unshift( m('option', {disabled:true, value:''}, data.children.attrs.placeholder ) );
         dom = Global._extend( {}, data.children )
         dom.children = options
     } else if( isCheckbox ) {
+        let defaultVal = data.children.attrs.value
         var options = data.children.children.map(function(v){
-          let checked = v==data.children.attrs.value?'[checked]':'';
-          return m('label', [ v, m(`input.checkbox[type=checkbox][value=${v}][name=${name}]${checked}`, v) ] );
+          let checked = defaultVal.split('||').indexOf(v)>-1?'[checked]':'';
+          let value =v, text=v
+          if(typeof v=='object'&&v)value=v.value, text=v.text
+          return m('label', [ m(`input.checkbox[type=checkbox][value=${value}][name=${name}]${checked}`), text ] );
         });
         dom = Global._extend( {}, data.children )
         dom.children = options
     } else if( isRadio ) {
+        let defaultVal = data.children.attrs.value
         var options = data.children.children.map(function(v){
-          let checked = v==data.children.attrs.value?'[checked]':'';
-          return m('label', [ v, m(`input.radio[type=radio][value=${v}][name=${name}]${checked}`, v) ] );
+          let checked = v==defaultVal?'[checked]':'';
+          let value =v, text=v
+          if(typeof v=='object'&&v)value=v.value, text=v.text
+          return m('label', [ m(`input.radio[type=radio][value=${value}][name=${name}]${checked}`), text ] );
         });
         dom = Global._extend( {}, data.children )
         dom.children = options
