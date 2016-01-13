@@ -1,7 +1,7 @@
 
 export var canvasForm = 
 {
-	'#poplist':{position:'absolute'},
+	'#poplist':{position:'absolute', opacity: 0.9 },
 
 	// canvas input form
 		'.canvas':{

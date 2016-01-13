@@ -143,6 +143,7 @@ class DataListView {
 			'.row':{display:'table-row'},
 			'.row:hover':{background:'#ccc'},
 			'.cell':{display:'table-cell',  width: '2%', padding: '5px', border:'1px solid #ccc'},
+			'.cell textarea':{ width:'100%', height:'100%', border:'none', background:'none', resize:'none' }
 		})
 		this.getList = function() {
 			var query = '&filter[meta_ver]=<='+ version +'&include=meta_form&fields[formtype]=template'
@@ -160,12 +161,17 @@ class DataListView {
 						}}, 
 						[
 						Object.keys(typeInfo).map(key=>{
+							var isTextArea = typeInfo[key].tag=='textarea';
+							var val = isTextArea
+										?m('textarea', m.trust(v.attributes[key]))
+										:v.attributes[key]
 							return m('td.cell.'+key, {config: function(el,old,context){ 
 								if(old) return;
 								$(el).on('click', function(e){
 									options.onCellClick&&options.onCellClick(el, { formType:formType, row:v, key:key } ) 
 								})
-							}}, v.attributes[key])
+							}}, v.attributes[key] )
+							// replace(/\n/g, '<br>').replace(/ /g, '&nbsp;')
 						})
 					] )
 			})
@@ -218,7 +224,7 @@ class DataListView {
 
 
 class CanvasView {
-	constructor(formType){
+	constructor(formType, container){
 		var self = this;
 		var template = formType.attributes.template
 		
@@ -342,7 +348,8 @@ class CanvasView {
 		      		} )
 		      	}}),
 		      	m('input[type=button][value=重置]', {onclick:function(){
-		      		ctrl.buildCanvas()
+		      		m.mount(container, null)
+		      		showForm(formType, container)
 		      	}}),
 		     ]),
 		     ctrl.Canvas1().getView(),
