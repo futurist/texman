@@ -167,9 +167,9 @@ class DataListView {
 								var isMultiple = typeInfo[key].attrs.type=='checkbox'||typeInfo[key].attrs.multiple
 								var title = typeInfo[key].attrs.title||''
 								var selVal = row.attributes[key]
-								selVal = typeof selVal!=='object'?[selVal]:selVal
 								var child = typeInfo[key].children
-								child = typeof child!='object'?[child]:child
+								selVal = {}.toString.call(selVal)!=="[object Array]" ?[selVal]:selVal
+								child = {}.toString.call(child)!=="[object Array]" ?[child]:child
 								var dom  =m('select', Global._extend({}, {
 											name: row.id+'_'+key,
 											multiple:isMultiple, 
@@ -181,7 +181,8 @@ class DataListView {
 											!isMultiple? m('option', { value:''} , placeholder): [],
 											child.map(v=>{
 												let value =v, text=v
-									            if(typeof v=='object'&&v) value=v.value, text=v.text
+									            if(typeof v=='object'&&v) value=v.value, text=v.text;
+									            console.log( selVal, value )
 												return m('option'+( selVal.indexOf(value)>-1 ?'[selected]':''), { value:value }, text)
 											})
 										]
