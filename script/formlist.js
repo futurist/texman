@@ -132,68 +132,119 @@ class DataListView {
 		var name = options.tableName || formType.attributes.name;
 		var id = formType.attributes.id;
 		var version = formType.attributes.version;
+		var listMode = options.listMode || 'edit'	//'text', 'edit'
 		m_j2c.add('data_table', {
 			'.table': util._extend( {display:'table', table_layout: 'fixed', border_collapse:'collapse' }, options.tableStyle ),
 			'.row':{display:'table-row'},
 			'.row:hover':{background:'#ccc'},
 			'.cell':{display:'table-cell',  width: '2%', padding: '5px', border:'1px solid #ccc'},
-			'.cell textarea':{ width:'100%', height:'100%', border:'none', background:'none', resize:'none' }
+			'.cell textarea':{ width:'100%', height:'100%', border:'none', background:'none', resize:'none' },
+			'a.action':{margin:'0 4px'},
+			'.listAction input':{ margin:'10px 4px' },
 		})
+
 		this.getList = function() {
 			var query = '&filter[meta_ver]=<='+ version +'&include=meta_form&fields[formtype]=template'
 			return Global.mRequestApi('GET', Global.APIHOST+'/form_'+name+'?' + query)
 		}
 
-		function buildTableRows(typeInfo, data){
-			var getAction = function(row){
-				return m('td.cell.action', 
-					[
-						m('a.edit[href="javascript:;"]', {onclick:function(){ showForm(formType, {row:row} ) }}, 'edit')
-					]
-				)
-			}
-
-			return data.data.map(function(v){
-				return m('tr.row', 
-						{config: function(el,old,context){ 
-								if(old) return;
-								$(el).on('click', function(e){
-									options.onRowClick&&options.onRowClick(el, { formType:formType, row:v } ) 
-								})
-						}}, 
-						[
-						getAction(v),
-						Object.keys(typeInfo).map(key=>{
-							var isTextArea = typeInfo[key].tag=='textarea';
-							var val = isTextArea
-										?m('textarea', m.trust(v.attributes[key]))
-										:v.attributes[key]
-							return m('td.cell.'+key, {config: function(el,old,context){ 
-								if(old) return;
-								$(el).on('click', function(e){
-									options.onCellClick&&options.onCellClick(el, { formType:formType, row:v, key:key } ) 
-								})
-							}}, v.attributes[key] )
-							// replace(/\n/g, '<br>').replace(/ /g, '&nbsp;')
-						})
-					] )
-			})
-		}
-
-		function buildTableHeader(typeInfo){
-			return m('th.row', [
-					m('td.cell', m('.actionHeader', 'action')),
-					Object.keys(typeInfo).map( (v)=>{
-						var title = typeInfo[v].attrs&&typeInfo[v].attrs.title||''
-						var description = typeInfo[v].attrs&&typeInfo[v].attrs.description||''
-						return m('td.cell.'+v, {title:v+'\n'+description}, title||v )
-					})
-				] )
-		}
-
 		this.controller = function(){
 			var ctrl = this;
 		  	ctrl.savedData = m.prop()
+
+			ctrl.buildTableRows = function(typeInfo, data){
+				var renderCell = function(row, key){
+					switch(listMode){
+						case 'edit':
+							var isTextArea = typeInfo[key].tag=='textarea'
+							var isSelect = /select|span/.test(typeInfo[key].tag)
+							if(isTextArea){
+								return m('textarea', Global._extend({}, {name: row.id+'_'+key}), row.attributes[key])
+							}
+
+							if(isSelect) {
+								var placeholder = typeInfo[key].attrs.placeholder||''
+								var isMultiple = typeInfo[key].attrs.type=='checkbox'||typeInfo[key].attrs.multiple
+								var title = typeInfo[key].attrs.title||''
+								var selVal = row.attributes[key]
+								selVal = typeof selVal!=='object'?[selVal]:selVal
+								var child = typeInfo[key].children
+								child = typeof child!='object'?[child]:child
+								var dom  =m('select', Global._extend({}, {
+											name: row.id+'_'+key,
+											multiple:isMultiple, 
+											title:isMultiple?'按Ctrl键点击可多选\n'+title:title,
+											oninput:function(){
+												console.log(row)
+										}}),
+										[
+											!isMultiple? m('option', { value:''} , placeholder): [],
+											child.map(v=>{
+												let value =v, text=v
+									            if(typeof v=='object'&&v) value=v.value, text=v.text
+												return m('option'+( selVal.indexOf(value)>-1 ?'[selected]':''), { value:value }, text)
+											})
+										]
+									)
+								return dom
+							}
+							return m('input', Global._extend({}, {name: row.id+'_'+key, value:row.attributes[key]}) )
+						case 'text':
+						default:
+							return row.attributes[key]
+					}
+				}
+				var renderAction = function(row){
+					return m('td.cell.action', 
+						[
+							m('a.action.edit[href="javascript:;"]', {onclick:function(){ showForm(formType, {row:row} ) }}, '编辑'),
+							m('a.action.delete[href="javascript:;"]', {className:'', onclick:function(){ 
+								if($(this).hasClass('deleting'))return;
+								ctrl.deleteRow(row); 
+								$(this).addClass('deleting'); }}, '删除'),
+						]
+					)
+				}
+
+				return data.data.map(function(v){
+					return m('tr.row', 
+							{config: function(el,old,context){ 
+									if(old) return;
+									$(el).on('click', function(e){
+										options.onRowClick&&options.onRowClick(el, { formType:formType, row:v } ) 
+									})
+							}}, 
+							[
+							renderAction(v),
+							Object.keys(typeInfo).map(key=>{
+								var isTextArea = typeInfo[key].tag=='textarea';
+								var val = isTextArea
+											?m('textarea', m.trust(v.attributes[key]))
+											:v.attributes[key]
+								return m('td.cell.'+key, {config: function(el,old,context){ 
+									if(old) return;
+									$(el).on('click', function(e){
+										options.onCellClick&&options.onCellClick(el, { formType:formType, row:v, key:key } ) 
+									})
+								}}, renderCell(v, key) )
+								// replace(/\n/g, '<br>').replace(/ /g, '&nbsp;')
+							})
+						] )
+				})
+			}
+
+			ctrl.buildTableHeader = function(typeInfo){
+				return m('th.row', [
+						m('td.cell', m('.actionHeader', 'action')),
+						Object.keys(typeInfo).map( (v)=>{
+							var title = typeInfo[v].attrs&&typeInfo[v].attrs.title||''
+							var description = typeInfo[v].attrs&&typeInfo[v].attrs.description||''
+							return m('td.cell.'+v, {title:v+'\n'+description}, title||v )
+						})
+					] )
+			}
+
+
 		  	ctrl.updateListView = function(){
 		  		self.getList().then( function(data){
 		  			ctrl.savedData(data)
@@ -205,21 +256,40 @@ class DataListView {
 
 					type['meta_ver'] = {type:String, attrs:{order:999}}
 
-					ctrl.tableHeader = buildTableHeader( type )
-					ctrl.tableRows = buildTableRows( type, data )
+					ctrl.tableHeader = ctrl.buildTableHeader( type )
+					ctrl.tableRows = ctrl.buildTableRows( type, data )
 				})
 		  	}
+			ctrl.deleteRow = function(row) {
+				return Global.mRequestApi('DELETE', Global.APIHOST+'/form_'+name+'/' + row.id).then( ctrl.updateListView )
+			}
 		  	ctrl.updateListView()
 		}
 
 		this.view = function(ctrl){
-			return m_j2c('data_table', m('table.table', {
-				config:function(el,old,context){
-					if(!old){
-						// $(el).width( $(el).parent().width() )
-					}
-				}
-			}, [ctrl.tableHeader, ctrl.tableRows] ) )
+			return m_j2c('data_table', 
+				m('.listCon',
+				[
+					m('.listAction',
+						[
+							listMode=='edit'
+							? [
+								m('input[type=button][value='+ '列表模式' +']', {onclick:function(){ listMode='text'; ctrl.updateListView() }}),
+								m('input[type=button][value='+ '保存编辑' +']', {onclick:function(){ listMode='text'; ctrl.updateListView() }}),
+							  ]
+							: m('input[type=button][value='+ '编辑模式' +']', {onclick:function(){ listMode='edit'; ctrl.updateListView() }})
+						]
+					),
+					m('table.table', {
+						config:function(el,old,context){
+							if(!old){
+								// $(el).width( $(el).parent().width() )
+							}
+						}
+					}, 
+					[ctrl.tableHeader, ctrl.tableRows] ) 
+				])
+			)
 		}
 	}
 }
@@ -240,7 +310,6 @@ class CanvasView {
 		var self = this;
 		var template = formType.attributes.template
 		var rowData = options.row && options.row.attributes
-		var rowType = options.row && options.row.type
 		var rowID = options.row && options.row.id
 		m_j2c.add('', 'canvasForm', canvasForm)
 		var classList = m_j2c.getClass('', '')	// default ns, all class
@@ -277,7 +346,7 @@ class CanvasView {
 		  		self.setPopListOpen(false)
 		  	}
 		  	ctrl.buildCanvas = function(){
-		  		ctrl.Canvas1 = self.getCanvasData().then( function(data){
+		  		window.Canvas1 = ctrl.Canvas1 = self.getCanvasData().then( function(data){
 		  			ctrl.savedData(data)
 					return buildStageFromData( data.data.attributes.dom, null, {mode:'present'} )
 				})
@@ -342,9 +411,9 @@ class CanvasView {
 			    		}
 			    		if(rowData){
 			    			ctrl.setTemplateValue( v, rowData[v] )
-							setTimeout( m.redraw)
 						}
 			    	})
+					rowData && setTimeout( m.redraw )
 		    	}
 		    } }, [
 		      m('h2', ctrl.Canvas1().Prop.title),
@@ -353,6 +422,8 @@ class CanvasView {
 		      		var domData = ctrl.Canvas1().getDomTree();
 		      		var userData = {}
 		      		for(let i in domData.template){
+		      			// get only 'dirty input', where version > 0
+		      			if(rowID && !domData.template[i].meta.version ) continue;
 		      			userData[i] = Global.getInputVal(i, classList['.canvas'] ) ;
 		      		}
 		      		if(!rowID) userData.meta_form = {type:'formtype', id:formType.id}
@@ -364,18 +435,24 @@ class CanvasView {
 					}
 					if(rowID){
 						apiData.data.id=rowID
-			      		Global.mRequestApi('PATCH', Global.APIHOST+'/form_'+domData.name+'/'+rowID, apiData, function(ret){
+			      		Global.mRequestApi('PATCH', Global.APIHOST+'/form_'+domData.name+'/'+rowID, apiData).then(function(ret){
 			      			console.log(ret)
 			      		} )
 					}else{
-			      		Global.mRequestApi('POST', Global.APIHOST+'/form_'+domData.name, apiData, function(ret){
-			      			console.log(ret)
+			      		Global.mRequestApi('POST', Global.APIHOST+'/form_'+domData.name, apiData).then(function(ret){
+			      			options.row = ret.data;
+			      			rowData = ret.data.attributes;
+			      			rowID = ret.data.id;
 			      		} )
 					}
 		      	}}),
 		      	m('input[type=button][value=重置]', {onclick:function(){
 		      		m.mount(options.container, null)
 		      		showForm(formType, options)
+		      	}}),
+		      	m('input[type=button][value=列表]', {onclick:function(){
+		      		m.mount(options.container, null)
+		      		showDataList(formType, options)
 		      	}}),
 		     ]),
 		     ctrl.Canvas1().getView(),

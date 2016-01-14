@@ -47,6 +47,8 @@ export default class WidgetDiv extends LayerBaseClass {
       data.children.attrs.description = data.attrs.description||''
       data.children.attrs.table = data.attrs.table||''
       data.children.attrs.tkey = data.attrs.tkey||''
+      data.children.meta = data.children.meta||{}
+      data.children.meta.version = data.children.meta.version||0
       // var oldKeyPressFunc = data.children.attrs.onkeypress;
       // data.children.attrs.onkeypress = function(){ Global.mSkipRedraw(); if(typeof oldKeyPressFunc=='function') oldKeyPressFunc.apply(this, arguments); }
       if(data.attrs.table){
@@ -57,9 +59,9 @@ export default class WidgetDiv extends LayerBaseClass {
         }
       }
       if(isTextarea){
-        data.children.attrs.oninput = function(){ data.children.children = ( $(this).val() ) }
+        data.children.attrs.oninput = function(){ data.children.meta.version++; data.children.children = ( $(this).val() ) }
       }else{
-        data.children.attrs.oninput = function(){ data.children.attrs.value = ( $(this).val() ) }
+        data.children.attrs.oninput = function(){ data.children.meta.version++; data.children.attrs.value = ( $(this).val() ) }
       }
       data.children.attrs.config = function(el,old,context){ context.retain = true; }
       Global.applyStyle( data.children.attrs, Global._pluck(data.style, ['fontFamily', 'fontSize', 'color', 'textAlign', 'fontStyle', 'fontWeight']) );
@@ -69,6 +71,8 @@ export default class WidgetDiv extends LayerBaseClass {
     if( isSelect ) {
         data.children.attrs['name'] = name;
         let defaultVal = data.children.attrs.value
+        let isMultiple = data.children.attrs.multiple
+        if(isMultiple) data.children.attrs.title ='按CTRL键点击可多选\n'+ (data.children.attrs.title||'')
         data.children.children = typeof data.children.children!='object'?[ data.children.children ]:data.children.children
         var options = data.children.children.map(function(v){
           let checked = defaultVal.split('||').indexOf(v)>-1?'[selected]':'';
@@ -76,7 +80,7 @@ export default class WidgetDiv extends LayerBaseClass {
           if(typeof v=='object'&&v)value=v.value, text=v.text
           return m('option'+checked, {value:value}, text)
         });
-        if( data.children.attrs.placeholder ) options.unshift( m('option', {disabled:true, value:''}, data.children.attrs.placeholder ) );
+        if( data.children.attrs.placeholder && !isMultiple ) options.unshift( m('option', { value:''}, data.children.attrs.placeholder ) );
         dom = Global._extend( {}, data.children )
         dom.children = options
     } else if( isCheckbox ) {
