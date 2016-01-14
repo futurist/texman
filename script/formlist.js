@@ -74,8 +74,8 @@ export class formList {
 									[
 										m('.item', [
 											m('.name', { onclick:function(){ m_j2c.setNS('abc'); showForm(v) } }, v.attributes.name),
-											m('.title', {onclick:function(){ 
-												showDataList(v ) 
+											m('.title', {onclick:function(){
+												showDataList(v )
 											}}, v.attributes.title),
 											m('.createAt', v.attributes.createAt),
 										]),
@@ -172,17 +172,16 @@ class DataListView {
 								child = {}.toString.call(child)!=="[object Array]" ?[child]:child
 								var dom  =m('select', Global._extend({}, {
 											name: row.id+'_'+key,
-											multiple:isMultiple, 
+											multiple:isMultiple,
 											title:isMultiple?'按Ctrl键点击可多选\n'+title:title,
 											oninput:function(){
-												console.log(row)
+												row.attributes[key] = $(this).val()
 										}}),
 										[
 											!isMultiple? m('option', { value:''} , placeholder): [],
 											child.map(v=>{
 												let value =v, text=v
 									            if(typeof v=='object'&&v) value=v.value, text=v.text;
-									            console.log( selVal, value )
 												return m('option'+( selVal.indexOf(value)>-1 ?'[selected]':''), { value:value }, text)
 											})
 										]
@@ -196,25 +195,25 @@ class DataListView {
 					}
 				}
 				var renderAction = function(row){
-					return m('td.cell.action', 
+					return m('td.cell.action',
 						[
 							m('a.action.edit[href="javascript:;"]', {onclick:function(){ showForm(formType, {row:row} ) }}, '编辑'),
-							m('a.action.delete[href="javascript:;"]', {className:'', onclick:function(){ 
+							m('a.action.delete[href="javascript:;"]', {className:'', onclick:function(){
 								if($(this).hasClass('deleting'))return;
-								ctrl.deleteRow(row); 
+								ctrl.deleteRow(row);
 								$(this).addClass('deleting'); }}, '删除'),
 						]
 					)
 				}
 
 				return data.data.map(function(v){
-					return m('tr.row', 
-							{config: function(el,old,context){ 
+					return m('tr.row',
+							{config: function(el,old,context){
 									if(old) return;
 									$(el).on('click', function(e){
-										options.onRowClick&&options.onRowClick(el, { formType:formType, row:v } ) 
+										options.onRowClick&&options.onRowClick(el, { formType:formType, row:v } )
 									})
-							}}, 
+							}},
 							[
 							renderAction(v),
 							Object.keys(typeInfo).map(key=>{
@@ -222,10 +221,10 @@ class DataListView {
 								var val = isTextArea
 											?m('textarea', m.trust(v.attributes[key]))
 											:v.attributes[key]
-								return m('td.cell.'+key, {config: function(el,old,context){ 
+								return m('td.cell.'+key, {config: function(el,old,context){
 									if(old) return;
 									$(el).on('click', function(e){
-										options.onCellClick&&options.onCellClick(el, { formType:formType, row:v, key:key } ) 
+										options.onCellClick&&options.onCellClick(el, { formType:formType, row:v, key:key } )
 									})
 								}}, renderCell(v, key) )
 								// replace(/\n/g, '<br>').replace(/ /g, '&nbsp;')
@@ -268,7 +267,7 @@ class DataListView {
 		}
 
 		this.view = function(ctrl){
-			return m_j2c('data_table', 
+			return m_j2c('data_table',
 				m('.listCon',
 				[
 					m('.listAction',
@@ -287,8 +286,8 @@ class DataListView {
 								// $(el).width( $(el).parent().width() )
 							}
 						}
-					}, 
-					[ctrl.tableHeader, ctrl.tableRows] ) 
+					},
+					[ctrl.tableHeader, ctrl.tableRows] )
 				])
 			)
 		}
@@ -349,7 +348,7 @@ class CanvasView {
 		  	ctrl.buildCanvas = function(){
 		  		window.Canvas1 = ctrl.Canvas1 = self.getCanvasData().then( function(data){
 		  			ctrl.savedData(data)
-					return buildStageFromData( data.data.attributes.dom, null, {mode:'present'} )
+					return buildStageFromData( data.data.attributes.dom, null, {mode:'present', rowData:rowData} )
 				})
 		  	}
 		  	ctrl.setTemplateValue = function(key, val, isOption){
@@ -372,8 +371,8 @@ class CanvasView {
 
 		  this.view = function(ctrl){
 		  	if( !ctrl.Canvas1() ) return;
-		  	
-		    return m_j2c('', 'canvasForm', m('.mainCanvas', { config:function(el, isInit, context){ 
+
+		    return m_j2c('', 'canvasForm', m('.mainCanvas', { config:function(el, isInit, context){
 		    	context.retain=true
 		    	if(!isInit){
 			    	Object.keys(template).forEach(function(v) {
@@ -408,13 +407,9 @@ class CanvasView {
 					    				},
 					    			})
 					    		})
-			    			
+
 			    		}
-			    		if(rowData){
-			    			ctrl.setTemplateValue( v, rowData[v] )
-						}
 			    	})
-					rowData && setTimeout( m.redraw )
 		    	}
 		    } }, [
 		      m('h2', ctrl.Canvas1().Prop.title),
