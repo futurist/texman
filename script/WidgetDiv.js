@@ -69,6 +69,7 @@ export default class WidgetDiv extends LayerBaseClass {
     if( isSelect ) {
         data.children.attrs['name'] = name;
         let defaultVal = data.children.attrs.value
+        data.children.children = typeof data.children.children!='object'?[ data.children.children ]:data.children.children
         var options = data.children.children.map(function(v){
           let checked = defaultVal.split('||').indexOf(v)>-1?'[selected]':'';
           let value =v, text=v
@@ -80,6 +81,7 @@ export default class WidgetDiv extends LayerBaseClass {
         dom.children = options
     } else if( isCheckbox ) {
         let defaultVal = data.children.attrs.value
+        data.children.children = typeof data.children.children!='object'?[ data.children.children ]:data.children.children
         var options = data.children.children.map(function(v){
           let checked = defaultVal.split('||').indexOf(v)>-1?'[checked]':'';
           let value =v, text=v
@@ -90,6 +92,7 @@ export default class WidgetDiv extends LayerBaseClass {
         dom.children = options
     } else if( isRadio ) {
         let defaultVal = data.children.attrs.value
+        data.children.children = typeof data.children.children!='object'?[ data.children.children ]:data.children.children
         var options = data.children.children.map(function(v){
           let checked = v==defaultVal?'[checked]':'';
           let value =v, text=v

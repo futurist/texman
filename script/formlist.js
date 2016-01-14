@@ -126,12 +126,6 @@ function showPopList(formType, options={}) {
 	m.mount(container, new DataListView(formType, options) );
 }
 
-// get a form when click
-function showForm(formType, container) {
-	container = container||document.querySelector('#container')
-	m.mount(container, new CanvasView(formType, container) );
-}
-
 class DataListView {
 	constructor(formType, options={} ) {
 		var self = this;
@@ -151,6 +145,14 @@ class DataListView {
 		}
 
 		function buildTableRows(typeInfo, data){
+			var getAction = function(row){
+				return m('td.cell.action', 
+					[
+						m('a.edit[href="javascript:;"]', {onclick:function(){ showForm(formType, {row:row} ) }}, 'edit')
+					]
+				)
+			}
+
 			return data.data.map(function(v){
 				return m('tr.row', 
 						{config: function(el,old,context){ 
@@ -160,6 +162,7 @@ class DataListView {
 								})
 						}}, 
 						[
+						getAction(v),
 						Object.keys(typeInfo).map(key=>{
 							var isTextArea = typeInfo[key].tag=='textarea';
 							var val = isTextArea
@@ -179,6 +182,7 @@ class DataListView {
 
 		function buildTableHeader(typeInfo){
 			return m('th.row', [
+					m('td.cell', m('.actionHeader', 'action')),
 					Object.keys(typeInfo).map( (v)=>{
 						var title = typeInfo[v].attrs&&typeInfo[v].attrs.title||''
 						var description = typeInfo[v].attrs&&typeInfo[v].attrs.description||''
@@ -223,11 +227,21 @@ class DataListView {
 
 
 
+// get a form when click
+function showForm(formType, options={}) {
+	var container = container||document.querySelector('#container')
+	options.container = options.container||container;
+	m.mount(container, null );
+	m.mount(container, new CanvasView(formType, options) );
+}
+
 class CanvasView {
-	constructor(formType, container){
+	constructor(formType, options){
 		var self = this;
 		var template = formType.attributes.template
-		
+		var rowData = options.row && options.row.attributes
+		var rowType = options.row && options.row.type
+		var rowID = options.row && options.row.id
 		m_j2c.add('', 'canvasForm', canvasForm)
 		var classList = m_j2c.getClass('', '')	// default ns, all class
 		var getClass= function(name){ return '.'+(classList[name]||name) }
@@ -268,14 +282,16 @@ class CanvasView {
 					return buildStageFromData( data.data.attributes.dom, null, {mode:'present'} )
 				})
 		  	}
-		  	ctrl.setTemplateValue = function(key, val){
+		  	ctrl.setTemplateValue = function(key, val, isOption){
 		  		var domData = ctrl.Canvas1().getDomTree();
 		  		var template = domData.template[key]
-		  		var templateRef = domData.templateRef[key]
 		  		var isTextArea = template.tag==='textarea'
 		  		var isSelect = template.tag==='select'
-				if(isTextArea || isSelect) {
+				if(isTextArea) {
 					template.children = val
+				}else if(isSelect) {
+					if(isOption) template.children = val
+					else template.attrs.value = val
 				}else{
 					template.attrs.value = val
 				}
@@ -288,9 +304,8 @@ class CanvasView {
 		  	if( !ctrl.Canvas1() ) return;
 		  	
 		    return m_j2c('', 'canvasForm', m('.mainCanvas', { config:function(el, isInit, context){ 
-		    	context.retain=true 
+		    	context.retain=true
 		    	if(!isInit){
-
 			    	Object.keys(template).forEach(function(v) {
 			    		var $f = $('[name="'+ v +'"]')
 			    		var T = template[v];
@@ -303,7 +318,7 @@ class CanvasView {
 			    					var kv = ret.data.map(row=>{
 			    						return {value:row.id, text: tkey?row.attributes[tkey]:row.id}
 			    					})
-			    					ctrl.setTemplateValue( v, kv )
+			    					ctrl.setTemplateValue( v, kv, true )
 			    				})
 			    			}
 			    			else
@@ -325,31 +340,42 @@ class CanvasView {
 					    		})
 			    			
 			    		}
+			    		if(rowData){
+			    			ctrl.setTemplateValue( v, rowData[v] )
+							setTimeout( m.redraw)
+						}
 			    	})
 		    	}
 		    } }, [
 		      m('h2', ctrl.Canvas1().Prop.title),
 		      m('.canvasOp', [
-		      	m('input[type=button][value=提交]', {onclick:function(){
+		      	m('input[type=button][value='+ (rowID?'提交保存':'提交新建') +']', {onclick:function(){
 		      		var domData = ctrl.Canvas1().getDomTree();
 		      		var userData = {}
 		      		for(let i in domData.template){
 		      			userData[i] = Global.getInputVal(i, classList['.canvas'] ) ;
 		      		}
-		      		userData.meta_form = {type:'formtype', id:formType.id}
+		      		if(!rowID) userData.meta_form = {type:'formtype', id:formType.id}
 		      		let apiData = {
 						"data":{
 							"type": domData.name ,
 							"attributes": userData
 						}
 					}
-		      		Global.mRequestApi('POST', Global.APIHOST+'/form_'+domData.name, apiData, function(ret){
-		      			console.log(ret)
-		      		} )
+					if(rowID){
+						apiData.data.id=rowID
+			      		Global.mRequestApi('PATCH', Global.APIHOST+'/form_'+domData.name+'/'+rowID, apiData, function(ret){
+			      			console.log(ret)
+			      		} )
+					}else{
+			      		Global.mRequestApi('POST', Global.APIHOST+'/form_'+domData.name, apiData, function(ret){
+			      			console.log(ret)
+			      		} )
+					}
 		      	}}),
 		      	m('input[type=button][value=重置]', {onclick:function(){
-		      		m.mount(container, null)
-		      		showForm(formType, container)
+		      		m.mount(options.container, null)
+		      		showForm(formType, options)
 		      	}}),
 		     ]),
 		     ctrl.Canvas1().getView(),
