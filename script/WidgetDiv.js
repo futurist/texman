@@ -31,8 +31,8 @@ export default class WidgetDiv extends LayerBaseClass {
     var self = this;
     var data = this.jsonData();
     var schema = this.jsonSchema();
-    var isEdit = !!this.options.rowData
-    this.options.rowData = this.options.rowData||{};
+    var editMode = !!this.options.rowData
+    var rowData = this.options.rowData||{};
     var isInput = data.type=='inputText';
     var isRadio = data.type=='radio';
     var isCheckbox = data.type=='checkbox';
@@ -43,15 +43,21 @@ export default class WidgetDiv extends LayerBaseClass {
     let isMultiple = isCheckbox || data.children.attrs.multiple
 
     var getValue = function(){
-      if(isEdit) return self.options.rowData[name];
-      var str =  (isTextarea)? data.children.children:data.children.attrs.value
-      self.options.rowData[name] = (isMultiple)?str.split('||') : str
-      return self.options.rowData[name]
+      if(editMode) return rowData[name];
+      else{
+	      var str =  (isTextarea)? data.children.children:data.children.attrs.value
+      	  return str
+      }
     }
     var setValue = function(val){
-    	var arr = val;
-    	if(isMultiple && val.constructor==String) arr=val.split('||');
-         self.options.rowData[name]=val;
+		var str = val
+    	if(editMode){
+	    	if(isMultiple && val.constructor==String) str=val.split('||');
+    		rowData[name]=str;
+    	}else{
+	    	if(isMultiple && val.constructor==Array) str=val.join('||');
+    		(isTextarea)? data.children.children=str: data.children.attrs.value=str
+    	}
     }
     var setInputValue=function(){
     	data.children.meta.version++;
@@ -61,7 +67,7 @@ export default class WidgetDiv extends LayerBaseClass {
     	setValue( val );
     	return val
     }
-    if(!isEdit) setValue(  (isTextarea)? data.children.children:data.children.attrs.value  )
+    if(!editMode) setValue(  (isTextarea)? data.children.children:data.children.attrs.value  )
 
     if(typeof data.children=='object'){
       data.children.attrs = data.children.attrs || {}

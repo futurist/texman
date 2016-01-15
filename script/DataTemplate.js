@@ -82,11 +82,11 @@ export var jsonTypeSchema = {
               "title": "attrs",
               "type": "object",
               "properties": {
-					"required": {
-					  "title": "required",
-					  "type": "boolean",
-					  "default":false
-					},
+          "required": {
+            "title": "required",
+            "type": "boolean",
+            "default":false
+          },
                   "type": {
                     "title": "input type",
                     "type": "string",
@@ -105,6 +105,44 @@ export var jsonTypeSchema = {
                   },
             }
           }
+        }
+      },
+
+    }
+  },
+  textarea: {
+    "title":"多行输入",
+    "properties": {
+      "attrs":
+      {
+        "title": "attrs",
+        "type": "object",
+        "properties": {
+
+        },
+
+      },
+      "children": {
+        "title": "children",
+        "type": "object",
+        "properties": {
+            "attrs": {
+              "title": "attrs",
+              "type": "object",
+              "properties": {
+    					"required": {
+    					  "title": "required",
+    					  "type": "boolean",
+    					  "default":false
+    					},
+            }
+          },
+          "children": {
+            "title": "value",
+            "type": "string",
+            "format": "textarea",
+            "default":""
+          },
         }
       },
 
