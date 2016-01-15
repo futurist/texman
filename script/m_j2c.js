@@ -2,7 +2,7 @@ import j2c from './j2c.es6'
 import util from 'util_extend_exclude'
 import m from 'mithril'
 
-var DEFAULT_NS = 'global_j2c'
+var DEFAULT_NS = 'default'
 var namespace = DEFAULT_NS
 var j2cGlobal = {}
 var domClassMap = []
@@ -72,6 +72,13 @@ function removeDom (styleObj) {
 	var dom = styleObj.dom;
 	dom && dom.parentNode && dom.parentNode.removeChild(dom);
 	delete styleObj.dom
+}
+
+function parseNSName(nsName=""){
+	var arr = nsName.split(':')
+	if(arr.length<=1)return [namespace, nsName];
+	var ns = arr.shift()||namespace
+	return [ns, arr.join(':') ]
 }
 
 function m_j2c(ns, name, vdom) {

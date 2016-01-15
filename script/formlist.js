@@ -126,6 +126,45 @@ function showPopList(formType, options={}) {
 	m.mount(container, new DataListView(formType, options) );
 }
 
+class SelectComponent{
+	// typeDef = {tag:'', attrs:{}, children}
+	// row = { type, id, attributes:{key:val,...} }
+	constructor(typeInfo, row, key) {
+		if(!typeInfo||!typeInfo[key]) return [];
+		var typeDef = typeInfo[key]
+		var placeholder = typeDef.attrs.placeholder||''
+		var isMultiple = typeDef.attrs.type=='checkbox'||typeDef.attrs.multiple
+		var title = typeDef.attrs.title||''
+		var selVal = row.attributes[key]
+		var child = typeDef.children
+		selVal = {}.toString.call(selVal)!=="[object Array]" ?[selVal]:selVal
+		child = {}.toString.call(child)!=="[object Array]" ?[child]:child
+		this.controller=function(){
+
+		}
+
+		this.view=function(){
+			var dom  =m('select', Global._extend({}, {
+						name: row.id+'_'+key,
+						multiple:isMultiple,
+						title:isMultiple?'按Ctrl键点击可多选\n'+title:title,
+						oninput:function(){
+							row.attributes[key] = $(this).val()
+					}}),
+					[
+						!isMultiple? m('option', { value:''} , placeholder): [],
+						child.map(v=>{
+							let value =v, text=v
+				            if(typeof v=='object'&&v) value=v.value, text=v.text;
+							return m('option'+( selVal.indexOf(value)>-1 ?'[selected]':''), { value:value }, text)
+						})
+					]
+				)
+			return dom
+		}
+	}
+}
+
 class DataListView {
 	constructor(formType, options={} ) {
 		var self = this;
@@ -143,6 +182,10 @@ class DataListView {
 			'.listAction input':{ margin:'10px 4px' },
 		})
 
+		this.populateRef = function(formName) {
+			var query = '&filter[meta_ver]=>=0&include=meta_form&fields[formtype]=template'
+			return Global.mRequestApi('GET', Global.APIHOST+'/form_'+formName+'?' + query)
+		}
 		this.getList = function() {
 			var query = '&filter[meta_ver]=<='+ version +'&include=meta_form&fields[formtype]=template'
 			return Global.mRequestApi('GET', Global.APIHOST+'/form_'+name+'?' + query)
@@ -163,30 +206,7 @@ class DataListView {
 							}
 
 							if(isSelect) {
-								var placeholder = typeInfo[key].attrs.placeholder||''
-								var isMultiple = typeInfo[key].attrs.type=='checkbox'||typeInfo[key].attrs.multiple
-								var title = typeInfo[key].attrs.title||''
-								var selVal = row.attributes[key]
-								var child = typeInfo[key].children
-								selVal = {}.toString.call(selVal)!=="[object Array]" ?[selVal]:selVal
-								child = {}.toString.call(child)!=="[object Array]" ?[child]:child
-								var dom  =m('select', Global._extend({}, {
-											name: row.id+'_'+key,
-											multiple:isMultiple,
-											title:isMultiple?'按Ctrl键点击可多选\n'+title:title,
-											oninput:function(){
-												row.attributes[key] = $(this).val()
-										}}),
-										[
-											!isMultiple? m('option', { value:''} , placeholder): [],
-											child.map(v=>{
-												let value =v, text=v
-									            if(typeof v=='object'&&v) value=v.value, text=v.text;
-												return m('option'+( selVal.indexOf(value)>-1 ?'[selected]':''), { value:value }, text)
-											})
-										]
-									)
-								return dom
+								return new SelectComponent( typeInfo, row, key )
 							}
 							return m('input', Global._extend({}, {name: row.id+'_'+key, value:row.attributes[key]}) )
 						case 'text':
