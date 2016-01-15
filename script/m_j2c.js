@@ -2,6 +2,9 @@ import j2c from './j2c.es6'
 import util from 'util_extend_exclude'
 import m from 'mithril'
 
+var OBJECT = "[object Object]", ARRAY = "[object Array]", STRING = "[object String]", REGEXP="[object RegExp]";
+var type = {}.toString;
+
 var DEFAULT_NS = 'default'
 var namespace = DEFAULT_NS
 var j2cGlobal = {}
@@ -59,11 +62,11 @@ function intervdom (sheet, vdom){
 			return c
 		}).join(' ')
 	}
-	if( {}.toString.call(vdom.children) ==="[object Array]" ) vdom.children.forEach(function(v){ applyStyle(sheet, v)  } )
+	if( type.call(vdom.children) ===ARRAY ) vdom.children.forEach(function(v){ applyStyle(sheet, v)  } )
 	return vdom
 }
 function applyStyle (sheet, vdom){
-	if( {}.toString.call(vdom)==="[object Array]" ) return vdom.map( function(v){ return applyStyle(sheet, v) } );
+	if( type.call(vdom)===ARRAY ) return vdom.map( function(v){ return applyStyle(sheet, v) } );
 	return [intervdom(sheet, vdom)]
 }
 
@@ -228,7 +231,7 @@ m_j2c.getClass = function (ns, name) {
 	name = name||/./
 	for(var i in store){
 		// tutpoint: string.match(undefined) ?
-		if( (sheet=store[i].sheet) && ( {}.toString.call(name)=="[object RegExp]" ? i.match(name) : i==name ) ){
+		if( (sheet=store[i].sheet) && ( type.call(name)==REGEXP ? i.match(name) : i==name ) ){
 			for(var key in sheet){ if(sheet.hasOwnProperty(key)&& !key.match(/^\d/) ) list[key]=sheet[key] }
 		}
 	}

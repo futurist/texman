@@ -132,7 +132,11 @@ window.TableCache = TableCache
 class SelectComponent{
 	// typeDef = {tag:'', attrs:{}, children}
 	// row = { type, id, attributes:{key:val,...} }
-	constructor(typeInfo, row, key) {
+	constructor(typeInfo, options={}) {
+		// var row = options.row||{}
+		// var key = options.key||''
+		// var viewMode = options.viewMode||false
+		var {row={},key='',viewMode=false} = options
 		if(!typeInfo||!typeInfo[key]) return [];
 		var self = this
 		var typeDef = typeInfo[key]
@@ -143,7 +147,7 @@ class SelectComponent{
 		var title = typeDef.attrs.title||''
 		var selVal = row.attributes[key]
 		var child = typeDef.children
-		selVal = {}.toString.call(selVal)!=="[object Array]" ?[selVal]:selVal
+		if(isMultiple) selVal = {}.toString.call(selVal)!=="[object Array]" ?[selVal]:selVal
 		child = m.prop( {}.toString.call(child)!=="[object Array]" ?[child]:child )
 
 		this.populateRef = function(tableName) {
@@ -151,7 +155,6 @@ class SelectComponent{
 			return Global.mRequestApi('GET', Global.APIHOST+'/form_'+tableName+'?' + query)
 		}
 		var getKV = function(ret) {
-			console.log(ret, TableCache[table]())
 			var kv = ret.data.map(row=>{
 				return {value:row.id, text: tkey?row.attributes[tkey]:row.id}
 			})
@@ -164,12 +167,27 @@ class SelectComponent{
 					TableCache[table] = self.populateRef(table).then(getKV)
 				}
 				child = TableCache[table]
-				return console.log(table,'cached', TableCache[table]() );
 			}
 		}
 
 		this.view=function(){
-			var dom  =m('select', Global._extend({}, {
+			var dom= m('div', m_j2c('data_table_multi_view', m('div.multiView', 
+					child()
+						.filter(v=>{
+								let value =v, text=v
+					            if(typeof v=='object'&&v) value=v.value, text=v.text;
+								return (isMultiple?selVal.indexOf(value)>-1:selVal===value)
+						})
+						.map(v=>{
+								let value =v, text=v
+					            if(typeof v=='object'&&v) value=v.value, text=v.text;
+								return m('span', text)
+						})
+					)))
+			if(viewMode){
+				return dom
+			}else{
+				return m('select', Global._extend({}, {
 						name: row.id+'_'+key,
 						multiple:isMultiple,
 						title:isMultiple?'按Ctrl键点击可多选\n'+title:title,
@@ -181,11 +199,11 @@ class SelectComponent{
 						child().map(v=>{
 							let value =v, text=v
 				            if(typeof v=='object'&&v) value=v.value, text=v.text;
-							return m('option'+( selVal.indexOf(value)>-1 ?'[selected]':''), { value:value }, text)
+							return m('option'+( (isMultiple?selVal.indexOf(value)>-1:selVal===value) ?'[selected]':''), { value:value }, text)
 						})
 					]
 				)
-			return dom
+			}
 		}
 	}
 }
@@ -207,6 +225,10 @@ class DataListView {
 			'.listAction input':{ margin:'10px 4px' },
 		})
 
+		m_j2c.add('data_table_multi_view', {
+			'.multiView span':{ background_color:'#ccc', color:'#333', margin:'0 5px' },
+		})
+
 		this.populateRef = function(formName) {
 			var query = '&filter[meta_ver]=>=0&include=meta_form&fields[formtype]=template'
 			return Global.mRequestApi('GET', Global.APIHOST+'/form_'+formName+'?' + query)
@@ -222,21 +244,21 @@ class DataListView {
 
 			ctrl.buildTableRows = function(typeInfo, data){
 				var renderCell = function(row, key){
+					var isTextArea = typeInfo[key].tag=='textarea'
+					var isSelect = /select|span/.test(typeInfo[key].tag)
 					switch(listMode){
 						case 'edit':
-							var isTextArea = typeInfo[key].tag=='textarea'
-							var isSelect = /select|span/.test(typeInfo[key].tag)
 							if(isTextArea){
 								return m('textarea', Global._extend({}, {name: row.id+'_'+key}), row.attributes[key])
 							}
 
 							if(isSelect) {
-								return new SelectComponent( typeInfo, row, key )
+								return new SelectComponent( typeInfo, {row:row, key:key, viewMode:false} )
 							}
 							return m('input', Global._extend({}, {name: row.id+'_'+key, value:row.attributes[key]}) )
 						case 'text':
 						default:
-							return row.attributes[key]
+							return isSelect? new SelectComponent( typeInfo, {row:row, key:key, viewMode:true} ) : row.attributes[key]
 					}
 				}
 				var renderAction = function(row){

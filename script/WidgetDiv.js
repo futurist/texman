@@ -31,6 +31,7 @@ export default class WidgetDiv extends LayerBaseClass {
     var self = this;
     var data = this.jsonData();
     var schema = this.jsonSchema();
+    if(!data.children) return []
     var editMode = !!this.options.rowData
     var rowData = this.options.rowData||{};
     var isInput = data.type=='inputText';
@@ -40,12 +41,13 @@ export default class WidgetDiv extends LayerBaseClass {
     var isTextarea = data.type=='textarea';
     var dom, contentProp={ style:{} }
     var name = data.attrs.name;
+    data.children.attrs = data.children.attrs || {}
     let isMultiple = isCheckbox || data.children.attrs.multiple
 
     var getValue = function(){
       if(editMode) return rowData[name];
       else{
-	      var str =  (isTextarea)? data.children.children:data.children.attrs.value
+	      var str =  (isTextarea)? data.children.children: data.children.attrs.value
       	  return str
       }
     }
@@ -67,10 +69,9 @@ export default class WidgetDiv extends LayerBaseClass {
     	setValue( val );
     	return val
     }
-    if(!editMode) setValue(  (isTextarea)? data.children.children:data.children.attrs.value  )
+    if(!editMode) setValue(  (isTextarea)? data.children.children: data.children.attrs.value  )
 
     if(typeof data.children=='object'){
-      data.children.attrs = data.children.attrs || {}
       data.children.attrs.style = data.children.attrs.style||{}
       data.children.attrs.order = parseInt(data.attrs.order)||0
       data.children.attrs.title = data.attrs.title||''
