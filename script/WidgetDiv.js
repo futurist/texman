@@ -99,9 +99,10 @@ export default class WidgetDiv extends LayerBaseClass {
 
     if( isSelect ) {
         data.children.attrs['name'] = name;
+        let title = (data.children.attrs.title||'')
         let defaultVal = getValue()||''
         if(isMultiple && typeof defaultVal=='string') defaultVal = defaultVal.split('||');
-        if(isMultiple) data.children.attrs.title ='按CTRL键点击可多选\n'+ (data.children.attrs.title||'')
+        if(isMultiple) title ='按CTRL键点击可多选\n'+ title
         data.children.children = {}.toString.call(data.children.children)!=="[object Array]"?[ data.children.children ]:data.children.children
         var options = data.children.children.map(function(v){
           let value =v, text=v
@@ -111,6 +112,7 @@ export default class WidgetDiv extends LayerBaseClass {
         });
         if( data.children.attrs.placeholder && !isMultiple ) options.unshift( m('option', { value:''}, data.children.attrs.placeholder ) );
         dom = Global._extend( {}, data.children )
+        dom.attrs.title = title
         dom.children = options
     } else if( isCheckbox ) {
         let defaultVal = getValue()||''
