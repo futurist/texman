@@ -167,7 +167,7 @@ class SelectComponent{
 		}
 
 		this.view=function(){
-			var dom= m('div', m_j2c('data_table_multi_view', m('div.multiView', 
+			var dom= m('div', m_j2c('data_table_multi_view', m('div.multiView',
 					child()
 						.filter(v=>{
 								let value =v, text=v
@@ -187,9 +187,7 @@ class SelectComponent{
 						name: row.id+'_'+key,
 						multiple:isMultiple,
 						title:isMultiple?'按Ctrl键点击可多选\n'+title:title,
-						oninput:function(){
-							row.attributes[key] = $(this).val()
-					}}),
+						oninput:options.onChange }),
 					[
 						!isMultiple? m('option', { value:''} , placeholder): [],
 						child().map(v=>{
@@ -217,6 +215,7 @@ class DataListView {
 			'.row:hover':{background:'#ccc'},
 			'.cell':{display:'table-cell',  width: '2%', padding: '5px', border:'1px solid #ccc'},
 			'.cell textarea':{ width:'100%', height:'100%', border:'none', background:'none', resize:'none' },
+			'.cell[data-dirty=true]':{background:'#ffaaaa', border_style:'dashed'},
 			'a.action':{margin:'0 4px'},
 			'.listAction input':{ margin:'10px 4px' },
 		})
@@ -227,28 +226,60 @@ class DataListView {
 
 		this.controller = function(){
 			var ctrl = this;
+		  	var changedData = {}
+		  	var isDirty = function(row, key){
+		  		if( row.id in changedData ) return key in changedData[row.id];
+		  		else return false
+		  	}
+		  	var logChange = function(row, key, val){
+		  		var old = row.attributes[key]
+		  		if( !(row.id in changedData) ) changedData[row.id]={};
+		  		if( !(key in changedData[row.id] ) ) changedData[row.id][key] = { oldVal: !Global.isNumeric(old)?(old||''):old }
+		  		if( changedData[row.id][key].oldVal!=val ) changedData[row.id][key].newVal = val
+		  		else delete changedData[row.id][key];
+		  	}
+		  	ctrl.saveList=function(){
+		  		Object.keys(changedData).forEach(rowID=>{
+		  			var list = Object.keys(changedData[rowID])
+		  			if(list.length===0) return delete changedData[rowID];
+		  			var data = {}
+		  			list.forEach(v=>{ data[v]=changedData[rowID][v].newVal })
+		      		let apiData = {
+						"data":{
+							"type": name ,
+							"id": rowID,
+							"attributes": data
+						}
+					}
+		      		Global.mRequestApi('PATCH', Global.APIHOST+'/form_'+name+'/'+rowID, apiData).then(function(ret){
+		      			console.log(ret)
+		      			delete changedData[rowID]
+		      		})
+		  		})
+		  	}
 		  	ctrl.savedData = m.prop()
-
 			ctrl.buildTableRows = function(typeInfo, data){
 				var renderCell = function(row, key){
 					var isTextArea = typeInfo[key].tag=='textarea'
 					var isSelect = /select|span/.test(typeInfo[key].tag)
-					var version = 0
 					switch(listMode){
 						case 'edit':
 							if(isTextArea){
-								return m('textarea', Global._extend({}, {name: row.id+'_'+key, oninput:function(){
-
+								return m('textarea', Global._extend({}, { name: row.id+'_'+key, oninput:function(){
+									logChange(row, key, $(this).val() )
+									row.attributes[key] = $(this).val()
 								}}), row.attributes[key])
 							}
 
 							if(isSelect) {
-								return [new SelectComponent( typeInfo, {row:row, key:key, viewMode:false} )]
+								return [new SelectComponent( typeInfo, {row:row, key:key, viewMode:false, onChange:function(){
+									logChange(row, key, $(this).val() )
+									row.attributes[key] = $(this).val()
+								} } )]
 							}
-							return m('input', Global._extend({}, {id: row.id+'_'+key+version, value:row.attributes[key], oninput:function(){
-								version++
-								row.attributes[key] = this.value
-								console.log( version, this.value )
+							return m('input', Global._extend({}, { name:row.id+'_'+key, value:row.attributes[key], oninput:function(){
+								logChange(row, key, this.value)
+								row.attributes[key] = $(this).val()
 							}}) )
 						case 'text':
 						default:
@@ -282,7 +313,7 @@ class DataListView {
 								var val = isTextArea
 											?m('textarea', m.trust(v.attributes[key]))
 											:v.attributes[key]
-								return m('td.cell.'+key, {key: v.id+key, 'data-key':v.id+key, config: function(el,old,context){
+								return m('td.cell.'+key, {key: v.id+key, 'data-dirty': isDirty(v, key), 'data-key':v.id+key, config: function(el,old,context){
 									if(old) return;
 									$(el).on('click', function(e){
 										options.onCellClick&&options.onCellClick(el, { formType:formType, row:v, key:key } )
@@ -305,7 +336,6 @@ class DataListView {
 					] )
 			}
 
-
 		  	ctrl.updateListView = function(){
 		  		jsonAPI.getList(name, {version:version}).then( function(data){
 		  			ctrl.savedData(data)
@@ -313,12 +343,14 @@ class DataListView {
 					var type = {}
 					Object.keys(template)
 						.sort(function(a,b){ return template[a].attrs.order - template[a].attrs.order })
-						.map(function(v){ type[v] = template[v] });
+						.map(function(v){
+							type[v] = template[v]
+						});
 
 					type['meta_ver'] = {type:String, attrs:{order:999}}
 
-					ctrl.tableHeader = ctrl.buildTableHeader( type )
-					ctrl.tableRows = ctrl.buildTableRows( type, data )
+					ctrl.tableHeader = function(){ return ctrl.buildTableHeader( type ) }
+					ctrl.tableRows = function(){ return ctrl.buildTableRows( type, data ) }
 				})
 		  	}
 			ctrl.deleteRow = function(row) {
@@ -336,7 +368,7 @@ class DataListView {
 							listMode=='edit'
 							? [
 								m('input[type=button][value='+ '列表模式' +']', {onclick:function(){ listMode='text'; ctrl.updateListView() }}),
-								m('input[type=button][value='+ '保存编辑' +']', {onclick:function(){ listMode='text'; ctrl.updateListView() }}),
+								m('input[type=button][value='+ '保存编辑' +']', {onclick:function(){ ctrl.saveList() }}),
 							  ]
 							: m('input[type=button][value='+ '编辑模式' +']', {onclick:function(){ listMode='edit'; ctrl.updateListView() }})
 						]
@@ -348,7 +380,7 @@ class DataListView {
 							}
 						}
 					},
-					[ctrl.tableHeader, ctrl.tableRows] )
+					[ctrl.tableHeader(), ctrl.tableRows()] )
 				])
 			)
 		}

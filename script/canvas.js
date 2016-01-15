@@ -46,6 +46,7 @@ constructor(savedData) {
     {
       view: function(){
         return m_j2c('', 'canvasForm', m('.mainCanvas', { config:function(el, isInit, context){ context.retain=true } }, [
+          m('input', {value:dd(), oninput:m.withAttr('value', dd) } ),
           m('h2', Canvas1.Prop.title),
           Canvas1.getView()
         ]) )
