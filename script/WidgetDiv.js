@@ -105,7 +105,7 @@ export default class WidgetDiv extends LayerBaseClass {
         var options = data.children.children.map(function(v){
           let value =v, text=v
           if(typeof v=='object'&&v)value=v.value, text=v.text
-          let checked = defaultVal.indexOf(value)>-1?'[selected]':'';
+          let checked = (isMultiple?defaultVal.indexOf(value)>-1:defaultVal==value)?'[selected]':'';
           return m('option'+checked, {value:value}, text)
         });
         if( data.children.attrs.placeholder && !isMultiple ) options.unshift( m('option', { value:''}, data.children.attrs.placeholder ) );
