@@ -126,21 +126,46 @@ function showPopList(formType, options={}) {
 	m.mount(container, new DataListView(formType, options) );
 }
 
+var TableCache = {}
+window.TableCache = TableCache
+
 class SelectComponent{
 	// typeDef = {tag:'', attrs:{}, children}
 	// row = { type, id, attributes:{key:val,...} }
 	constructor(typeInfo, row, key) {
 		if(!typeInfo||!typeInfo[key]) return [];
+		var self = this
 		var typeDef = typeInfo[key]
 		var placeholder = typeDef.attrs.placeholder||''
+		var table = typeDef.attrs.table||''
+		var tkey = typeDef.attrs.tkey||''
 		var isMultiple = typeDef.attrs.type=='checkbox'||typeDef.attrs.multiple
 		var title = typeDef.attrs.title||''
 		var selVal = row.attributes[key]
 		var child = typeDef.children
 		selVal = {}.toString.call(selVal)!=="[object Array]" ?[selVal]:selVal
-		child = {}.toString.call(child)!=="[object Array]" ?[child]:child
-		this.controller=function(){
+		child = m.prop( {}.toString.call(child)!=="[object Array]" ?[child]:child )
 
+		this.populateRef = function(tableName) {
+			var query = '&filter[meta_ver]=>=0&include=meta_form&fields[formtype]=template'
+			return Global.mRequestApi('GET', Global.APIHOST+'/form_'+tableName+'?' + query)
+		}
+		var getKV = function(ret) {
+			console.log(ret, TableCache[table]())
+			var kv = ret.data.map(row=>{
+				return {value:row.id, text: tkey?row.attributes[tkey]:row.id}
+			})
+			return kv
+			// ctrl.setTemplateValue( v, kv, true )
+		}
+		this.controller=function(){
+			if(table){
+				if( !TableCache[table] ){
+					TableCache[table] = self.populateRef(table).then(getKV)
+				}
+				child = TableCache[table]
+				return console.log(table,'cached', TableCache[table]() );
+			}
 		}
 
 		this.view=function(){
@@ -153,7 +178,7 @@ class SelectComponent{
 					}}),
 					[
 						!isMultiple? m('option', { value:''} , placeholder): [],
-						child.map(v=>{
+						child().map(v=>{
 							let value =v, text=v
 				            if(typeof v=='object'&&v) value=v.value, text=v.text;
 							return m('option'+( selVal.indexOf(value)>-1 ?'[selected]':''), { value:value }, text)
