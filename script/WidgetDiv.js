@@ -31,7 +31,8 @@ export default class WidgetDiv extends LayerBaseClass {
     var self = this;
     var data = this.jsonData();
     var schema = this.jsonSchema();
-    var rowData = this.options.rowData||{template:['A','B']};
+    var isEdit = !!this.options.rowData
+    this.options.rowData = this.options.rowData||{};
     var isInput = data.type=='inputText';
     var isRadio = data.type=='radio';
     var isCheckbox = data.type=='checkbox';
@@ -39,20 +40,28 @@ export default class WidgetDiv extends LayerBaseClass {
     var isTextarea = data.type=='textarea';
     var dom, contentProp={ style:{} }
     var name = data.attrs.name;
+    let isMultiple = isCheckbox || data.children.attrs.multiple
 
     var getValue = function(){
-      if(name in rowData) return rowData[name];
-      if(isTextarea) return data.children.children;
-      else return data.children.attrs&&data.children.attrs.value;
+      if(isEdit) return self.options.rowData[name];
+      var str =  (isTextarea)? data.children.children:data.children.attrs.value
+      self.options.rowData[name] = (isMultiple)?str.split('||') : str
+      return self.options.rowData[name]
     }
     var setValue = function(val){
-      if(name in rowData) rowData[name]=val;
-      var str=val;
-      if(val&&val.constructor == Array) str=val.join('||')
-      if(isTextarea) data.children.children = val;
-      else if(data.children.attrs) data.children.attrs.value = str;
+    	var arr = val;
+    	if(isMultiple && val.constructor==String) arr=val.split('||');
+         self.options.rowData[name]=val;
     }
-    setValue( getValue() )
+    var setInputValue=function(){
+    	data.children.meta.version++;
+    	var val = (isCheckbox)
+    		? [].slice.apply(document.querySelectorAll('[name="'+name+'"]:checked')).map(v=>v.value) 
+    		: $('[name="'+name+'"]').val()
+    	setValue( val );
+    	return val
+    }
+    if(!isEdit) setValue(  (isTextarea)? data.children.children:data.children.attrs.value  )
 
     if(typeof data.children=='object'){
       data.children.attrs = data.children.attrs || {}
@@ -73,7 +82,9 @@ export default class WidgetDiv extends LayerBaseClass {
           }
         }
       }
-      data.children.attrs.oninput = function(){ data.children.meta.version++; setValue( $(this).val() ); }
+      if(!isCheckbox && !isRadio) {
+	      data.children.attrs.oninput = setInputValue
+      }
       data.children.attrs.config = function(el,old,context){ context.retain = true; }
       Global.applyStyle( data.children.attrs, Global._pluck(data.style, ['fontFamily', 'fontSize', 'color', 'textAlign', 'fontStyle', 'fontWeight']) );
       Global.applyStyle( contentProp, Global._pluck(data.style, ['alignItems', 'justifyContent']) );
@@ -81,7 +92,6 @@ export default class WidgetDiv extends LayerBaseClass {
 
     if( isSelect ) {
         data.children.attrs['name'] = name;
-        let isMultiple = data.children.attrs.multiple
         let defaultVal = getValue()||''
         if(isMultiple && typeof defaultVal=='string') defaultVal = defaultVal.split('||');
         if(isMultiple) data.children.attrs.title ='按CTRL键点击可多选\n'+ (data.children.attrs.title||'')
@@ -103,7 +113,7 @@ export default class WidgetDiv extends LayerBaseClass {
           let checked = defaultVal.indexOf(v)>-1?'[checked]':'';
           let value =v, text=v
           if(typeof v=='object'&&v)value=v.value, text=v.text
-          return m('label', [ m(`input.checkbox[type=checkbox][value=${value}][name=${name}]${checked}`), text ] );
+          return m('label', [ m(`input.checkbox[type=checkbox][value=${value}][name=${name}]${checked}`, {onchange:setInputValue} ), text ] );
         });
         dom = Global._extend( {}, data.children )
         dom.children = options
@@ -114,7 +124,7 @@ export default class WidgetDiv extends LayerBaseClass {
           let checked = v==defaultVal?'[checked]':'';
           let value =v, text=v
           if(typeof v=='object'&&v)value=v.value, text=v.text
-          return m('label', [ m(`input.radio[type=radio][value=${value}][name=${name}]${checked}`), text ] );
+          return m('label', [ m(`input.radio[type=radio][value=${value}][name=${name}]${checked}`, {onchange:setInputValue}), text ] );
         });
         dom = Global._extend( {}, data.children )
         dom.children = options
@@ -123,6 +133,8 @@ export default class WidgetDiv extends LayerBaseClass {
       dom = Global._extend( {}, data.children )
       dom.children = dom.html? m.trust(dom.children) : dom.children;
     }
+    if(isSelect) delete dom.attrs.value;
+    else dom.attrs.value = getValue()
     return m('.content', Global._extend( { key:'key_'+name, config: function(el,isInit,context){context.retain=true} }, contentProp ), [dom] );
 
   }
