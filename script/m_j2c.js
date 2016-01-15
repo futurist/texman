@@ -37,14 +37,16 @@ function stylize(element, sheet){
     return element;
 }
 
-function addStyleToHead(styleObj) {
+function addStyleToHead(styleObj, name) {
 	if(!isBrowser) return;
+	name=name||''
 	if(!styleObj.dom){
 		var el = document.createElement('style')
 		document.head.appendChild(el)
 		styleObj.dom = el
 	}
-	styleObj.dom.setAttribute('data-ns', namespace + '_' + styleObj.version)
+	var id = 'style_'+namespace + '_' + name + '_' + styleObj.version
+	styleObj.dom.setAttribute('id', id.replace(/\"/g,'&quot;').replace(/\'/g,'&apos;') )
 	stylize(styleObj.dom, styleObj.sheet)
 }
 
@@ -106,22 +108,12 @@ function m_j2c(ns, name, vdom) {
 		return vdom
 	}
 	var sheet = styleObj.sheet;
-	var styleDom = m('style', {
-		config:function(el, old, context, vdom){
-			context.retain = true;
-			if(!old) {
-                stylize(el, sheet);
-                styleObj.dom = el;
-            }
-		}
-	});
-	styleDom.attrs[ 'data-'+ namespace + '_' + name+'_'+styleObj.version ] = true;
 	// here we can insert into header instead of vdom
-	// styleDom = null; addStyleToHead(styleObj)
+	addStyleToHead(styleObj, name)
 
 	// Known Issue: the dom will always re-created when pass to mithril, so we set below to skip next redraw()
 	// m.redraw.strategy('none')
-	return [ styleDom, applyStyle(sheet, vdom) ]
+	return  applyStyle(sheet, vdom)
 }
 m_j2c.DEFAULT_NS = DEFAULT_NS;
 m_j2c.j2c = j2c;
@@ -185,7 +177,7 @@ m_j2c.add = function( ns, name, cssObj ) {
 		styleObj.sheet = j2c.sheet(styleObj.cssObj);
 		styleObj.version++
 	}
-	if( isHead ) addStyleToHead(styleObj)
+	if( isHead ) addStyleToHead(styleObj, name)
 	else if( styleObj.dom ) m.redraw();
 
 	return j2cStore[name];
@@ -214,7 +206,7 @@ m_j2c.remove = function(ns, name, cssObj) {
 	}
 	if( isHead ) {
 		cssObj
-		? addStyleToHead(styleObj)
+		? addStyleToHead(styleObj, name)
 		: removeDom( styleObj )
 	}
 	else if( styleObj.dom ) m.redraw();

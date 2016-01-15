@@ -5,6 +5,7 @@ import * as Global from './global'
 import WidgetDiv from './WidgetDiv'
 import WidgetCanvas from './WidgetCanvas'
 import {buildStageFromData} from './canvas'
+import jsonAPI from './jsonAPI'
 
 import {canvasForm} from './css/formCSS'
 
@@ -95,8 +96,7 @@ export class formList {
 	}
 
 	getList(){
-		var field = '?fields[formtype]=name,title,createAt'
-		field = ''
+		var field = '?fields[formtype]=name,title,createAt,template'
 		return Global.mRequestApi('GET', Global.APIHOST+'/formtype'+field)
 	}
 
@@ -150,10 +150,6 @@ class SelectComponent{
 		if(isMultiple) selVal = {}.toString.call(selVal)!=="[object Array]" ?[selVal]:selVal
 		child = m.prop( {}.toString.call(child)!=="[object Array]" ?[child]:child )
 
-		this.populateRef = function(tableName) {
-			var query = '&filter[meta_ver]=>=0&include=meta_form&fields[formtype]=template'
-			return Global.mRequestApi('GET', Global.APIHOST+'/form_'+tableName+'?' + query)
-		}
 		var getKV = function(ret) {
 			var kv = ret.data.map(row=>{
 				return {value:row.id, text: tkey?row.attributes[tkey]:row.id}
@@ -164,7 +160,7 @@ class SelectComponent{
 		this.controller=function(){
 			if(table){
 				if( !TableCache[table] ){
-					TableCache[table] = self.populateRef(table).then(getKV)
+					TableCache[table] = jsonAPI.populateRef(table).then(getKV)
 				}
 				child = TableCache[table]
 			}
@@ -229,15 +225,6 @@ class DataListView {
 			'.multiView span':{ background_color:'#ccc', color:'#333', margin:'0 5px' },
 		})
 
-		this.populateRef = function(formName) {
-			var query = '&filter[meta_ver]=>=0&include=meta_form&fields[formtype]=template'
-			return Global.mRequestApi('GET', Global.APIHOST+'/form_'+formName+'?' + query)
-		}
-		this.getList = function() {
-			var query = '&filter[meta_ver]=<='+ version +'&include=meta_form&fields[formtype]=template'
-			return Global.mRequestApi('GET', Global.APIHOST+'/form_'+name+'?' + query)
-		}
-
 		this.controller = function(){
 			var ctrl = this;
 		  	ctrl.savedData = m.prop()
@@ -253,7 +240,7 @@ class DataListView {
 							}
 
 							if(isSelect) {
-								return new SelectComponent( typeInfo, {row:row, key:key, viewMode:false} )
+								return [new SelectComponent( typeInfo, {row:row, key:key, viewMode:false} )]
 							}
 							return m('input', Global._extend({}, {name: row.id+'_'+key, value:row.attributes[key]}) )
 						case 'text':
@@ -313,7 +300,7 @@ class DataListView {
 
 
 		  	ctrl.updateListView = function(){
-		  		self.getList().then( function(data){
+		  		jsonAPI.getList(name, {version:version}).then( function(data){
 		  			ctrl.savedData(data)
 		  			var template = data.included[0].attributes.template
 					var type = {}
@@ -397,10 +384,6 @@ class CanvasView {
 		  	}
 		}
 
-		this.populateRef = function(formName) {
-			var query = '&filter[meta_ver]=>=0&include=meta_form&fields[formtype]=template'
-			return Global.mRequestApi('GET', Global.APIHOST+'/form_'+formName+'?' + query)
-		}
 		this.getCanvasData = function() {
 			return Global.mRequestApi('GET', Global.APIHOST+'/formtype/'+formType.id)
 		}
@@ -450,7 +433,7 @@ class CanvasView {
 			    		var tkey = T.attrs.tkey;
 			    		if( table ){
 			    			if(isSelect){
-			    				self.populateRef(table).then(function(ret){
+			    				jsonAPI.populateRef(table).then(function(ret){
 			    					var kv = ret.data.map(row=>{
 			    						return {value:row.id, text: tkey?row.attributes[tkey]:row.id}
 			    					})
