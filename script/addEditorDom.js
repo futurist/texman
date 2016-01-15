@@ -4,7 +4,8 @@ import * as DataTemplate from './DataTemplate'
 
 import m_j2c from './m_j2c'
 import {canvasToolBar} from './css/formCSS'
-m_j2c.add('', 'canvasToolBar', canvasToolBar)
+
+m_j2c(m).add('', 'canvasToolBar', canvasToolBar)
 
 
 export function addEditorDom (savedData){

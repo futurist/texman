@@ -1,6 +1,8 @@
 import j2c from './j2c.es6'
 import util from 'util_extend_exclude'
-import m from 'mithril'
+// import m from 'mithril'
+// have to manually set m ref when required
+var m= window&&window.m||function(){}
 
 var OBJECT = "[object Object]", ARRAY = "[object Array]", STRING = "[object String]", REGEXP="[object RegExp]";
 var type = {}.toString;
@@ -87,6 +89,10 @@ function parseNSName(nsName=""){
 }
 
 function m_j2c(ns, name, vdom) {
+	//if it's mithril ref
+	if(typeof ns=='function' && ns.prop){
+		m=ns; return m_j2c;
+	}
 	var args = arguments;
 	// usage: m_j2c() will return all j2cStore
 	if(args.length===0) return j2cGlobal;

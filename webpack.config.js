@@ -4,6 +4,7 @@ module.exports = {
     entry: {
         app: './script/app.js',
         formlist: './script/formlist.js',
+        // m_j2c: './script/m_j2c.js',
     },
     output: {
         path: __dirname,

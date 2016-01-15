@@ -10,7 +10,7 @@ import UndoManager from './UndoManager'
 import m_j2c from './m_j2c'
 import {canvasForm} from './css/formCSS'
 
-m_j2c.add('', 'canvasForm', canvasForm)
+m_j2c(m).add('', 'canvasForm', canvasForm)
 window.mm = m_j2c
 
 export function buildStageFromData(data, parent=null, options={}) {

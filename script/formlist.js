@@ -13,7 +13,7 @@ export class formList {
 	constructor(){
 
 		// config m_j2c
-		m_j2c.setNS('formlist')
+		m_j2c(m).setNS('formlist')
 
 		var self = this;
 		self.css = {
@@ -233,16 +233,23 @@ class DataListView {
 				var renderCell = function(row, key){
 					var isTextArea = typeInfo[key].tag=='textarea'
 					var isSelect = /select|span/.test(typeInfo[key].tag)
+					var version = 0
 					switch(listMode){
 						case 'edit':
 							if(isTextArea){
-								return m('textarea', Global._extend({}, {name: row.id+'_'+key}), row.attributes[key])
+								return m('textarea', Global._extend({}, {name: row.id+'_'+key, oninput:function(){
+
+								}}), row.attributes[key])
 							}
 
 							if(isSelect) {
 								return [new SelectComponent( typeInfo, {row:row, key:key, viewMode:false} )]
 							}
-							return m('input', Global._extend({}, {name: row.id+'_'+key, value:row.attributes[key]}) )
+							return m('input', Global._extend({}, {id: row.id+'_'+key+version, value:row.attributes[key], oninput:function(){
+								version++
+								row.attributes[key] = this.value
+								console.log( version, this.value )
+							}}) )
 						case 'text':
 						default:
 							return isSelect? new SelectComponent( typeInfo, {row:row, key:key, viewMode:true} ) : row.attributes[key]
@@ -275,7 +282,7 @@ class DataListView {
 								var val = isTextArea
 											?m('textarea', m.trust(v.attributes[key]))
 											:v.attributes[key]
-								return m('td.cell.'+key, {config: function(el,old,context){
+								return m('td.cell.'+key, {key: v.id+key, 'data-key':v.id+key, config: function(el,old,context){
 									if(old) return;
 									$(el).on('click', function(e){
 										options.onCellClick&&options.onCellClick(el, { formType:formType, row:v, key:key } )

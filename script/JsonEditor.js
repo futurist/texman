@@ -375,7 +375,7 @@ export default class JsonEditor {
 			return getOriginalKeyVal( DATA(), orgData )
 		}
 		this.controller = function(args){
-			m_j2c.add('m_jsonEditor', j2cCSSObject)
+			m_j2c(m).add('m_jsonEditor', j2cCSSObject)
 		}
 		this.view = function(ctrl){
 			return m_j2c('m_jsonEditor', this.parseSchema(SCHEMA(), 'root') );
