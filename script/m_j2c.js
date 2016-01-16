@@ -42,12 +42,13 @@ function stylize(element, sheet){
 function addStyleToHead(styleObj, name) {
 	if(!isBrowser) return;
 	name=name||''
+	var id = 'style_'+namespace + '_' + name + '_' + styleObj.version
+	if( document.getElementById(id) ) return;
 	if(!styleObj.dom){
 		var el = document.createElement('style')
 		document.head.appendChild(el)
 		styleObj.dom = el
 	}
-	var id = 'style_'+namespace + '_' + name + '_' + styleObj.version
 	styleObj.dom.setAttribute('id', id.replace(/\"/g,'&quot;').replace(/\'/g,'&apos;') )
 	stylize(styleObj.dom, styleObj.sheet)
 }

@@ -228,6 +228,15 @@ class DataListView {
 			'a.action':{margin:'0 4px'},
 			'.listAction input':{ margin:'10px 4px' },
 			'.listCon':{ height:'100%', overflow:'auto' },
+			':global(.iconfont).uparrow': {
+				'&:before':{ content: '"\\e801"' }
+			},
+			':global(.iconfont).downarrow:before':{
+			  content: '"\\e800"'
+			},
+			'.grey':{
+				color:'#999'
+			},
 		})
 
 		m_j2c.add('data_table_multi_view', {
@@ -353,8 +362,8 @@ class DataListView {
 							return m('td.cell.'+v, { title:v+'\n'+description}, 
 								[
 									title||v,
-									m('i', {className: 'iconfont '+ (options.sort[v]>0?'down':'up') +'arrow '+(options.sortField==v?'':' grey'), onclick:function(){ 
-										var curSort = (v in options.sort)? options.sort[v] : 1
+									m('i', {className: 'global(iconfont) '+ (options.sort[v]>0?'down':'up') +'arrow '+(options.sortField==v?'':' grey'), onclick:function(){ 
+										var curSort = (v in options.sort)? options.sort[v] : -1
 										options.sort[v]=options.sortField==v?-curSort:curSort
 										options.sortField = v
 										ctrl.updateListView()
@@ -371,8 +380,14 @@ class DataListView {
 				getSortDir(field)
 				return options.sort[field]
 			}
+			ctrl.getList = function() {
+				var query = '&include=meta_form&fields[formtype]=template'
+				if(options.version) query+='&filter[meta_ver]=<='+ options.version +''
+				if(options.sortField) query+='&sort='+ ((options.sort[options.sortField]||-1)>0?'<':'>') + options.sortField
+				return Global.mRequestApi('GET', Global.APIHOST+'/form_'+name+'?' + query)
+			}
 		  	ctrl.updateListView = function(){
-		  		jsonAPI.getList(name, {version:version}).then( function(data){
+		  		ctrl.getList().then( function(data){
 		  			ctrl.savedData(data)
 		  			var template = data.included[0].attributes.template
 					var type = {}
