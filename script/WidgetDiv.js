@@ -9,7 +9,7 @@ export default class WidgetDiv extends LayerBaseClass {
 
     this.options = options = Global._extend({
       tool:Global.curTool,
-      mode:'edit'
+      mode:'edit' //'edit', 'present'
     }, options)
 
 		this.parent = parent;
@@ -27,7 +27,7 @@ export default class WidgetDiv extends LayerBaseClass {
     super.onUnSelected()
   }
 
-  getChildren(){
+  getChildren(ctrl){
     var self = this;
     var data = this.jsonData();
     var schema = this.jsonSchema();
@@ -111,29 +111,31 @@ export default class WidgetDiv extends LayerBaseClass {
           return m('option'+checked, {value:value}, text)
         });
         if( data.children.attrs.placeholder && !isMultiple ) options.unshift( m('option', { value:''}, data.children.attrs.placeholder ) );
-        dom = Global._extend( {}, data.children )
+        dom = Global._extend( {config: Global._retain}, data.children )
         dom.attrs.title = title
         dom.children = options
     } else if( isCheckbox ) {
         let defaultVal = getValue()||''
         if(typeof defaultVal=='string') defaultVal = defaultVal.split('||');
         data.children.children = {}.toString.call(data.children.children)!=="[object Array]"?[ data.children.children ]:data.children.children
-        var options = data.children.children.map(function(v){
+        var options = data.children.children.map(function(v, idx){
           let checked = defaultVal.indexOf(v)>-1?'[checked]':'';
           let value =v, text=v
           if(typeof v=='object'&&v)value=v.value, text=v.text
-          return m('label', [ m(`input.checkbox[type=checkbox][value=${value}][name=${name}]${checked}`, {onchange:setInputValue} ), text ] );
+          return m('label', {key:idx+1, config: Global._retain }, [ m(`input.checkbox[type=checkbox][value=${value}][name=${name}]${checked}`, { onchange:setInputValue } ), text ] );
         });
         dom = Global._extend( {}, data.children )
         dom.children = options
     } else if( isRadio ) {
         let defaultVal = getValue()||''
         data.children.children = {}.toString.call(data.children.children)!=="[object Array]"?[ data.children.children ]:data.children.children
-        var options = data.children.children.map(function(v){
-          let checked = v==defaultVal?'[checked]':'';
+        var options = data.children.children.map(function(v,idx){
+          let checked = v===defaultVal;
           let value =v, text=v
           if(typeof v=='object'&&v)value=v.value, text=v.text
-          return m('label', [ m(`input.radio[type=radio][value=${value}][name=${name}]${checked}`, {onchange:setInputValue}), text ] );
+          return m('label', {key:idx+1, config: Global._retain }, [ m(`input.radio[type=radio][value=${value}][name=${name}]`, {
+            checked: checked,
+            onchange:setInputValue}), text ] );
         });
         dom = Global._extend( {}, data.children )
         dom.children = options
@@ -142,14 +144,15 @@ export default class WidgetDiv extends LayerBaseClass {
       dom = Global._extend( {}, data.children )
       dom.children = dom.html? m.trust(dom.children) : dom.children;
     }
-    if(isSelect) delete dom.attrs.value;
+    if(isSelect||isRadio||isCheckbox||isTextarea) delete dom.attrs.value;
     else dom.attrs.value = getValue()
-    return m('.content', Global._extend( { key:'key_'+name, config: function(el,isInit,context){context.retain=true} }, contentProp ), [dom] );
+    return m('.content', Global._extend( { key:'key_'+name, config: Global._retain }, contentProp ), [dom] );
 
   }
 
 	controller (){
-		this.onunload = function(){
+    var ctrl = this
+		ctrl.onunload = function(){
 
 		}
 	}
@@ -158,7 +161,7 @@ export default class WidgetDiv extends LayerBaseClass {
     var self = this;
     var Prop = Global.applyProp(this.Prop)
     var dom = m('div.layer', Global._extend({}, Prop, { key: self.key(), 'data-key': self.key()} ), [
-        this.getChildren(),
+        this.getChildren(ctrl),
 
         // if not edit mode, do nothing
         self.options.mode=='edit'

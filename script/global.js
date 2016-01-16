@@ -342,9 +342,14 @@ export function getInputVal(name, ns=''){
     var val = []
     if(ns) ns = ns + ' '
     var el = $(ns+`[name="${name}"]`)
+    var isRadio = el.get(0)&&el.get(0).type=='radio'
     if(el.length==1) return el.val()
     else{
         el.filter(':checked').each(function(){ val.push( $(this).val() ) })
-        return val;
+        return isRadio? val.join(''): val;
     }
 }
+
+export function _retain(el,isInit,context){context.retain=true}
+
+

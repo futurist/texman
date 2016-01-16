@@ -117,12 +117,18 @@ function showDataList(formType, options={}) {
 	var container = document.querySelector('#container')
 	options.tableStyle = options.tableStyle||{width:$(container).width()-300+'px'}
 	options.container = options.container||container;
+	options.readOnly = false
+	options.widgetAction = true
+	options.showVersion = true
 	m.mount(container, new DataListView(formType, options) );
 }
 function showPopList(formType, options={}) {
 	var container = $('#poplist').show().get(0)
 	options.tableStyle = options.tableStyle||{width:'auto'}
 	options.container = options.container||container;
+	options.listMode = 'text'
+	options.readOnly = true
+	options.widgetAction = false
 	m.mount(container, new DataListView(formType, options) );
 }
 
@@ -183,7 +189,7 @@ class SelectComponent{
 			if(viewMode){
 				return dom
 			}else{
-				return m('select', Global._extend({}, {
+				return m('select', Global._extend(Global._exclude(Global.clone(typeInfo[key].attrs), ['value']), {
 						name: row.id+'_'+key,
 						multiple:isMultiple,
 						title:isMultiple?'按Ctrl键点击可多选\n'+title:title,
@@ -218,6 +224,7 @@ class DataListView {
 			'.cell[data-dirty=true]':{background:'#ffaaaa', border_style:'dashed'},
 			'a.action':{margin:'0 4px'},
 			'.listAction input':{ margin:'10px 4px' },
+			'.listCon':{ height:'100%', overflow:'auto' },
 		})
 
 		m_j2c.add('data_table_multi_view', {
@@ -265,7 +272,7 @@ class DataListView {
 					switch(listMode){
 						case 'edit':
 							if(isTextArea){
-								return m('textarea', Global._extend({}, { name: row.id+'_'+key, oninput:function(){
+								return m('textarea', Global._extend(Global.clone(typeInfo[key].attrs), { name: row.id+'_'+key, oninput:function(){
 									logChange(row, key, $(this).val() )
 									row.attributes[key] = $(this).val()
 								}}), row.attributes[key])
@@ -277,7 +284,7 @@ class DataListView {
 									row.attributes[key] = $(this).val()
 								} } )]
 							}
-							return m('input', Global._extend({}, { name:row.id+'_'+key, value:row.attributes[key], oninput:function(){
+							return m('input', Global._extend( Global.clone(typeInfo[key].attrs) , { name:row.id+'_'+key, value:row.attributes[key], oninput:function(){
 								logChange(row, key, this.value)
 								row.attributes[key] = $(this).val()
 							}}) )
@@ -287,6 +294,7 @@ class DataListView {
 					}
 				}
 				var renderAction = function(row){
+					if(!options.widgetAction||options.readOnly)return []
 					return m('td.cell.action',
 						[
 							m('a.action.edit[href="javascript:;"]', {onclick:function(){ showForm(formType, {row:row} ) }}, '编辑'),
@@ -327,7 +335,7 @@ class DataListView {
 
 			ctrl.buildTableHeader = function(typeInfo){
 				return m('th.row', [
-						m('td.cell', m('.actionHeader', 'action')),
+						!options.widgetAction||options.readOnly?[]:m('td.cell', m('.actionHeader', 'action')),
 						Object.keys(typeInfo).map( (v)=>{
 							var title = typeInfo[v].attrs&&typeInfo[v].attrs.title||''
 							var description = typeInfo[v].attrs&&typeInfo[v].attrs.description||''
@@ -347,7 +355,7 @@ class DataListView {
 							type[v] = template[v]
 						});
 
-					type['meta_ver'] = {type:String, attrs:{order:999}}
+					if(options.showVersion) type['meta_ver'] = {tag:'input', attrs:{order:999, readOnly:true}}
 
 					ctrl.tableHeader = function(){ return ctrl.buildTableHeader( type ) }
 					ctrl.tableRows = function(){ return ctrl.buildTableRows( type, data ) }
@@ -370,7 +378,7 @@ class DataListView {
 								m('input[type=button][value='+ '列表模式' +']', {onclick:function(){ listMode='text'; ctrl.updateListView() }}),
 								m('input[type=button][value='+ '保存编辑' +']', {onclick:function(){ ctrl.saveList() }}),
 							  ]
-							: m('input[type=button][value='+ '编辑模式' +']', {onclick:function(){ listMode='edit'; ctrl.updateListView() }})
+							: ( options.readOnly?[]:m('input[type=button][value='+ '编辑模式' +']', {onclick:function(){ listMode='edit'; ctrl.updateListView() }}) )
 						]
 					),
 					m('table.table', {
@@ -380,7 +388,7 @@ class DataListView {
 							}
 						}
 					},
-					[ctrl.tableHeader(), ctrl.tableRows()] )
+					ctrl.savedData()?[ctrl.tableHeader(), ctrl.tableRows()]:[] )
 				])
 			)
 		}
@@ -430,6 +438,7 @@ class CanvasView {
 		  this.controller = function(){
 		  	var ctrl = this;
 		  	ctrl.savedData = m.prop()
+		  	ctrl.domCache={}
 		  	ctrl.onunload=function(e){
 		  		// e.preventDefault()
 		  		self.setPopListOpen(false)
@@ -461,9 +470,10 @@ class CanvasView {
 		  this.view = function(ctrl){
 		  	if( !ctrl.Canvas1() ) return;
 
-		    return m_j2c('', 'canvasForm', m('.mainCanvas', { config:function(el, isInit, context){
+		    return ctrl.domCache['Canvas1']?{subtree:'retain'}: m_j2c('', 'canvasForm', m('.mainCanvas', { config:function(el, isInit, context){
 		    	context.retain=true
 		    	if(!isInit){
+		    		setTimeout(function(){ ctrl.domCache['Canvas1'] = true })
 			    	Object.keys(template).forEach(function(v) {
 			    		var $f = $('[name="'+ v +'"]')
 			    		var T = template[v];
