@@ -90,14 +90,16 @@ function parseNSName(nsName=""){
 }
 
 function m_j2c(ns, name, vdom) {
-	//if it's mithril ref
-	if(typeof ns=='function' && ns.prop){
-		m=ns; return m_j2c;
-	}
 	var args = arguments;
 	// usage: m_j2c() will return all j2cStore
 	if(args.length===0) return j2cGlobal;
-	if(args.length===1) name=ns, ns=namespace;
+	if(args.length===1){
+		//if it's mithril ref
+		if(typeof ns=='function' && ns.prop){
+			m=ns; return m_j2c;
+		}
+		name=ns, ns=namespace;
+	}
 	if(typeof args[1]=='object') vdom=name, name=ns, ns=namespace;
 	ns=ns||DEFAULT_NS
 

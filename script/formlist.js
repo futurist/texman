@@ -215,6 +215,7 @@ class DataListView {
 		var id = formType.attributes.id;
 		var version = formType.attributes.version;
 		var listMode = options.listMode || 'edit'	//'text', 'edit'
+		options.sort = options.sort||{}
 		m_j2c.add('data_table', {
 			'.table': util._extend( {display:'table', table_layout: 'fixed', border_collapse:'collapse' }, options.tableStyle ),
 			'.row':{display:'table-row'},
@@ -349,11 +350,27 @@ class DataListView {
 						Object.keys(typeInfo).map( (v)=>{
 							var title = typeInfo[v].attrs&&typeInfo[v].attrs.title||''
 							var description = typeInfo[v].attrs&&typeInfo[v].attrs.description||''
-							return m('td.cell.'+v, {title:v+'\n'+description}, title||v )
+							return m('td.cell.'+v, { title:v+'\n'+description}, 
+								[
+									title||v,
+									m('i', {className: 'iconfont '+ (options.sort[v]>0?'down':'up') +'arrow '+(options.sortField==v?'':' grey'), onclick:function(){ 
+										var curSort = (v in options.sort)? options.sort[v] : 1
+										options.sort[v]=options.sortField==v?-curSort:curSort
+										options.sortField = v
+										ctrl.updateListView()
+									} }),
+								] )
 						})
 					] )
 			}
-
+			ctrl.setSortDir = function(field, dir){
+				options.sort[field] = dir||-1
+				return options.sort[field]
+			}
+			ctrl.revertSortDir = function(field){
+				getSortDir(field)
+				return options.sort[field]
+			}
 		  	ctrl.updateListView = function(){
 		  		jsonAPI.getList(name, {version:version}).then( function(data){
 		  			ctrl.savedData(data)
