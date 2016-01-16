@@ -45,7 +45,7 @@ export default class WidgetDiv extends LayerBaseClass {
     let isMultiple = isCheckbox || data.children.attrs.multiple
 
     var getValue = function(){
-      if(editMode) return rowData[name];
+      if(editMode) return rowData[name]||'';
       else{
 	      var str =  (isTextarea)? data.children.children: data.children.attrs.value
       	  return str

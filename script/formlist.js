@@ -118,8 +118,8 @@ function showDataList(formType, options={}) {
 	options.tableStyle = options.tableStyle||{width:$(container).width()-300+'px'}
 	options.container = options.container||container;
 	options.readOnly = false
-	options.widgetAction = true
 	options.showVersion = true
+	console.log(options)
 	m.mount(container, new DataListView(formType, options) );
 }
 function showPopList(formType, options={}) {
@@ -128,7 +128,7 @@ function showPopList(formType, options={}) {
 	options.container = options.container||container;
 	options.listMode = 'text'
 	options.readOnly = true
-	options.widgetAction = false
+	options.hideAction = true
 	m.mount(container, new DataListView(formType, options) );
 }
 
@@ -219,7 +219,9 @@ class DataListView {
 			'.table': util._extend( {display:'table', table_layout: 'fixed', border_collapse:'collapse' }, options.tableStyle ),
 			'.row':{display:'table-row'},
 			'.row:hover':{background:'#ccc'},
-			'.cell':{display:'table-cell',  width: '2%', padding: '5px', border:'1px solid #ccc'},
+			'.lastEditRow':{ background:'rgba(255,204,204,1)', '-webkit-transition': 'background-color 10s' },
+			'.lastEditRowNormal':{ background:'rgba(255,204,204,0)' },
+			'.cell':{display:'table-cell', width: '2%', padding: '5px', border:'1px solid #ccc'},
 			'.cell textarea':{ width:'100%', height:'100%', border:'none', background:'none', resize:'none' },
 			'.cell[data-dirty=true]':{background:'#ffaaaa', border_style:'dashed'},
 			'a.action':{margin:'0 4px'},
@@ -275,7 +277,7 @@ class DataListView {
 								return m('textarea', Global._extend(Global.clone(typeInfo[key].attrs), { name: row.id+'_'+key, oninput:function(){
 									logChange(row, key, $(this).val() )
 									row.attributes[key] = $(this).val()
-								}}), row.attributes[key])
+								}}), row.attributes[key]||'')
 							}
 
 							if(isSelect) {
@@ -284,17 +286,17 @@ class DataListView {
 									row.attributes[key] = $(this).val()
 								} } )]
 							}
-							return m('input', Global._extend( Global.clone(typeInfo[key].attrs) , { name:row.id+'_'+key, value:row.attributes[key], oninput:function(){
+							return m('input', Global._extend( Global.clone(typeInfo[key].attrs) , { name:row.id+'_'+key, value:row.attributes[key]||'', oninput:function(){
 								logChange(row, key, this.value)
 								row.attributes[key] = $(this).val()
 							}}) )
 						case 'text':
 						default:
-							return isSelect? new SelectComponent( typeInfo, {row:row, key:key, viewMode:true} ) : row.attributes[key]
+							return isSelect? new SelectComponent( typeInfo, {row:row, key:key, viewMode:true} ) : row.attributes[key]||''
 					}
 				}
 				var renderAction = function(row){
-					if(!options.widgetAction||options.readOnly)return []
+					if(options.hideAction||options.readOnly)return []
 					return m('td.cell.action',
 						[
 							m('a.action.edit[href="javascript:;"]', {onclick:function(){ showForm(formType, {row:row} ) }}, '编辑'),
@@ -308,7 +310,8 @@ class DataListView {
 
 				return data.data.map(function(v){
 					return m('tr.row',
-							{config: function(el,old,context){
+							{
+								config: function(el,old,context){
 									if(old) return;
 									$(el).on('click', function(e){
 										options.onRowClick&&options.onRowClick(el, { formType:formType, row:v } )
@@ -321,8 +324,15 @@ class DataListView {
 								var val = isTextArea
 											?m('textarea', m.trust(v.attributes[key]))
 											:v.attributes[key]
-								return m('td.cell.'+key, {key: v.id+key, 'data-dirty': isDirty(v, key), 'data-key':v.id+key, config: function(el,old,context){
+								return m('td.cell.'+key, {
+									className: options.row&&options.row.id==v.id?'lastEditRow':'',
+									key: v.id+key,
+									'data-dirty': isDirty(v, key), 
+									config: function(el,old,context){
 									if(old) return;
+									setTimeout( function(){
+										$(el).addClass( m_j2c.getClass('data_table').lastEditRowNormal )
+									},2000)
 									$(el).on('click', function(e){
 										options.onCellClick&&options.onCellClick(el, { formType:formType, row:v, key:key } )
 									})
@@ -335,7 +345,7 @@ class DataListView {
 
 			ctrl.buildTableHeader = function(typeInfo){
 				return m('th.row', [
-						!options.widgetAction||options.readOnly?[]:m('td.cell', m('.actionHeader', 'action')),
+						options.hideAction||options.readOnly?[]:m('td.cell', m('.actionHeader', 'action')),
 						Object.keys(typeInfo).map( (v)=>{
 							var title = typeInfo[v].attrs&&typeInfo[v].attrs.title||''
 							var description = typeInfo[v].attrs&&typeInfo[v].attrs.description||''
@@ -532,6 +542,7 @@ class CanvasView {
 						apiData.data.id=rowID
 			      		Global.mRequestApi('PATCH', Global.APIHOST+'/form_'+domData.name+'/'+rowID, apiData).then(function(ret){
 			      			console.log(ret)
+			      			options.row = ret.data;
 			      		} )
 					}else{
 			      		Global.mRequestApi('POST', Global.APIHOST+'/form_'+domData.name, apiData).then(function(ret){
