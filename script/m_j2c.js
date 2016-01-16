@@ -70,6 +70,7 @@ function intervdom (sheet, vdom){
 	return vdom
 }
 function applyStyle (sheet, vdom){
+	if( type.call(vdom)===OBJECT&&vdom.subtree=='retain' ) return vdom
 	if( type.call(vdom)===ARRAY ) return vdom.map( function(v){ return applyStyle(sheet, v) } );
 	return [intervdom(sheet, vdom)]
 }
@@ -119,7 +120,9 @@ function m_j2c(ns, name, vdom) {
 
 	// Known Issue: the dom will always re-created when pass to mithril, so we set below to skip next redraw()
 	// m.redraw.strategy('none')
-	return  applyStyle(sheet, vdom)
+	var ret = applyStyle(sheet, vdom)
+	// console.log(ret)
+	return  ret
 }
 m_j2c.DEFAULT_NS = DEFAULT_NS;
 m_j2c.j2c = j2c;

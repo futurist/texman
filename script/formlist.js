@@ -538,6 +538,7 @@ class CanvasView {
 			      			options.row = ret.data;
 			      			rowData = ret.data.attributes;
 			      			rowID = ret.data.id;
+			      			ctrl.domCache={}
 			      		} )
 					}
 		      	}}),
