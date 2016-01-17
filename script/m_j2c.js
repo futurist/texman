@@ -18,13 +18,6 @@ j2cGlobal[m_j2c.DEFAULT_NS] = {};
 
 var isBrowser = typeof document==='object' && document && document instanceof Node;
 
-function findDom(dom) {
-	for(var i=0, n=domClassMap.length; i<n; i++ ){
-		if(domClassMap[i].dom === dom) return i
-	}
-	return -1
-}
-
 // check if the given object is HTML element
 function isElement(o){return (typeof HTMLElement == "object" ? o instanceof HTMLElement :o && typeof o === "object" && o !== null && o.nodeType === 1 && typeof o.nodeName==="string"); }
 function isComponent(o){return typeof o=='object'&&o&&typeof o.view=='function' }
@@ -159,7 +152,10 @@ m_j2c.add = function( ns, name, cssObj ) {
 	else if(!cssObj)return j2cGlobal[ns]&&j2cGlobal[ns][name];
 
 	var j2cStore = j2cGlobal[ns]
-	if(!j2cStore) j2cGlobal[ns]={}
+	if(!j2cStore) j2cGlobal[ns]={};
+	// revert all class for ns/name
+	var changeList=[]
+	domClassMap.forEach(v=>_addClassToDom(v.dom,changeList,ns,name,false))
 	var styleObj
 	if(!j2cStore[name]){
 		styleObj = j2cStore[name] = { cssObj:cssObj, version:0, sheet:j2c.sheet(cssObj) };
@@ -170,12 +166,8 @@ m_j2c.add = function( ns, name, cssObj ) {
 		styleObj.version++
 	}
 	addStyleToHead(styleObj, name)
-	domClassMap.forEach(function(v){
-		if(v.ns==ns&&v.name==name){
-
-		}
-	})
 	m&&m.redraw();
+	changeList.forEach(v=>_addClassToDom(v.dom,[],ns,name,true))
 	return j2cStore[name];
 }
 m_j2c.remove = function(ns, name, cssObj) {
@@ -185,23 +177,24 @@ m_j2c.remove = function(ns, name, cssObj) {
 	if(typeof args[1]=='object') cssObj=name, name=ns, ns=namespace;
 	ns=ns||m_j2c.DEFAULT_NS
 
-	if(!name)return j2cGlobal[ns];
-	else if(!cssObj)return j2cGlobal[ns]&&j2cGlobal[ns][name];
-
 	var j2cStore = j2cGlobal[ns]
-	if(!j2cStore) return;
-
+	if(!name || !j2cStore || !j2cStore[name]) return;
+	// revert all class for ns/name
+	var changeList=[]
+	domClassMap.forEach(v=>{
+		_addClassToDom(v.dom,changeList,ns,name,false)
+	})
 	var styleObj = j2cStore[name];
 	if(!cssObj){
 		delete j2cStore[name]
+		removeDom( styleObj )
 	}else{
 		util._exclude(styleObj.cssObj, cssObj, null);
 		styleObj.sheet = j2c.sheet(styleObj.cssObj);
 		styleObj.version++
+		addStyleToHead(styleObj, name)
+		changeList.forEach(v=>_addClassToDom(v.dom,[],ns,name,true))
 	}
-	cssObj
-	? addStyleToHead(styleObj, name)
-	: removeDom( styleObj );
 	m&&m.redraw();
 	return styleObj
 }
@@ -225,14 +218,16 @@ var _addClassToDom = function(dom, domRange, ns, name, isAdd) {
 	var pos, c = dom.className&&dom.className.split(/\s+/)
     if(c) dom.className = c.map(function(v){
     	if( isAdd===false ) {
-    		if((pos=findDom(dom))!==-1){
-    			domRange&&domRange.push( domClassMap[pos] );
-	    		var old = domClassMap[pos].original
-	    		// domClassMap.splice(pos,1)
-	    		return  domClassMap[pos].j2c==v?old:v
-    		}else{
-    			return v
+    		for(var i=domClassMap.length;i--;){
+    			var d=domClassMap[i]
+    			ns=ns||d.ns
+    			name=name||d.name
+    			if(d.ns==ns&&d.name==name&&d.dom===dom && d.j2c==v){
+    				domRange&&domRange.push( d )
+    				return d.original
+    			}
     		}
+    		return v
     	}else{
     		var list = m_j2c.getClass(ns, name)
     		if(!list)return
@@ -250,13 +245,13 @@ var _addClassToDom = function(dom, domRange, ns, name, isAdd) {
 m_j2c.domMap = function (){
 	return domClassMap
 }
-m_j2c.revertClass = function (target){
+m_j2c.revertClass = function (target, ns, name) {
 	var domRange=[]
 	if( !target||!isElement(target) )target=document.body;
-	_addClassToDom(target,domRange,null,null,false)
+	_addClassToDom(target,domRange,ns,name,false)
 	var items = target.getElementsByTagName("*")
 	for (var i = items.length; i--;) {
-	    _addClassToDom(items[i],domRange,null,null,false)
+	    _addClassToDom(items[i],domRange,ns,name,false)
 	}
 	return domRange
 }
@@ -267,7 +262,6 @@ m_j2c.applyClass = function (ns, name, target){
 	if(name===undefined) name=ns, ns=namespace;
 	if( !target||!isElement(target) )target=document.body;
 	ns=ns||m_j2c.DEFAULT_NS
-	console.log(ns, name, target)
 	if( type.call(name)==OBJECT ){
 		//support {'.item li':{float:left}} as name
 		var tempName='temp_'+Date.now()+Math.random()
