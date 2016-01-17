@@ -242,12 +242,14 @@ var _addClassToDom = function(dom, domRange, ns, name, isAdd) {
     }).join(' ')
 }
 
-m_j2c.domMap = function (){
+m_j2c.domClassMap = function (){
 	return domClassMap
 }
 m_j2c.revertClass = function (target, ns, name) {
 	var domRange=[]
 	if( !target||!isElement(target) )target=document.body;
+	if(ns==='') ns=m_j2c.DEFAULT_NS;
+	ns=ns||namespace
 	_addClassToDom(target,domRange,ns,name,false)
 	var items = target.getElementsByTagName("*")
 	for (var i = items.length; i--;) {
