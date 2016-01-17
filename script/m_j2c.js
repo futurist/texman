@@ -34,10 +34,10 @@ function stylize(element, sheet){
     return element;
 }
 
-function addStyleToHead(styleObj, name) {
+function addStyleToHead(styleObj, ns, name) {
 	if(!isBrowser) return;
 	name=name||''
-	var id = 'style_'+namespace + '_' + name + '_' + styleObj.version
+	var id = 'style_'+ ns + '_' + name + '_' + styleObj.version
 	if( document.getElementById(id) ) return;
 	if(!styleObj.dom){
 		var el = document.createElement('style')
@@ -165,7 +165,7 @@ m_j2c.add = function( ns, name, cssObj ) {
 		styleObj.sheet = j2c.sheet(styleObj.cssObj);
 		styleObj.version++
 	}
-	addStyleToHead(styleObj, name)
+	addStyleToHead(styleObj, ns, name)
 	m&&m.redraw();
 	changeList.forEach(v=>_addClassToDom(v.dom,[],ns,name,true))
 	return j2cStore[name];
@@ -192,7 +192,7 @@ m_j2c.remove = function(ns, name, cssObj) {
 		util._exclude(styleObj.cssObj, cssObj, null);
 		styleObj.sheet = j2c.sheet(styleObj.cssObj);
 		styleObj.version++
-		addStyleToHead(styleObj, name)
+		addStyleToHead(styleObj, ns, name)
 		changeList.forEach(v=>_addClassToDom(v.dom,[],ns,name,true))
 	}
 	m&&m.redraw();
