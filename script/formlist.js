@@ -215,11 +215,13 @@ class DataListView {
 		var id = formType.attributes.id;
 		var version = formType.attributes.version;
 		var listMode = options.listMode || 'edit'	//'text', 'edit'
+		options.filter = options.filter||{}
 		options.sort = options.sort||{}
+		options.sortField = options.sortField||[]
 		m_j2c.add('data_table', {
 			'.table': util._extend( {display:'table', table_layout: 'fixed', border_collapse:'collapse' }, options.tableStyle ),
 			'.row':{display:'table-row'},
-			'.row:hover':{background:'#ccc'},
+			'.data.row:hover':{background:'#ccc'},
 			'.lastEditRow':{ background:'rgba(255,204,204,1)', '-webkit-transition': 'background-color 10s' },
 			'.lastEditRowNormal':{ background:'rgba(255,204,204,0)' },
 			'.cell':{display:'table-cell', width: '2%', padding: '5px', border:'1px solid #ccc'},
@@ -319,7 +321,7 @@ class DataListView {
 				}
 
 				return data.data.map(function(v){
-					return m('tr.row',
+					return m('tr.data.row',
 							{
 								config: function(el,old,context){
 									if(old) return;
@@ -354,7 +356,7 @@ class DataListView {
 			}
 
 			ctrl.buildTableHeader = function(typeInfo){
-				return m('th.row', [
+				return m('th.head.row', [
 						options.hideAction||options.readOnly?[]:m('td.cell', m('.actionHeader', 'action')),
 						Object.keys(typeInfo).map( (v)=>{
 							var title = typeInfo[v].attrs&&typeInfo[v].attrs.title||''
@@ -362,12 +364,23 @@ class DataListView {
 							return m('td.cell.'+v, { title:v+'\n'+description}, 
 								[
 									title||v,
-									m('i', {className: 'global(iconfont) '+ (options.sort[v]>0?'down':'up') +'arrow '+(options.sortField==v?'':' grey'), onclick:function(){ 
+									m('i', {className: 'global(iconfont) '+ (options.sort[v]>0?'down':'up') +'arrow '+(~options.sortField.indexOf(v)?'':' grey'), onclick:function(){ 
+										var pos = options.sortField.indexOf(v)
 										var curSort = (v in options.sort)? options.sort[v] : -1
-										options.sort[v]=options.sortField==v?-curSort:curSort
-										options.sortField = v
+										options.sort[v]= ~pos?-curSort:curSort
+										// ~pos && options.sortField.splice(pos,1)
+										// Global._addToSet(true, options.sortField, v)
+										options.sortField = [v]
 										ctrl.updateListView()
 									} }),
+								
+									m('.searchBox', m('input[type=text][name='+v+']', {onkeydown:function(e){
+											if(e.keyCode==13){
+												options.filter[v]=this.value
+												ctrl.updateListView()
+											}
+										}
+									}) ),
 								] )
 						})
 					] )
@@ -383,7 +396,10 @@ class DataListView {
 			ctrl.getList = function() {
 				var query = '&include=meta_form&fields[formtype]=template'
 				if(options.version) query+='&filter[meta_ver]=<='+ options.version +''
-				if(options.sortField) query+='&sort='+ ((options.sort[options.sortField]||-1)>0?'<':'>') + options.sortField
+				if(options.sortField.length) query+='&sort='+ options.sortField.map(v=>((options.sort[v]||-1)>0?'<':'>') + v).join(',,,');
+				Object.keys(options.filter).forEach(v=>{
+					query+='&filter['+v+']=:'+ options.filter[v]
+				})
 				return Global.mRequestApi('GET', Global.APIHOST+'/form_'+name+'?' + query)
 			}
 		  	ctrl.updateListView = function(){
