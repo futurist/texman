@@ -3,5 +3,4 @@ app.js
 formlist.js
 node_modules/
 compiled
-app
 *.log

@@ -1,4 +1,4 @@
-import j2c from './j2c.es6'
+import j2c from 'j2c'
 import util from 'util_extend_exclude'
 // import m from 'mithril'
 // have to manually set m ref when required
@@ -155,7 +155,7 @@ m_j2c.add = function( ns, name, cssObj ) {
 	if(!j2cStore) j2cGlobal[ns]={};
 	// revert all class for ns/name
 	var changeList=[]
-	domClassMap.forEach(v=>_addClassToDom(v.dom,changeList,ns,name,false))
+	domClassMap.forEach( function(v){_addClassToDom(v.dom,changeList,ns,name,false)} )
 	var styleObj
 	if(!j2cStore[name]){
 		styleObj = j2cStore[name] = { cssObj:cssObj, version:0, sheet:j2c.sheet(cssObj) };
@@ -167,7 +167,7 @@ m_j2c.add = function( ns, name, cssObj ) {
 	}
 	addStyleToHead(styleObj, ns, name)
 	m&&m.redraw();
-	changeList.forEach(v=>_addClassToDom(v.dom,[],ns,name,true))
+	changeList.forEach( function(v){_addClassToDom(v.dom,[],ns,name,true)} )
 	return j2cStore[name];
 }
 m_j2c.remove = function(ns, name, cssObj) {
@@ -181,9 +181,9 @@ m_j2c.remove = function(ns, name, cssObj) {
 	if(!name || !j2cStore || !j2cStore[name]) return;
 	// revert all class for ns/name
 	var changeList=[]
-	domClassMap.forEach(v=>{
+	domClassMap.forEach( function(v){
 		_addClassToDom(v.dom,changeList,ns,name,false)
-	})
+	} )
 	var styleObj = j2cStore[name];
 	if(!cssObj){
 		delete j2cStore[name]
@@ -193,7 +193,7 @@ m_j2c.remove = function(ns, name, cssObj) {
 		styleObj.sheet = j2c.sheet(styleObj.cssObj);
 		styleObj.version++
 		addStyleToHead(styleObj, ns, name)
-		changeList.forEach(v=>_addClassToDom(v.dom,[],ns,name,true))
+		changeList.forEach( function(v){_addClassToDom(v.dom,[],ns,name,true)} )
 	}
 	m&&m.redraw();
 	return styleObj
