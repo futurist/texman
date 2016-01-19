@@ -339,7 +339,7 @@ class DataListView {
 								return m('td.cell.'+key, {
 									className: options.row&&options.row.id==v.id?'lastEditRow':'',
 									key: v.id+key,
-									'data-dirty': isDirty(v, key), 
+									'data-dirty': isDirty(v, key),
 									config: function(el,old,context){
 									if(old) return;
 									setTimeout( function(){
@@ -361,10 +361,10 @@ class DataListView {
 						Object.keys(typeInfo).map( (v)=>{
 							var title = typeInfo[v].attrs&&typeInfo[v].attrs.title||''
 							var description = typeInfo[v].attrs&&typeInfo[v].attrs.description||''
-							return m('td.cell.'+v, { title:v+'\n'+description}, 
+							return m('td.cell.'+v, { title:v+'\n'+description},
 								[
 									title||v,
-									m('i', {className: 'global(iconfont) '+ (options.sort[v]>0?'down':'up') +'arrow '+(~options.sortField.indexOf(v)?'':' grey'), onclick:function(){ 
+									m('i', {className: 'global(iconfont) '+ (options.sort[v]>0?'down':'up') +'arrow '+(~options.sortField.indexOf(v)?'':' grey'), onclick:function(){
 										var pos = options.sortField.indexOf(v)
 										var curSort = (v in options.sort)? options.sort[v] : -1
 										options.sort[v]= ~pos?-curSort:curSort
@@ -373,7 +373,7 @@ class DataListView {
 										options.sortField = [v]
 										ctrl.updateListView()
 									} }),
-								
+
 									m('.searchBox', m('input[type=text][name='+v+']', {onkeydown:function(e){
 											if(e.keyCode==13){
 												options.filter[v]=this.value
@@ -398,7 +398,8 @@ class DataListView {
 				if(options.version) query+='&filter[meta_ver]=<='+ options.version +''
 				if(options.sortField.length) query+='&sort='+ options.sortField.map(v=>((options.sort[v]||-1)>0?'<':'>') + v).join(',,,');
 				Object.keys(options.filter).forEach(v=>{
-					query+='&filter['+v+']=:'+ options.filter[v]
+					var val = options.filter[v]
+					if(val) query+='&filter['+v+']=:'+ val
 				})
 				return Global.mRequestApi('GET', Global.APIHOST+'/form_'+name+'?' + query)
 			}
@@ -471,7 +472,7 @@ class CanvasView {
 		var rowData = options.row && options.row.attributes
 		var rowID = options.row && options.row.id
 		m_j2c.add('', 'canvasForm', canvasForm)
-		var classList = m_j2c.getClass('', '')	// default ns, all class
+		var classList = m_j2c.getClass('', 'canvasForm')||{}	// default ns, all class
 		var getClass= function(name){ return '.'+(classList[name]||name) }
 
 		var popListOpen = false
@@ -496,12 +497,13 @@ class CanvasView {
 		  this.controller = function(){
 		  	var ctrl = this;
 		  	ctrl.savedData = m.prop()
-		  	ctrl.domCache={}
+		  	ctrl.retainCache={}
 		  	ctrl.onunload=function(e){
 		  		// e.preventDefault()
 		  		self.setPopListOpen(false)
 		  	}
 		  	ctrl.buildCanvas = function(){
+		  		console.log(345234)
 		  		window.Canvas1 = ctrl.Canvas1 = self.getCanvasData().then( function(data){
 		  			ctrl.savedData(data)
 					return buildStageFromData( data.data.attributes.dom, null, {mode:'present', rowData:rowData} )
@@ -528,10 +530,10 @@ class CanvasView {
 		  this.view = function(ctrl){
 		  	if( !ctrl.Canvas1() ) return;
 
-		    return ctrl.domCache['Canvas1']?{subtree:'retain'}: m_j2c('', 'canvasForm', m('.mainCanvas', { config:function(el, isInit, context){
+		    return ctrl.retainCache['Canvas1']?{subtree:'retain'}: m_j2c('', 'canvasForm', m('.mainCanvas', { config:function(el, isInit, context){
 		    	context.retain=true
+	    		setTimeout(function(){ ctrl.retainCache['Canvas1'] = true })
 		    	if(!isInit){
-		    		setTimeout(function(){ ctrl.domCache['Canvas1'] = true })
 			    	Object.keys(template).forEach(function(v) {
 			    		var $f = $('[name="'+ v +'"]')
 			    		var T = template[v];
@@ -545,6 +547,7 @@ class CanvasView {
 			    						return {value:row.id, text: tkey?row.attributes[tkey]:row.id}
 			    					})
 			    					ctrl.setTemplateValue( v, kv, true )
+			    					ctrl.retainCache['Canvas1'] = false
 			    				})
 			    			}
 			    			else
@@ -597,7 +600,7 @@ class CanvasView {
 			      			options.row = ret.data;
 			      			rowData = ret.data.attributes;
 			      			rowID = ret.data.id;
-			      			ctrl.domCache={}
+			      			ctrl.retainCache={}
 			      		} )
 					}
 		      	}}),
