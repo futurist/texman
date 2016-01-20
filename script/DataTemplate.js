@@ -135,6 +135,11 @@ export var jsonTypeSchema = {
     					  "type": "boolean",
     					  "default":false
     					},
+              "html": {
+                "title": "is html",
+                "type": "boolean",
+                "default": false
+              },
             }
           },
           "children": {

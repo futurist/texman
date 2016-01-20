@@ -234,7 +234,7 @@ class DataListView {
 			'.lastEditRowNormal':{ background:'rgba('+ options.style.HighlightBGColor +',0)' },
 			'.cell':{display:'table-cell', padding: '5px', border_left:'1px solid #ccc'},
 			'.cell.first':{ border_left:'none' },
-			'.cell textarea':{ width:'100%', height:'100%', border:'none', background:'none', resize:'none' },
+			'.cell textarea, .cell input':{ width:'100%', height:'100%', border:'none', background:'none', resize:'none' },
 			'.cell[data-dirty=true]':{background:options.style.CellDirtyColor},
 			'.cell.action':{ background:options.style.NormalBGColor },
 			'a.action':{margin:'0 2px'},
@@ -310,7 +310,7 @@ class DataListView {
 								return m('textarea', Global._extend(Global.clone(typeInfo[key].attrs), { name: row.id+'_'+key, oninput:function(){
 									logChange(row, key, $(this).val() )
 									row.attributes[key] = $(this).val()
-								}}), row.attributes[key]||'')
+								}}),  row.attributes[key]||''  )
 							}
 
 							if(isSelect) {
@@ -325,7 +325,9 @@ class DataListView {
 							}}) )
 						case 'text':
 						default:
-							return isSelect? new SelectComponent( typeInfo, {row:row, key:key, viewMode:true} ) : row.attributes[key]||''
+							return isSelect
+							? new SelectComponent( typeInfo, {row:row, key:key, viewMode:true} ) 
+							: ( typeInfo[key].attrs.html? m.trust(row.attributes[key]||''):(row.attributes[key]||'') )
 					}
 				}
 				var renderAction = function(row){
@@ -355,7 +357,7 @@ class DataListView {
 							Object.keys(typeInfo).map(key=>{
 								var isTextArea = typeInfo[key].tag=='textarea';
 								var val = isTextArea
-											?m('textarea', m.trust(v.attributes[key]))
+											?m('textarea', typeInfo[key].attrs.html?m.trust(v.attributes[key]||''):(v.attributes[key]||'') )
 											:v.attributes[key]
 								return m('td.cell.'+key, {
 									className: options.row&&options.row.id==v.id?'lastEditRow':'',
