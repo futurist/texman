@@ -155,7 +155,6 @@ class SelectComponent{
 		var child = typeDef.children
 		if(isMultiple) selVal = {}.toString.call(selVal)!=="[object Array]" ?[selVal]:selVal
 		child = m.prop( {}.toString.call(child)!=="[object Array]" ?[child]:child )
-
 		var getKV = function(ret) {
 			var kv = ret.data.map(row=>{
 				return {value:row.id, text: tkey?row.attributes[tkey]:row.id}
@@ -218,18 +217,37 @@ class DataListView {
 		options.filter = options.filter||{}
 		options.sort = options.sort||{}
 		options.sortField = options.sortField||[]
+		options.style={
+			NormalBGColor: '#fff',
+			HighlightBGColor: '255,204,204',
+			RowHoverColor: '#eee',
+			CellDirtyColor: '#ffaaaa',
+		}
 		m_j2c.add('data_table', {
 			'.table': util._extend( {display:'table', table_layout: 'fixed', border_collapse:'collapse' }, options.tableStyle ),
 			'.row':{display:'table-row'},
-			'.data.row:hover':{background:'#ccc'},
-			'.lastEditRow':{ background:'rgba(255,204,204,1)', '-webkit-transition': 'background-color 10s' },
-			'.lastEditRowNormal':{ background:'rgba(255,204,204,0)' },
-			'.cell':{display:'table-cell', width: '2%', padding: '5px', border:'1px solid #ccc'},
+			'.data.row:hover':{ background:options.style.RowHoverColor },
+			'.lastEditRow':{ background:'rgba('+ options.style.HighlightBGColor +',1)', '-webkit-transition': 'background-color 10s' },
+			'.lastEditRowNormal':{ background:'rgba('+ options.style.HighlightBGColor +',0)' },
+			'.cell':{display:'table-cell', padding: '5px', border:'1px solid #ccc'},
 			'.cell textarea':{ width:'100%', height:'100%', border:'none', background:'none', resize:'none' },
-			'.cell[data-dirty=true]':{background:'#ffaaaa', border_style:'dashed'},
+			'.cell[data-dirty=true]':{background:options.style.CellDirtyColor, border_style:'dashed'},
+			'.cell.action':{ background:options.style.NormalBGColor },
 			'a.action':{margin:'0 4px'},
+			'a.action.icon':{
+				'&:link':{ color:'#333', text_decoration:'none' },
+				'&:visited':{ color:'#C88' },
+				'&:hover':{ color:'#E05454' },
+				'&:active':{ color:'#E05454' },
+			},
 			'.listAction input':{ margin:'10px 4px' },
 			'.listCon':{ height:'100%', overflow:'auto' },
+			':global(.iconfont).edit': {
+				'&:before':{ content: '"\\e805"' }
+			},
+			':global(.iconfont).delete': {
+				'&:before':{ content: '"\\e804"' }
+			},
 			':global(.iconfont).uparrow': {
 				'&:before':{ content: '"\\e801"' }
 			},
@@ -311,11 +329,11 @@ class DataListView {
 					if(options.hideAction||options.readOnly)return []
 					return m('td.cell.action',
 						[
-							m('a.action.edit[href="javascript:;"]', {onclick:function(){ showForm(formType, {row:row} ) }}, '编辑'),
-							m('a.action.delete[href="javascript:;"]', {className:'', onclick:function(){
+							m('a.action.icon[href="javascript:;"]', {onclick:function(){ showForm(formType, {row:row} ) }}, m('i.iconfont.edit')),
+							m('a.action.icon[href="javascript:;"]', {className:'', onclick:function(){
 								if($(this).hasClass('deleting'))return;
 								ctrl.deleteRow(row);
-								$(this).addClass('deleting'); }}, '删除'),
+								$(this).addClass('deleting'); }}, m('i.iconfont.delete')),
 						]
 					)
 				}
@@ -357,8 +375,8 @@ class DataListView {
 
 			ctrl.buildTableHeader = function(typeInfo){
 				return m('th.head.row', [
-						options.hideAction||options.readOnly?[]:m('td.cell', m('.actionHeader', 'action')),
-						Object.keys(typeInfo).map( (v)=>{
+						options.hideAction||options.readOnly?[]:m('td.cell', {style:{width:'76px'} }, m('.actionHeader', 'action')),
+						Object.keys(typeInfo).map( (v, idx)=>{
 							var title = typeInfo[v].attrs&&typeInfo[v].attrs.title||''
 							var description = typeInfo[v].attrs&&typeInfo[v].attrs.description||''
 							return m('td.cell.'+v, { title:v+'\n'+description},
@@ -394,7 +412,7 @@ class DataListView {
 				return options.sort[field]
 			}
 			ctrl.getList = function() {
-				var query = '&include=meta_form&fields[formtype]=template'
+				var query = '&page[limit]=50&include=meta_form&fields[formtype]=template'
 				if(options.version) query+='&filter[meta_ver]=<='+ options.version +''
 				if(options.sortField.length) query+='&sort='+ options.sortField.map(v=>((options.sort[v]||-1)>0?'<':'>') + v).join(',,,');
 				Object.keys(options.filter).forEach(v=>{
@@ -503,7 +521,6 @@ class CanvasView {
 		  		self.setPopListOpen(false)
 		  	}
 		  	ctrl.buildCanvas = function(){
-		  		console.log(345234)
 		  		window.Canvas1 = ctrl.Canvas1 = self.getCanvasData().then( function(data){
 		  			ctrl.savedData(data)
 					return buildStageFromData( data.data.attributes.dom, null, {mode:'present', rowData:rowData} )
