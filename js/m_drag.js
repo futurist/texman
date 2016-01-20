@@ -1,14 +1,14 @@
-(function (root, factory) {
+;(function (root, factory) {
   if(typeof define === "function" && define.amd) {
     define([], factory);
   } else if(typeof module === "object" && module.exports) {
     module.exports = factory();
   } else {
-    root.DragFactory = factory();
+    root.m_drag = factory();
   }
 }(this, function() {
-	return function DragFactory(options) {
-		var defaultOptions = {mithril:true}, options=options||{}
+	return function m_drag(options) {
+		var defaultOptions = {mithril:false}, options=options||{}
 		for(var i in defaultOptions){ if( !(i in options) ) options[i] = defaultOptions[i] }
 		var isTouch = ('ontouchstart' in window) || ('DocumentTouch' in window && document instanceof DocumentTouch);
 		var downE = isTouch? 'touchstart' :'mousedown';
@@ -55,8 +55,8 @@
 				data.dx = data.dy = 0
 			}
 		}
-		window.addEventListener(moveE, moveHandle)
-		window.addEventListener(upE, upHandle)
+		document.addEventListener(moveE, moveHandle)
+		document.addEventListener(upE, upHandle)
 		return function(name, data, moveCB, upCB){
 			if(typeof data=='function') upCB = moveCB, moveCB = data, data={};
 			dragRoot[name] = { name:name, data:data, move:moveCB, up:upCB };

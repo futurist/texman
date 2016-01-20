@@ -51,10 +51,9 @@ function addStyleToHead(styleObj, ns, name) {
 function intervdom (sheet, vdom){
 	if(vdom.attrs&&vdom.attrs.className){
 		vdom.attrs.className = vdom.attrs.className.split(/\s+/).map(function(c){
-			var g = c.match(/global\((.*)\)/);
+			var g = c.match(/^!(.*)/);
 			if(g) return g.pop();
-			if(sheet[c]) return sheet[c];
-			return c
+			return sheet[c]||c
 		}).join(' ')
 	}
 	if( type.call(vdom.children) ===ARRAY ) vdom.children.forEach(function(v){ applyStyle(sheet, v)  } )

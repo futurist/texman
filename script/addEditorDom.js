@@ -12,7 +12,7 @@ export function addEditorDom (savedData){
 	var ID = savedData && savedData.data && savedData.data.id
 	var PARAM = m.route.parseQueryString(location.hash.slice(1));
 	// editor container & resize bar
-	var dragFunc = DragFactory();
+	var dragFunc = m_drag();
 	var initEditorWidth = 400;
 	var downFunc = dragFunc('resizeBar', {width:initEditorWidth}, function(e, data){
 			if( data.data.width +data.dx<=40 )return false;

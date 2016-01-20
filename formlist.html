@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <title></title>
 <!-- <link rel="stylesheet" type="text/css" href="css/canvas.css" /> -->
+<!-- <link rel="stylesheet" type="text/css" href="semantic/dist/semantic.min.css" /> -->
 <style type="text/css">
 @font-face {
 	font-family: 'fontello';
@@ -86,6 +87,199 @@ ul,li{
 	padding:0;
 	margin:0;
 }
+body{
+  font:10px Verdana,'微软雅黑';
+}
+
+
+
+.ui.table {
+    width: 100%;
+    background: #FFF;
+    margin: 1em 0;
+    border: 1px solid rgba(34,36,38,.15);
+    box-shadow: none;
+    border-radius: .28571429rem;
+    text-align: left;
+    color: rgba(0,0,0,.87);
+    border-collapse: separate;
+    border-spacing: 0;
+}
+.ui.table {
+    font-size: 1em;
+}
+.ui.table:last-child {
+    margin-bottom: 0;
+}
+
+.ui.table th {
+  text-align: left;
+}
+.ui.table td {
+    padding: .51428571em;
+    text-align: inherit;
+}
+.ui.table tr td {
+    border-top: 1px solid rgba(34,36,38,.1);
+}
+
+
+
+.ui.input {
+    font-size: 1em;
+    width: calc(100% - 18px)
+}
+.ui.input {
+    position: relative;
+    font-weight: 400;
+    font-style: normal;
+    color: rgba(0,0,0,.87);
+    margin: 5px 0 -1px 0;
+}
+
+
+
+i.icon {
+    display: inline-block;
+    opacity: 1;
+    margin: 0 0 0 0;
+    width: 1.18em;
+    height: 1em;
+    text-align: center;
+    speak: none;
+    font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing: antialiased;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
+i.link.icon {
+    cursor: pointer;
+    opacity: .8;
+    -webkit-transition: opacity .1s ease;
+    transition: opacity .1s ease;
+}
+i.icon, i.icons {
+    font-size: 1em;
+}
+.ui.icon.input>i.icon {
+    cursor: default;
+    position: absolute;
+    line-height: 1;
+    text-align: center;
+    top: 0;
+    right: 0;
+    margin: 0;
+    height: 100%;
+    width: 2.67142857em;
+    opacity: .5;
+    border-radius: 0 .28571429rem .28571429rem 0;
+    -webkit-transition: opacity .3s ease;
+    transition: opacity .3s ease;
+}
+.ui.icon.input>i.icon:hover{
+  opacity: 1
+}
+i.link.icon:hover{
+  opacity: 1
+}
+.ui.icon.input>i.circular.icon {
+    top: .35em;
+    right: .5em;
+}
+.ui.icon.input>i.link.icon {
+    cursor: pointer;
+}
+i.circular.icon {
+    border-radius: 500em!important;
+    line-height: 1!important;
+    padding: .5em!important;
+    box-shadow: 0 0 0 .1em rgba(0,0,0,.1) inset;
+    width: 1em!important;
+    height: 1em!important;
+    position: absolute;
+    right: -5px;
+    top: 1px;
+}
+
+i.iconfont.clear:before{
+    content: "\e806";
+}
+i.iconfont.clear{
+  display: none;
+  position: absolute;
+  left: 0;
+  padding: 5px 5px;
+  background-color: #eee;
+  border-radius: 10px;
+  top: 2px;
+  color: #888;
+  cursor: pointer;
+}
+.ui.input.hasText{
+  width:calc(100% - 40px);
+}
+.ui.input.hasText .search{
+  right:-27px;
+}
+.ui.input.hasSearched .search{
+  display: none;
+}
+.ui.input.hasText .clear{
+  display: block;
+}
+.ui.input.hasText input{
+  padding-left: 27px;
+}
+
+i.icon:before {
+    background: 0 0!important;
+}
+i.icon.search:before {
+    content: "\e807";
+}
+.ui.icon.input>i.icon:after, .ui.icon.input>i.icon:before {
+    left: 0;
+    position: absolute;
+    text-align: center;
+    top: 50%;
+    width: 100%;
+    margin-top: -.5em;
+}
+
+
+.ui.icon.input input {
+    padding-right: 2.67142857em!important;
+}
+.ui.input input {
+    margin: 0;
+    width: 100%;
+    outline: 0;
+    -webkit-tap-highlight-color: rgba(255,255,255,0);
+    text-align: left;
+    line-height: 1.2142em;
+    font-family: Lato,'Helvetica Neue',Arial,Helvetica,sans-serif;
+    padding: 5px 5px;
+    background: #fff;
+    border: 1px solid rgba(34,36,38,.15);
+    color: rgba(0,0,0,.87);
+    border-radius: .28571429rem;
+    -webkit-transition: box-shadow .1s ease,border-color .1s ease;
+    transition: box-shadow .1s ease,border-color .1s ease;
+    box-shadow: none;
+}
+input[type=text], input[type=email], input[type=search], input[type=password] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+input {
+    line-height: normal;
+}
+button, input, optgroup, select, textarea {
+    color: inherit;
+    font: inherit;
+    margin: 0;
+}
 
 </style>
 </head>
@@ -95,5 +289,6 @@ ul,li{
 <div id="poplist"></div>
 </body>
 </html>
-<script type="text/javascript" src="js/zepto.min.js"></script>
+<script type="text/javascript" src="js/jquery.js"></script>
+<!-- <script type="text/javascript" src="semantic/dist/semantic.js"></script> -->
 <script type="text/javascript" src="formlist.js"></script>

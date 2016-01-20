@@ -61,14 +61,14 @@ export class formList {
 			var forms = ctrl.forms();
 			var data = forms&&forms.data || [];
 
-			var dom = m('.global(list)',
+			var dom = m('.!list',
 					{ config:function(el, old, ctx, vdom){
 						var cls=m_j2c.getClass('formlist')
 						// ctx.retain = true;
 						// console.log( old, cls, $( ('.'+cls.list) ) )
 					}  },
 					[
-						m('.global(operate)', m('a.add[href="cane.html"][target=_blank]','添加')),
+						m('.!operate', m('a.add[href="cane.html"][target=_blank]','添加')),
 						m('ul',
 							data.map((v,i)=>{
 								return m('li',
@@ -115,7 +115,8 @@ m.mount( $('#formlist').get(0), new formList )
 // get a form when click
 function showDataList(formType, options={}) {
 	var container = document.querySelector('#container')
-	options.tableStyle = options.tableStyle||{width:$(container).width()-300+'px'}
+	options.conStyle = options.conStyle||{width:$(container).width()-300+'px'}
+	console.log(options)
 	options.container = options.container||container;
 	options.readOnly = false
 	options.showVersion = true
@@ -124,7 +125,7 @@ function showDataList(formType, options={}) {
 }
 function showPopList(formType, options={}) {
 	var container = $('#poplist').show().get(0)
-	options.tableStyle = options.tableStyle||{width:'auto'}
+	options.conStyle = options.conStyle||{width:'auto'}
 	options.container = options.container||container;
 	options.listMode = 'text'
 	options.readOnly = true
@@ -224,24 +225,26 @@ class DataListView {
 			CellDirtyColor: '#ffaaaa',
 		}
 		m_j2c.add('data_table', {
-			'.table': util._extend( {display:'table', table_layout: 'fixed', border_collapse:'collapse' }, options.tableStyle ),
+			'.listAction input':{ margin:'10px 4px' },
+			'.listCon': util._extend( { height:'100%', padding:'20px', overflow:'auto' }, options.conStyle ),
+			'.table': util._extend( {display:'table', table_layout: 'fixed', border_collapse:'collapse' }, options.tableStyle||{} ),
 			'.row':{display:'table-row'},
 			'.data.row:hover':{ background:options.style.RowHoverColor },
 			'.lastEditRow':{ background:'rgba('+ options.style.HighlightBGColor +',1)', '-webkit-transition': 'background-color 10s' },
 			'.lastEditRowNormal':{ background:'rgba('+ options.style.HighlightBGColor +',0)' },
-			'.cell':{display:'table-cell', padding: '5px', border:'1px solid #ccc'},
+			'.cell':{display:'table-cell', padding: '5px', border_left:'1px solid #ccc'},
+			'.cell.first':{ border_left:'none' },
 			'.cell textarea':{ width:'100%', height:'100%', border:'none', background:'none', resize:'none' },
-			'.cell[data-dirty=true]':{background:options.style.CellDirtyColor, border_style:'dashed'},
+			'.cell[data-dirty=true]':{background:options.style.CellDirtyColor},
 			'.cell.action':{ background:options.style.NormalBGColor },
-			'a.action':{margin:'0 4px'},
+			'a.action':{margin:'0 2px'},
 			'a.action.icon':{
+				font_size:'16px',
 				'&:link':{ color:'#333', text_decoration:'none' },
 				'&:visited':{ color:'#C88' },
 				'&:hover':{ color:'#E05454' },
 				'&:active':{ color:'#E05454' },
 			},
-			'.listAction input':{ margin:'10px 4px' },
-			'.listCon':{ height:'100%', overflow:'auto' },
 			':global(.iconfont).edit': {
 				'&:before':{ content: '"\\e805"' }
 			},
@@ -327,7 +330,7 @@ class DataListView {
 				}
 				var renderAction = function(row){
 					if(options.hideAction||options.readOnly)return []
-					return m('td.cell.action',
+					return m('td.cell.action.first',
 						[
 							m('a.action.icon[href="javascript:;"]', {onclick:function(){ showForm(formType, {row:row} ) }}, m('i.iconfont.edit')),
 							m('a.action.icon[href="javascript:;"]', {className:'', onclick:function(){
@@ -372,17 +375,36 @@ class DataListView {
 						] )
 				})
 			}
+			ctrl.filterHistory=function(){
+				var store = {}
+				return function(key, val){
+					store[key] = store[key] || []
+					if(val!==undefined) store[key].push(val);
+					else return store[key].pop()
+				}
+			}()
 
 			ctrl.buildTableHeader = function(typeInfo){
+				
 				return m('th.head.row', [
-						options.hideAction||options.readOnly?[]:m('td.cell', {style:{width:'76px'} }, m('.actionHeader', 'action')),
+						options.hideAction||options.readOnly?[]:m('td.cell.first', {style:{width:'76px'} }, m('.actionHeader', 'action')),
 						Object.keys(typeInfo).map( (v, idx)=>{
 							var title = typeInfo[v].attrs&&typeInfo[v].attrs.title||''
 							var description = typeInfo[v].attrs&&typeInfo[v].attrs.description||''
+
+							var searchHandler = function (err, data){
+								if(err){
+									alert(err);
+									var prevVal = ctrl.filterHistory( v )
+									$('[name=filter_'+v+']').val(prevVal)
+									options.filter[v] = prevVal
+									ctrl.updateListView(searchHandler)
+								}
+							}
 							return m('td.cell.'+v, { title:v+'\n'+description},
 								[
 									title||v,
-									m('i', {className: 'global(iconfont) '+ (options.sort[v]>0?'down':'up') +'arrow '+(~options.sortField.indexOf(v)?'':' grey'), onclick:function(){
+									m('i', {className: '!iconfont '+ (options.sort[v]>0?'down':'up') +'arrow '+(~options.sortField.indexOf(v)?'':' grey'), onclick:function(){
 										var pos = options.sortField.indexOf(v)
 										var curSort = (v in options.sort)? options.sort[v] : -1
 										options.sort[v]= ~pos?-curSort:curSort
@@ -392,13 +414,41 @@ class DataListView {
 										ctrl.updateListView()
 									} }),
 
-									m('.searchBox', m('input[type=text][name='+v+']', {onkeydown:function(e){
+									m('.searchBox.!ui.!input', {className: $('[name=filter_'+v+']').val()?'hasText':'' },
+									[
+									m('i', {class:'iconfont clear', onclick:function(){
+										$('[name=filter_'+v+']').val('')
+										delete options.filter[v]
+										$(this).parent().removeClass('hasSearched')
+										ctrl.updateListView()
+									}}),
+									m('input[type=text][name=filter_'+v+']', {
+										oninput:function(){
+											$(this).parent().removeClass('hasSearched')
+										},
+										onkeydown:function(e){
 											if(e.keyCode==13){
+												ctrl.filterHistory( v, options.filter[v] )
+												$(this).parent().addClass('hasSearched')
 												options.filter[v]=this.value
-												ctrl.updateListView()
+												ctrl.updateListView(function(err, data){
+													if(err){
+														alert(err);
+														$('[name=filter_'+v+']').val(prevVal)
+														options.filter[v] = prevVal
+														ctrl.updateListView(searchHandler)
+													}
+												})
 											}
 										}
-									}) ),
+									}),
+									m('i', {class:'iconfont circular search link icon', onclick:function(){
+										ctrl.filterHistory( v, options.filter[v] )
+										options.filter[v] = $('[name=filter_'+v+']').val()
+										$(this).parent().addClass('hasSearched')
+										ctrl.updateListView(searchHandler)
+									}})
+									] ),
 								] )
 						})
 					] )
@@ -421,9 +471,14 @@ class DataListView {
 				})
 				return Global.mRequestApi('GET', Global.APIHOST+'/form_'+name+'?' + query)
 			}
-		  	ctrl.updateListView = function(){
+		  	ctrl.updateListView = function(callback){
 		  		ctrl.getList().then( function(data){
+		  			if(!data.included.length){
+		  				callback && callback('未找到符合条件的记录')
+		  				return
+		  			}
 		  			ctrl.savedData(data)
+		  			callback && callback(null, data)
 		  			var template = data.included[0].attributes.template
 					var type = {}
 					Object.keys(template)
@@ -459,6 +514,7 @@ class DataListView {
 						]
 					),
 					m('table.table', {
+						className:'!ui !table',
 						config:function(el,old,context){
 							if(!old){
 								// $(el).width( $(el).parent().width() )

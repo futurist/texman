@@ -4,3 +4,4 @@ formlist.js
 node_modules/
 compiled
 *.log
+semantic
